@@ -11,7 +11,7 @@ def ipAddress92
 pipeline {
     parameters {
         //todo: prepare templates for 8.9 and 9.2
-        string(name: "vmTemplate89",defaultValue: "SEG8.9GA", description: "Template for 8.9 VM")
+        string(name: "vmTemplate89",defaultValue: "SDLC-Template-CxSAST-8-9", description: "Template for 8.9 VM")
         string(name: "vmTemplate90",defaultValue: "CxSDLC-Template-CxSAST-9-0", description: "Template for 9.0 VM")
         string(name: "vmTemplate92",defaultValue: "dynamicSmoke2016_without_MO", description: "Template for 9.2 VM")
         string(name: "ram",defaultValue: "12000", description: "Server memory")
@@ -312,7 +312,7 @@ pipeline {
         stage('Publish GitHub Release') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
+                    BRANCH_NAME == 'master'
                 }
             }
             environment {
