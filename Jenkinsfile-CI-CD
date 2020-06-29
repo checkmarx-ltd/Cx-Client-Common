@@ -12,7 +12,7 @@ pipeline {
     parameters {
         //todo: prepare templates for 8.9 and 9.2
         string(name: "vmTemplate89",defaultValue: "SEG8.9GA", description: "Template for 8.9 VM")
-        string(name: "vmTemplate90",defaultValue: "dynamicSmoke2016_without_MO", description: "Template for 9.0 VM")
+        string(name: "vmTemplate90",defaultValue: "CxSDLC-Template-CxSAST-9-0", description: "Template for 9.0 VM")
         string(name: "vmTemplate92",defaultValue: "dynamicSmoke2016_without_MO", description: "Template for 9.2 VM")
         string(name: "ram",defaultValue: "12000", description: "Server memory")
         string(name: "cpu",defaultValue: "4", description: "")
@@ -320,7 +320,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "ghr -t ${GITHUB_TOKEN} -u checkmarx-ltd -n ${cxCommonVersion} -r Cx-Client-Common -c ${GIT_PREVIOUS_COMMIT} -delete ${cxCommonVersion} /target/cx-client-common-${cxCommonVersion}.jar"
+                    sh "ghr -t ${GITHUB_TOKEN} -u checkmarx-ltd -n ${cxCommonVersion} -r Cx-Client-Common -c ${GIT_PREVIOUS_COMMIT} -delete ${cxCommonVersion} ./target/cx-client-common-${cxCommonVersion}.jar"
                 }
             }
         }
