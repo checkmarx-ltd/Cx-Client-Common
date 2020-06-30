@@ -10,7 +10,6 @@ def ipAddress92
 
 pipeline {
     parameters {
-        //todo: prepare templates for 8.9 and 9.2
         string(name: "vmTemplate89",defaultValue: "CxSDLC-Template-CxSAST-8-9", description: "Template for 8.9 VM")
         string(name: "vmTemplate90",defaultValue: "CxSDLC-Template-CxSAST-9-0", description: "Template for 9.0 VM")
         string(name: "vmTemplate92",defaultValue: "CxSDLC-Template-CxSAST-9-2", description: "Template for 9.2 VM")
@@ -68,7 +67,7 @@ pipeline {
                 stage('Run Unit & Integration Tests') {
                     steps {
                         script {
-                            sh "docker run --rm --name build-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn test"
+                            sh "docker run --rm --name test-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn test"
                         }
                     }
                 }
@@ -86,7 +85,7 @@ pipeline {
         stage('System Tests') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
+                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") || BRANCH_NAME == 'eitanas1-new-jenkinsfile' || false
                 }
             }
             parallel {
@@ -321,6 +320,19 @@ pipeline {
             steps {
                 script {
                     sh "ghr -t ${GITHUB_TOKEN} -u checkmarx-ltd -n ${cxCommonVersion} -r Cx-Client-Common -c ${GIT_PREVIOUS_COMMIT} -delete ${cxCommonVersion} ./target/cx-client-common-${cxCommonVersion}.jar"
+                }
+            }
+        }
+
+        stage('Publish to Maven Central') {
+            when {
+                expression {
+                    BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
+                }
+            }
+            steps {
+                script {
+                    sh "docker run --rm --name publish-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn deploy -P release"
                 }
             }
         }
