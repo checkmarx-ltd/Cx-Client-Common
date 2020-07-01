@@ -308,7 +308,7 @@
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>1.5</version>
                         <configuration>
-                            <executable>C:\Program Files (x86)\GNU\GnuPG\gpg2.exe</executable>
+                            <executable>/usr/bin/gpg2</executable>
                             <passphrase>Checkmarx123456</passphrase>
                         </configuration>
                         <executions>
