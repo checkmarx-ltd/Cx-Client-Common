@@ -1,6 +1,7 @@
 package com.cx.restclient.sast.dto;
 
 import com.cx.restclient.cxArm.dto.Policy;
+import com.cx.restclient.dto.IResults;
 
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -16,7 +17,7 @@ import static com.cx.restclient.sast.utils.SASTParam.SCAN_LINK_FORMAT;
 /**
  * Created by Galn on 05/02/2018.
  */
-public class SASTResults implements Serializable {
+public class SASTResults implements Serializable, IResults {
 
     private long scanId;
 

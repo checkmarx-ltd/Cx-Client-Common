@@ -3,7 +3,7 @@ package com.cx.restclient.dto.scansummary;
 import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.DependencyScannerType;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.osa.dto.OSASummaryResults;
@@ -18,13 +18,13 @@ import java.util.List;
  * Collects errors from a provided ScanResults object, based on scan config.
  */
 public class ScanSummary {
-    private final DependencyScannerType dependencyScannerType;
+    private final ScannerType dependencyScannerType;
     private final List<ThresholdError> thresholdErrors = new ArrayList<>();
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     private final boolean policyViolated;
 
     public ScanSummary(CxScanConfig config, ScanResults scanResults) {
-        dependencyScannerType = config.getDependencyScannerType();
+        dependencyScannerType = config.getScannerType();
 
         addSastThresholdErrors(config, scanResults.getSastResults());
         addDependencyScanThresholdErrors(config, scanResults.getDependencyScanResults());

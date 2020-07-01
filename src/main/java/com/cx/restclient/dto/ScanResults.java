@@ -6,7 +6,7 @@ import com.cx.restclient.sast.dto.SASTResults;
 
 import java.io.Serializable;
 
-public class ScanResults implements Serializable {
+public class ScanResults implements Serializable, IResults {
     private SASTResults sastResults = new SASTResults();
     private DependencyScanResults dependencyScanResults = new DependencyScanResults();
 

@@ -499,7 +499,7 @@ public class CxScanConfig implements Serializable {
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
-        return getDependencyScannerType() != DependencyScannerType.NONE &&
+        return getScannerType() != DependencyScannerType.NONE &&
                 getOsaThresholdsEnabled() &&
                 (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
     }
@@ -724,7 +724,7 @@ public class CxScanConfig implements Serializable {
         this.scaConfig = scaConfig;
     }
 
-    public DependencyScannerType getDependencyScannerType() {
+    public DependencyScannerType getScannerType() {
         return dependencyScannerType;
     }
 

@@ -1,9 +1,10 @@
 package com.cx.restclient;
 
-import com.cx.restclient.common.DependencyScanner;
+import com.cx.restclient.common.IScanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.DependencyScanResults;
+import com.cx.restclient.dto.IResults;
 import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.PathFilter;
 import com.cx.restclient.exception.CxClientException;
@@ -11,6 +12,7 @@ import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
+import com.cx.restclient.sast.dto.SASTResults;
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.cx.restclient.sca.SCAWaiter;
 import com.cx.restclient.sca.dto.*;
@@ -43,7 +45,7 @@ import java.util.List;
 /**
  * SCA - Software Composition Analysis - is the successor of OSA.
  */
-public class SCAClient implements DependencyScanner {
+public class SCAClient implements IScanner {
 
     public static final String ENCODING = StandardCharsets.UTF_8.name();
 
@@ -81,7 +83,7 @@ public class SCAClient implements DependencyScanner {
     private final CxScanConfig config;
 
     // This class uses its own instance of CxHttpClient, because SCA has a different base URL and Access Control server.
-    private final CxHttpClient httpClient;
+        private final CxHttpClient httpClient;
 
     private String projectId;
     private String scanId;
@@ -100,6 +102,11 @@ public class SCAClient implements DependencyScanner {
     }
 
     @Override
+    public CxHttpClient getHttpClient(){
+        return httpClient;
+    }
+    
+    @Override
     public void init() {
         try {
             login();
@@ -112,12 +119,12 @@ public class SCAClient implements DependencyScanner {
     /**
      * Waits for SCA scan to finish, then gets scan results.
      *
-     * @param target scan results will be written into this object
+     * @returns  scan results will be written into this object
      *               ({@link com.cx.restclient.dto.DependencyScanResults#setScaResults}).
      * @throws CxClientException in case of a network error, scan failure or when scan is aborted by timeout.
      */
     @Override
-    public void waitForScanResults(DependencyScanResults target) {
+    public IResults waitForScanResults() {
         log.info("------------------------------------Get CxSCA Results:-----------------------------------");
 
         log.info("Waiting for CxSCA scan to finish");
@@ -127,13 +134,13 @@ public class SCAClient implements DependencyScanner {
 
         SCAResults scaResult = retrieveScanResults();
         scaResult.setScaResultReady(true);
-        target.setScaResults(scaResult);
+        return scaResult; 
     }
 
     @Override
-    public String createScan(DependencyScanResults target) {
+    public IResults createScan() {
         log.info("----------------------------------- Creating CxSCA Scan:------------------------------------");
-
+        SCAResults scaResults = new SCAResults();
         scanId = null;
         try {
             SourceLocationType locationType = getScaConfig().getSourceLocationType();
@@ -143,13 +150,16 @@ public class SCAClient implements DependencyScanner {
             } else {
                 response = submitSourcesFromLocalDir();
             }
-            scanId = extractScanIdFrom(response);
+            this.scanId = extractScanIdFrom(response);
             log.info(String.format("Scan started successfully. Scan ID: %s", scanId));
+           
+            scaResults.setScanId(scanId);
+            return  scaResults;
+            
         } catch (IOException e) {
             throw new CxClientException("Error creating CxSCA scan.", e);
         }
-
-        return scanId;
+        
     }
 
     private static String extractScanIdFrom(HttpResponse response) {
@@ -261,7 +271,7 @@ public class SCAClient implements DependencyScanner {
     }
 
     @Override
-    public DependencyScanResults getLatestScanResults() {
+    public IResults getLatestScanResults() {
         // TODO: implement when someone actually needs this.
         //return null;
         //WA for SCA async mode - do not fail in NullPointerException. New feature is opened for next release to support SCA async mode.

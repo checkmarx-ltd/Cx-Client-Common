@@ -1,6 +1,7 @@
 package com.cx.restclient.common.summary;
 
-import com.cx.restclient.dto.DependencyScannerType;
+import com.cx.restclient.dto.ScannerType;
+import com.cx.restclient.dto.IResults;
 import com.cx.restclient.dto.scansummary.Severity;
 import com.cx.restclient.osa.dto.CVEReportTableRow;
 import com.cx.restclient.osa.dto.OSAResults;
@@ -12,8 +13,8 @@ import java.util.List;
 
 import static com.cx.restclient.common.ShragaUtils.formatDate;
 
-public class DependencyResult {
-    private DependencyScannerType dependencyScannerType;
+public class DependencyResult  implements IResults {
+    private ScannerType dependencyScannerType;
     private boolean resultReady;
     private int highVulnerability;
     private int mediumVulnerability;
@@ -31,7 +32,7 @@ public class DependencyResult {
     DependencyResult(){}
 
     DependencyResult(SCAResults scaResults){
-        this.dependencyScannerType = DependencyScannerType.SCA;
+        this.dependencyScannerType = ScannerType.SCA;
         this.highVulnerability = scaResults.getSummary().getHighVulnerabilityCount();
         this.mediumVulnerability = scaResults.getSummary().getMediumVulnerabilityCount();
         this.lowVulnerability = scaResults.getSummary().getLowVulnerabilityCount();
@@ -48,7 +49,7 @@ public class DependencyResult {
 
 
     DependencyResult(OSAResults osaResults){
-        this.dependencyScannerType = DependencyScannerType.OSA;
+        this.dependencyScannerType = ScannerType.OSA;
         this.highVulnerability = osaResults.getResults().getTotalHighVulnerabilities();
         this.mediumVulnerability = osaResults.getResults().getTotalMediumVulnerabilities();
         this.lowVulnerability = osaResults.getResults().getTotalLowVulnerabilities();
@@ -92,11 +93,11 @@ public class DependencyResult {
         }
     }
 
-    public DependencyScannerType getDependencyScannerType() {
+    public ScannerType getDependencyScannerType() {
         return dependencyScannerType;
     }
 
-    public void setDependencyScannerType(DependencyScannerType dependencyScannerType) {
+    public void setDependencyScannerType(ScannerType dependencyScannerType) {
         this.dependencyScannerType = dependencyScannerType;
     }
 

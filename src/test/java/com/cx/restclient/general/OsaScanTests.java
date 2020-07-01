@@ -1,9 +1,9 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxShragaClient;
+import com.cx.restclient.CxClientWrapper;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.DependencyScannerType;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -17,7 +17,7 @@ public class OsaScanTests extends CommonClientTest {
     @Test
     public void runOsaScan() throws MalformedURLException, CxClientException {
         CxScanConfig config = initOsaConfig();
-        CxShragaClient client = new CxShragaClient(config, log);
+        CxClientWrapper client = new CxClientWrapper(config, log);
         try {
             client.init();
             client.createDependencyScan();
@@ -33,7 +33,7 @@ public class OsaScanTests extends CommonClientTest {
 
     private CxScanConfig initOsaConfig() {
         CxScanConfig config = new CxScanConfig();
-        config.setDependencyScannerType(DependencyScannerType.OSA);
+        config.setDependencyScannerType(ScannerType.OSA);
         config.setSastEnabled(false);
         config.setSourceDir(props.getProperty("dependencyScanSourceDir"));
         config.setReportsDir(new File("C:\\report"));

@@ -1,15 +1,14 @@
 package com.cx.restclient;
 
+import com.cx.restclient.common.IScanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.PathFilter;
-import com.cx.restclient.dto.RemoteSourceRequest;
-import com.cx.restclient.dto.RemoteSourceTypes;
-import com.cx.restclient.dto.Status;
+import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.sast.dto.*;
+import com.cx.restclient.sast.utils.LegacyClient;
 import com.cx.restclient.sast.utils.SASTUtils;
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.google.gson.Gson;
@@ -26,6 +25,7 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -42,18 +42,18 @@ import static com.cx.restclient.sast.utils.SASTUtils.*;
 /**
  * Created by Galn on 05/02/2018.
  */
-class CxSASTClient {
+class CxSASTClient extends LegacyClient implements IScanner {
 
     public static final String JENKINS = "jenkins";
-    private Logger log;
-    private CxHttpClient httpClient;
-    private CxScanConfig config;
+ 
     private int reportTimeoutSec = 5000;
     private int cxARMTimeoutSec = 1000;
     private Waiter<ResponseQueueScanStatus> sastWaiter;
     private static final String SCAN_ID_PATH_PARAM = "{scanId}";
     private static final String PROJECT_ID_PATH_PARAM = "{projectId}";
-
+    private long scanId;
+    private SASTResults sastResults = new SASTResults();
+    
     private Waiter<ReportStatus> reportWaiter = new Waiter<ReportStatus>("Scan report", 10, 3) {
         @Override
         public ReportStatus getStatus(String id) throws CxClientException, IOException {
@@ -88,10 +88,10 @@ class CxSASTClient {
         }
     };
 
-    CxSASTClient(CxHttpClient client, Logger log, CxScanConfig config) {
-        this.log = log;
-        this.httpClient = client;
-        this.config = config;
+
+    CxSASTClient(Logger log, CxScanConfig config) throws MalformedURLException {
+        super( config, log );
+
         int interval = config.getProgressInterval() != null ? config.getProgressInterval() : 20;
         int retry = config.getConnectionRetries() != null ? config.getConnectionRetries() : 3;
         sastWaiter = new Waiter<ResponseQueueScanStatus>("CxSAST scan", interval, retry) {
@@ -112,18 +112,25 @@ class CxSASTClient {
         };
     }
 
+
+    
+    
     //**------ API  ------**//
 
     //CREATE SAST scan
-    long createSASTScan(long projectId) throws IOException, CxClientException {
-        log.info("-----------------------------------Create CxSAST Scan:------------------------------------");
-        if (config.isAvoidDuplicateProjectScans() != null && config.isAvoidDuplicateProjectScans() && projectHasQueuedScans(projectId)) {
-            throw new CxClientException("\nAvoid duplicate project scans in queue\n");
-        }
-        if (config.getRemoteType() == null) { //scan is local
-            return createLocalSASTScan(projectId);
-        } else {
-            return createRemoteSourceScan(projectId);
+    private long createSASTScan(long projectId) throws CxClientException {
+        try {
+            log.info("-----------------------------------Create CxSAST Scan:------------------------------------");
+            if (config.isAvoidDuplicateProjectScans() != null && config.isAvoidDuplicateProjectScans() && projectHasQueuedScans(projectId)) {
+                throw new CxClientException("\nAvoid duplicate project scans in queue\n");
+            }
+            if (config.getRemoteType() == null) { //scan is local
+                return createLocalSASTScan(projectId);
+            } else {
+                return createRemoteSourceScan(projectId);
+            }
+        }catch (IOException e){
+            throw new CxClientException(e);
         }
     }
 
@@ -214,8 +221,9 @@ class CxSASTClient {
     }
 
     //GET SAST results + reports
-    public SASTResults waitForSASTResults(long scanId, long projectId) throws InterruptedException, IOException, CxClientException {
-        SASTResults sastResults;
+    @Override
+    public IResults waitForScanResults() throws InterruptedException, CxClientException {
+        //SASTResults sastResults;
 
         log.info("------------------------------------Get CxSAST Results:-----------------------------------");
         //wait for SAST scan to finish
@@ -223,38 +231,42 @@ class CxSASTClient {
         sastWaiter.waitForTaskToFinish(Long.toString(scanId), config.getSastScanTimeoutInMinutes() * 60, log);
         log.info("Retrieving SAST scan results");
 
-        //retrieve SAST scan results
-        sastResults = retrieveSASTResults(scanId, projectId);
-        if (config.getEnablePolicyViolations()) {
-            resolveSASTViolation(sastResults, projectId);
-        }
-        SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
-
-        //PDF report
-        if (config.getGeneratePDFReport()) {
-            log.info("Generating PDF report");
-            byte[] pdfReport = getScanReport(sastResults.getScanId(), ReportType.PDF, CONTENT_TYPE_APPLICATION_PDF_V1);
-            sastResults.setPDFReport(pdfReport);
-            if (config.getReportsDir() != null) {
-                String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
-                String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
-                pdfFileName = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
-                sastResults.setPdfFileName(pdfFileName);
+        try {
+            //retrieve SAST scan results
+            sastResults = retrieveSASTResults(scanId, projectId);
+            if (config.getEnablePolicyViolations()) {
+                resolveSASTViolation(sastResults, projectId);
             }
-        }
-        // CLI report/s
-        else if (!config.getReports().isEmpty()) {
-            for (Map.Entry<ReportType, String> report : config.getReports().entrySet()) {
-                if (report != null) {
-                    log.info("Generating " + report.getKey().value() + " report");
-                    byte[] scanReport = getScanReport(sastResults.getScanId(), report.getKey(), CONTENT_TYPE_APPLICATION_PDF_V1);
-                    writeReport(scanReport, report.getValue(), log);
-                    if (report.getKey().value().equals("PDF")) {
-                        sastResults.setPDFReport(scanReport);
-                        sastResults.setPdfFileName(report.getValue());
+            SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
+
+            //PDF report
+            if (config.getGeneratePDFReport()) {
+                log.info("Generating PDF report");
+                byte[] pdfReport = getScanReport(sastResults.getScanId(), ReportType.PDF, CONTENT_TYPE_APPLICATION_PDF_V1);
+                sastResults.setPDFReport(pdfReport);
+                if (config.getReportsDir() != null) {
+                    String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
+                    String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
+                    pdfFileName = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
+                    sastResults.setPdfFileName(pdfFileName);
+                }
+            }
+            // CLI report/s
+            else if (!config.getReports().isEmpty()) {
+                for (Map.Entry<ReportType, String> report : config.getReports().entrySet()) {
+                    if (report != null) {
+                        log.info("Generating " + report.getKey().value() + " report");
+                        byte[] scanReport = getScanReport(sastResults.getScanId(), report.getKey(), CONTENT_TYPE_APPLICATION_PDF_V1);
+                        writeReport(scanReport, report.getValue(), log);
+                        if (report.getKey().value().equals("PDF")) {
+                            sastResults.setPDFReport(scanReport);
+                            sastResults.setPdfFileName(report.getValue());
+                        }
                     }
                 }
             }
+        }catch (IOException e){
+            throw new CxClientException(e.getMessage());
         }
         return sastResults;
     }
@@ -285,19 +297,25 @@ class CxSASTClient {
         return sastResults;
     }
 
-    SASTResults getLatestSASTResults(long projectId) throws IOException, CxClientException, InterruptedException {
-        log.info("---------------------------------Get Last CxSAST Results:--------------------------------");
-        List<LastScanResponse> scanList = getLatestSASTStatus(projectId);
-        for (LastScanResponse s : scanList) {
-            if (CurrentStatus.FINISHED.value().equals(s.getStatus().getName())) {
-                return retrieveSASTResults(s.getId(), projectId);
+    @Override
+    public IResults getLatestScanResults() throws  CxClientException, InterruptedException {
+        
+        try {
+            log.info("---------------------------------Get Last CxSAST Results:--------------------------------");
+            List<LastScanResponse> scanList = getLatestSASTStatus(projectId);
+            for (LastScanResponse s : scanList) {
+                if (CurrentStatus.FINISHED.value().equals(s.getStatus().getName())) {
+                    return retrieveSASTResults(s.getId(), projectId);
+                }
             }
+        }catch(IOException e){
+            throw new CxClientException(e.getMessage());
         }
         return new SASTResults();
     }
 
     //Cancel SAST Scan
-    public void cancelSASTScan(long scanId) throws IOException, CxClientException {
+    public void cancelSASTScan() throws IOException, CxClientException {
         UpdateScanStatusRequest request = new UpdateScanStatusRequest(CurrentStatus.CANCELED);
         String json = convertToJson(request);
         StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
@@ -517,4 +535,14 @@ class CxSASTClient {
         }
     }
 
+    @Override
+    public IResults createScan() throws CxClientException {
+
+        this.scanId  = createSASTScan(projectId);
+        sastResults.setSastScanLink(config.getUrl(), this.scanId, projectId);
+        sastResults.setScanId(this.scanId);
+        return sastResults;
+    }
+
+    
 }

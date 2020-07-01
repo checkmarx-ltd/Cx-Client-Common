@@ -3,16 +3,12 @@ package com.cx.restclient.common.summary;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
 import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.DependencyScannerType;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.scansummary.ScanSummary;
-import com.cx.restclient.exception.CxClientException;
-import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.osa.dto.OSAResults;
-import com.cx.restclient.osa.dto.OSASummaryResults;
 import com.cx.restclient.sast.dto.SASTResults;
 import com.cx.restclient.sca.dto.SCAResults;
-import com.cx.restclient.sca.dto.report.SCASummaryResults;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -146,7 +142,7 @@ public abstract class SummaryUtils {
             }
 */
 
-        if (config.getDependencyScannerType() == DependencyScannerType.OSA || config.getDependencyScannerType() == DependencyScannerType
+        if (config.getScannerType() == ScannerType.OSA || config.getScannerType() == ScannerType
         .SCA) {
             if (dependencyResult!=null && dependencyResult.isResultReady()) {
                 boolean thresholdExceeded = scanSummary.isOsaThresholdExceeded();
@@ -193,7 +189,7 @@ public abstract class SummaryUtils {
                         ));
             }
 
-            if (config.getDependencyScannerType() == DependencyScannerType.OSA &&
+            if (config.getScannerType() == ScannerType.OSA &&
                     osaResults.getOsaPolicies().size() > 0) {
                 policyViolated = true;
                 policies.putAll(osaResults.getOsaPolicies().stream().collect(

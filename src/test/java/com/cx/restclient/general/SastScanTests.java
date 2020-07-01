@@ -1,10 +1,11 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxShragaClient;
+import com.cx.restclient.CxClientWrapper;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScannerType;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sast.dto.SASTResults;
+import com.cx.restclient.sca.dto.SCAResults;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -30,11 +31,11 @@ public class SastScanTests extends CommonClientTest {
     }
 
     private void runSastScan(CxScanConfig config) throws MalformedURLException, CxClientException {
-        CxShragaClient client = new CxShragaClient(config, log);
+        CxClientWrapper client = new CxClientWrapper(config, log);
         try {
             client.init();
-            client.createSASTScan();
-            SASTResults results = client.waitForSASTResults();
+            client.createScan();
+            SASTResults results =  client.waitForScanResults().getSastResults();
             Assert.assertNotNull(results);
             Assert.assertNotEquals("Expected valid SAST scan id", 0, results.getScanId());
         } catch (Exception e) {
@@ -56,7 +57,7 @@ public class SastScanTests extends CommonClientTest {
         config.setTeamPath("\\CxServer");
         config.setSynchronous(true);
         config.setGeneratePDFReport(true);
-        config.setDependencyScannerType(DependencyScannerType.NONE);
+        config.setDependencyScannerType(ScannerType.NONE);
         config.setPresetName("Default");
 //        config.setPresetId(7);
 

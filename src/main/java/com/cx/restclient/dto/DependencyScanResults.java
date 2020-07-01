@@ -5,7 +5,7 @@ import com.cx.restclient.sca.dto.SCAResults;
 
 import java.io.Serializable;
 
-public class DependencyScanResults implements Serializable {
+public class DependencyScanResults implements Serializable, IResults {
     private OSAResults osaResults;
     private SCAResults scaResults;
 

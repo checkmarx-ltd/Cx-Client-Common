@@ -1,9 +1,9 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxShragaClient;
+import com.cx.restclient.CxClientWrapper;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.DependencyScannerType;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sca.dto.RemoteRepositoryInfo;
 import com.cx.restclient.sca.dto.SCAConfig;
@@ -184,7 +184,7 @@ public class ScaScanTests extends CommonClientTest {
     }
 
     private DependencyScanResults scanUsing(CxScanConfig config) throws MalformedURLException, CxClientException {
-        CxShragaClient client = new CxShragaClient(config, log);
+        CxClientWrapper client = new CxClientWrapper(config, log);
         DependencyScanResults results = null;
         try {
             client.init();
@@ -246,7 +246,7 @@ public class ScaScanTests extends CommonClientTest {
 
     private static CxScanConfig initScaConfig(boolean useOnPremAuthentication) {
         CxScanConfig config = new CxScanConfig();
-        config.setDependencyScannerType(DependencyScannerType.SCA);
+        config.setDependencyScannerType(ScannerType.SCA);
         config.setSastEnabled(false);
         config.setProjectName(props.getProperty("sca.projectName"));
 
