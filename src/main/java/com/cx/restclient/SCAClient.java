@@ -284,7 +284,7 @@ public class SCAClient implements IScanner {
         getProjects();
     }
 
-    private void login() throws IOException {
+    public void login() throws IOException {
         log.info("Logging into CxSCA.");
         SCAConfig scaConfig = getScaConfig();
 

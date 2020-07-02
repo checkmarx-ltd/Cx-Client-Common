@@ -156,15 +156,7 @@ public class LegacyClient {
             throw new CxClientException (e.getMessage());
         }
     }
-
-//    private void resolveProject() throws IOException, CxClientException {
-//        resolveProjectId();
-//
-//        // SAST and OSA share the same project ID.
-//        if (scanner instanceof CxOSAClient) {
-//            ((CxOSAClient) scanner).setProjectId(projectId);
-//        }
-//    }
+    
     
     
     public String getCxVersion() throws IOException, CxClientException {
@@ -222,6 +214,7 @@ public class LegacyClient {
 
         return result;
     }
+
 
     public CxHttpClient getHttpClient() {
         return httpClient;

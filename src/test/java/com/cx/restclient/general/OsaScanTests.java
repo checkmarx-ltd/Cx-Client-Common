@@ -3,7 +3,8 @@ package com.cx.restclient.general;
 import com.cx.restclient.CxClientWrapper;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.ScannerType;
+import com.cx.restclient.dto.DependencyScannerType;
+import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.exception.CxClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -20,12 +21,12 @@ public class OsaScanTests extends CommonClientTest {
         CxClientWrapper client = new CxClientWrapper(config, log);
         try {
             client.init();
-            client.createDependencyScan();
-            DependencyScanResults results = client.waitForDependencyScanResults();
+            client.createScan();
+            ScanResults results = client.waitForScanResults();
             Assert.assertNotNull(results);
-            Assert.assertNull(results.getScaResults());
-            Assert.assertNotNull(results.getOsaResults());
-            Assert.assertNotNull("Expected valid osa scan id", results.getOsaResults().getOsaScanId());
+            Assert.assertNull(results.getDependencyScanResults().getScaResults());
+            Assert.assertNotNull(results.getDependencyScanResults().getOsaResults());
+            Assert.assertNotNull("Expected valid osa scan id", results.getDependencyScanResults().getOsaResults().getOsaScanId());
         } catch (Exception e) {
             failOnException(e);
         }
@@ -33,7 +34,7 @@ public class OsaScanTests extends CommonClientTest {
 
     private CxScanConfig initOsaConfig() {
         CxScanConfig config = new CxScanConfig();
-        config.setDependencyScannerType(ScannerType.OSA);
+        config.setDependencyScannerType(DependencyScannerType.OSA);
         config.setSastEnabled(false);
         config.setSourceDir(props.getProperty("dependencyScanSourceDir"));
         config.setReportsDir(new File("C:\\report"));

@@ -3,7 +3,8 @@ package com.cx.restclient.general;
 import com.cx.restclient.CxClientWrapper;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.ScannerType;
+import com.cx.restclient.dto.DependencyScannerType;
+import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sca.dto.RemoteRepositoryInfo;
 import com.cx.restclient.sca.dto.SCAConfig;
@@ -58,7 +59,7 @@ public class ScaScanTests extends CommonClientTest {
             sourcesDir = extractTestProjectFromResources();
             config.setSourceDir(sourcesDir.toString());
 
-            DependencyScanResults scanResults = scanUsing(config);
+            ScanResults scanResults = scanUsing(config);
             verifyScanResults(scanResults);
         } finally {
             deleteDir(sourcesDir);
@@ -85,7 +86,7 @@ public class ScaScanTests extends CommonClientTest {
     public void runScaScanWithProxy() throws MalformedURLException, CxClientException {
         CxScanConfig config = initScaConfig(false);
         setProxy(config);
-        DependencyScanResults scanResults = scanUsing(config);
+        ScanResults scanResults = scanUsing(config);
         verifyScanResults(scanResults);
     }
 
@@ -100,7 +101,7 @@ public class ScaScanTests extends CommonClientTest {
         config.getScaConfig().setRemoteRepositoryInfo(repoInfo);
 
 
-        DependencyScanResults scanResults = scanUsing(config);
+        ScanResults scanResults = scanUsing(config);
         verifyScanResults(scanResults);
     }
 
@@ -183,24 +184,24 @@ public class ScaScanTests extends CommonClientTest {
                 .getResourceAsStream(srcResourceName);
     }
 
-    private DependencyScanResults scanUsing(CxScanConfig config) throws MalformedURLException, CxClientException {
+    private ScanResults scanUsing(CxScanConfig config) throws MalformedURLException, CxClientException {
         CxClientWrapper client = new CxClientWrapper(config, log);
-        DependencyScanResults results = null;
+        ScanResults results = null;
         try {
             client.init();
-            client.createDependencyScan();
-            results = client.waitForDependencyScanResults();
+            client.createScan();
+            results = client.waitForScanResults();
         } catch (Exception e) {
             failOnException(e);
         }
         return results;
     }
 
-    private void verifyScanResults(DependencyScanResults results) {
+    private void verifyScanResults(ScanResults results) {
         assertNotNull("Scan results are null.", results);
-        assertNull("OSA results are not null.", results.getOsaResults());
+        assertNull("OSA results are not null.", results.getDependencyScanResults().getOsaResults());
 
-        SCAResults scaResults = results.getScaResults();
+        SCAResults scaResults = results.getDependencyScanResults().getScaResults();
         assertNotNull("SCA results are null", scaResults);
         assertTrue("Scan ID is empty", StringUtils.isNotEmpty(scaResults.getScanId()));
         assertTrue("Web report link is empty", StringUtils.isNotEmpty(scaResults.getWebReportLink()));
@@ -246,7 +247,7 @@ public class ScaScanTests extends CommonClientTest {
 
     private static CxScanConfig initScaConfig(boolean useOnPremAuthentication) {
         CxScanConfig config = new CxScanConfig();
-        config.setDependencyScannerType(ScannerType.SCA);
+        config.setDependencyScannerType(DependencyScannerType.SCA);
         config.setSastEnabled(false);
         config.setProjectName(props.getProperty("sca.projectName"));
 

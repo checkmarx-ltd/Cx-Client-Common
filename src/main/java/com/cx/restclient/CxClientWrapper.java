@@ -8,6 +8,7 @@ import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.ClientType;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.*;
+import com.cx.restclient.sast.utils.LegacyClient;
 import com.cx.restclient.sca.dto.SCAResults;
 import org.apache.http.cookie.Cookie;
 import org.slf4j.Logger;
@@ -271,36 +272,54 @@ public class CxClientWrapper {
     }
     //HELP config  Methods
 
+    
 
- 
-
-    public String getToken() throws IOException, CxClientException {
-        LoginSettings settings = sastClient.getDefaultLoginSettings();
+    public String getTokenLegacyClient() throws IOException, CxClientException {
+        LegacyClient legacyClient = getLegacyClient();
+        LoginSettings settings = legacyClient.getDefaultLoginSettings();
         settings.setClientTypeForPasswordAuth(ClientType.CLI);
-        final TokenLoginResponse tokenLoginResponse = sastClient.getHttpClient().generateToken(settings);
+        final TokenLoginResponse tokenLoginResponse = legacyClient.getHttpClient().generateToken(settings);
         return tokenLoginResponse.getRefresh_token();
     }
 
     public void revokeToken(String token) throws IOException, CxClientException {
-        sastClient.getHttpClient().revokeToken(token);
+        getScanner().getHttpClient().revokeToken(token);
     }
-
-  
-
-  
-
-  
-
-
-   
     
 
-//    public List<Team> getTeamList() throws IOException, CxClientException {
-//        List<Team> teamList = clientHelper.getTeamList();
-//        return teamList;
-//    }
+    public List<Team> getTeamList() throws IOException, CxClientException {
+        
+        return getLegacyClient().getTeamList();
 
+    }
 
+    public void login() throws IOException, CxClientException {
+        getScanner().login();
+    }
+
+    public void loginLegacy(String version) throws IOException, CxClientException {
+        getLegacyClient().login(version);
+    }
+    
+    private IScanner getScanner() {
+        List<IScanner> scanners = getScannerList();
+
+        if(getScannerList().size()!=1){
+            throw new CxClientException("Login is allowed when only one scanner is defined");
+        }
+        return scanners.get(0);
+    }
+
+    private LegacyClient getLegacyClient() {
+
+        if(sastClient!= null) {
+            return  sastClient;
+        }
+        if(osaClient != null) {
+            return  osaClient;
+        }
+        throw new UnsupportedOperationException();
+    }
 
 
 

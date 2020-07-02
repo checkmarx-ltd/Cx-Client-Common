@@ -2,7 +2,7 @@ package com.cx.restclient.general;
 
 import com.cx.restclient.CxClientWrapper;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.ScannerType;
+import com.cx.restclient.dto.DependencyScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sast.dto.SASTResults;
 import com.cx.restclient.sca.dto.SCAResults;
@@ -57,7 +57,7 @@ public class SastScanTests extends CommonClientTest {
         config.setTeamPath("\\CxServer");
         config.setSynchronous(true);
         config.setGeneratePDFReport(true);
-        config.setDependencyScannerType(ScannerType.NONE);
+        config.setDependencyScannerType(DependencyScannerType.NONE);
         config.setPresetName("Default");
 //        config.setPresetId(7);
 
