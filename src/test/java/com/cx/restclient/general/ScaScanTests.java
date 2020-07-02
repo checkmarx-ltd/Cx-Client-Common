@@ -198,9 +198,9 @@ public class ScaScanTests extends CommonClientTest {
 
     private void verifyScanResults(ScanResults results) {
         assertNotNull("Scan results are null.", results);
-        assertNull("OSA results are not null.", results.getDependencyScanResults().getOsaResults());
+        assertNull("OSA results are not null.", results.getOsaResults());
 
-        SCAResults scaResults = results.getDependencyScanResults().getScaResults();
+        SCAResults scaResults = results.getScaResults();
         assertNotNull("SCA results are null", scaResults);
         assertTrue("Scan ID is empty", StringUtils.isNotEmpty(scaResults.getScanId()));
         assertTrue("Web report link is empty", StringUtils.isNotEmpty(scaResults.getWebReportLink()));

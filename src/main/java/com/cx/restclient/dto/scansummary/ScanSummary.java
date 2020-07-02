@@ -27,7 +27,7 @@ public class ScanSummary {
         dependencyScannerType = config.getScannerType();
 
         addSastThresholdErrors(config, scanResults.getSastResults());
-        addDependencyScanThresholdErrors(config, scanResults.getDependencyScanResults());
+        addDependencyScanThresholdErrors(config, scanResults.getOsaResults(), scanResults.getScaResults());
 
         addNewResultThresholdErrors(config, scanResults.getSastResults());
 
@@ -93,10 +93,9 @@ public class ScanSummary {
         }
     }
 
-    private void addDependencyScanThresholdErrors(CxScanConfig config, DependencyScanResults dependencyScanResults) {
-        if (config.isOSAThresholdEffectivelyEnabled() && dependencyScanResults != null) {
-            SCAResults scaResults = dependencyScanResults.getScaResults();
-            OSAResults osaResults = dependencyScanResults.getOsaResults();
+    private void addDependencyScanThresholdErrors(CxScanConfig config, OSAResults osaResults, SCAResults scaResults ) {
+        if (config.isOSAThresholdEffectivelyEnabled() && (scaResults != null) || osaResults!= null) {
+
             int totalHigh = 0, totalMedium = 0, totalLow = 0;
             boolean hasSummary = false;
 
@@ -153,13 +152,12 @@ public class ScanSummary {
     }
 
     private static boolean determinePolicyViolation(CxScanConfig config, ScanResults scanResults) {
-        DependencyScanResults dependencyScanResults = scanResults.getDependencyScanResults();
+
         SASTResults sastResults = scanResults.getSastResults();
 
         return config.getEnablePolicyViolations() &&
-                ((dependencyScanResults != null &&
-                        dependencyScanResults.getOsaResults() != null &&
-                        dependencyScanResults.getOsaResults().getOsaPolicies().size() > 0) ||
+                ((scanResults.getOsaResults() != null &&
+                     scanResults.getOsaResults().getOsaPolicies().size() > 0) ||
                         (sastResults != null && sastResults.getSastPolicies().size() > 0));
     }
 

@@ -13,6 +13,7 @@ import com.cx.restclient.sca.dto.SCAResults;
 import org.apache.http.cookie.Cookie;
 import org.slf4j.Logger;
 
+import javax.security.sasl.SaslClient;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
@@ -23,19 +24,16 @@ import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
 /**
  * Created by Galn on 05/02/2018.
  */
-//SHRAGA
-//System Holistic Rest Api Generic Application
+
 public class CxClientDelegator {
 
     private static final String PRINT_LINE = "-----------------------------------------------------------------------------------------";
 
     private Logger log;
     private CxScanConfig config;
-
-    private CxOSAClient osaClient;
-    private SCAClient scaClient;
-    private CxSASTClient sastClient;
     
+    
+    Map<ScannerType,IScanner> scannersMap = new HashMap<ScannerType,IScanner>();
      
     public CxClientDelegator(CxScanConfig config, Logger log) throws MalformedURLException, CxClientException {
 
@@ -44,13 +42,14 @@ public class CxClientDelegator {
 
 
         if (config.getSastEnabled()) {
-            sastClient = new CxSASTClient(log, config);
+            scannersMap.put(ScannerType.SAST, new CxSASTClient(log, config));
         }
 
         if (config.getScannerType() == DependencyScannerType.OSA) {
-            osaClient = new CxOSAClient( log, config);
-        } else if (config.getScannerType() == DependencyScannerType.SCA) {
-            scaClient = new SCAClient(config, log);
+            scannersMap.put(ScannerType.OSA, new CxOSAClient(log, config));
+        } 
+        else if (config.getScannerType() == DependencyScannerType.SCA) {
+            scannersMap.put(ScannerType.SCA, new SCAClient(config, log));
         }
     }
 
@@ -78,7 +77,7 @@ public class CxClientDelegator {
 
     public void init() throws CxClientException, IOException {
         log.info("Initializing Cx client [" + getClientVersion() + "]");
-        getScannerList().forEach(scanner->{
+        scannersMap.values().forEach(scanner->{
             scanner.init();
         });
     }
@@ -89,18 +88,17 @@ public class CxClientDelegator {
         SASTResults sastResults = null;
         OSAResults osaResults = null;
         SCAResults scaResults = null;
-        
-        
-        if(sastClient !=null) {
-            sastResults = (SASTResults)sastClient.createScan();
-        }
-        
-        if (osaClient != null) {
-            osaResults = (OSAResults)osaClient.createScan();
+
+        if(scannersMap.containsKey(ScannerType.SAST)){
+            sastResults = (SASTResults)scannersMap.get(ScannerType.SAST).createScan();
         }
 
-        if (scaClient != null) {
-            scaResults = (SCAResults)scaClient.createScan();
+        if (scannersMap.containsKey(ScannerType.OSA)) {
+            osaResults = (OSAResults)scannersMap.get(ScannerType.OSA).createScan();
+        }
+
+        if (scannersMap.containsKey(ScannerType.SCA)) {
+            scaResults = (SCAResults)scannersMap.get(ScannerType.SCA).createScan();
         }
 
        return combineResults( sastResults, osaResults, scaResults);
@@ -109,19 +107,13 @@ public class CxClientDelegator {
 
     private ScanResults combineResults(SASTResults sastResults, OSAResults osaResults, SCAResults scaResults) {
         ScanResults scanResults = new ScanResults();
-        DependencyScanResults dependencyScanResults = new DependencyScanResults();
-        dependencyScanResults.setOsaResults(osaResults);
-        dependencyScanResults.setScaResults(scaResults);
+        scanResults.setOsaResults(osaResults);
+        scanResults.setScaResults(scaResults);
         scanResults.setSastResults(sastResults);
-        scanResults.setDependencyScanResults(dependencyScanResults);
         return scanResults;
     }
     
 
-    public void cancelSASTScan() throws IOException, CxClientException {
-        sastClient.cancelSASTScan();
-    }
-    
 
     public ScanResults waitForScanResults() throws InterruptedException, CxClientException, IOException {
 
@@ -129,38 +121,39 @@ public class CxClientDelegator {
         OSAResults osaResults = null;
         SCAResults scaResults = null;
 
-        if(sastClient !=null) {
-            sastResults = (SASTResults)sastClient.waitForScanResults();
+        if(scannersMap.containsKey(ScannerType.SAST)){
+            sastResults = (SASTResults)scannersMap.get(ScannerType.SAST).waitForScanResults();
         }
 
-        if (osaClient != null) {
-            osaResults = (OSAResults)osaClient.waitForScanResults();
+        if (scannersMap.containsKey(ScannerType.OSA)) {
+            osaResults = (OSAResults)scannersMap.get(ScannerType.OSA).waitForScanResults();
         }
 
-        if (scaClient != null) {
-            scaResults = (SCAResults)scaClient.waitForScanResults();
+        if (scannersMap.containsKey(ScannerType.SCA)) {
+            scaResults = (SCAResults)scannersMap.get(ScannerType.SCA).waitForScanResults();
         }
+
 
         return combineResults( sastResults, osaResults, scaResults);
         
     }
 
-    public IResults getLatestScanResults() throws  CxClientException, InterruptedException {
+    public ScanResults getLatestScanResults() throws  CxClientException, InterruptedException {
 
         SASTResults sastResults = null;
         OSAResults osaResults = null;
         SCAResults scaResults = null;
 
-        if(sastClient !=null) {
-            sastResults = (SASTResults)sastClient.getLatestScanResults();
+        if(scannersMap.containsKey(ScannerType.SAST)){
+            sastResults = (SASTResults)scannersMap.get(ScannerType.SAST).getLatestScanResults();
         }
 
-        if (osaClient != null) {
-            osaResults = (OSAResults)osaClient.getLatestScanResults();
+        if (scannersMap.containsKey(ScannerType.OSA)) {
+            osaResults = (OSAResults)scannersMap.get(ScannerType.OSA).getLatestScanResults();
         }
 
-        if (scaClient != null) {
-            scaResults = (SCAResults)scaClient.getLatestScanResults();
+        if (scannersMap.containsKey(ScannerType.SCA)) {
+            scaResults = (SCAResults)scannersMap.get(ScannerType.SCA).getLatestScanResults();
         }
 
         return combineResults( sastResults, osaResults, scaResults);
@@ -173,10 +166,10 @@ public class CxClientDelegator {
             log.info("Policy Management: ");
             log.info("--------------------");
 
-            boolean hasOsaViolations = scanResults.getDependencyScanResults() != null &&
-                    scanResults.getDependencyScanResults().getOsaResults() != null &&
-                    scanResults.getDependencyScanResults().getOsaResults().getOsaPolicies() != null &&
-                    !scanResults.getDependencyScanResults().getOsaResults().getOsaPolicies().isEmpty();
+            boolean hasOsaViolations = 
+                    scanResults.getOsaResults() != null &&
+                    scanResults.getOsaResults().getOsaPolicies() != null &&
+                    !scanResults.getOsaResults().getOsaPolicies().isEmpty();
             
             boolean hasSastPolicies = false;
             
@@ -193,7 +186,7 @@ public class CxClientDelegator {
                     log.info("SAST violated policies names: " + getPoliciesNames(scanResults.getSastResults().getSastPolicies()));
                 }
                 if (hasOsaViolations) {
-                    log.info("OSA violated policies names: " + getPoliciesNames(scanResults.getDependencyScanResults().getOsaResults().getOsaPolicies()));
+                    log.info("OSA violated policies names: " + getPoliciesNames(scanResults.getOsaResults().getOsaPolicies()));
                 }
                 log.info(PRINT_LINE);
             }
@@ -201,115 +194,63 @@ public class CxClientDelegator {
         }
     }
 
-    /**
-     * @param config The following config properties are used:
-     *               scaConfig
-     *               proxyConfig
-     *               cxOrigin
-     *               disableCertificateValidation
-     */
-    public static void testScaConnection(CxScanConfig config, Logger log) throws CxClientException {
-        SCAClient client = new SCAClient(config, log);
-        try {
-            client.testConnection();
-        } catch (IOException e) {
-            throw new CxClientException(e);
-        }
-    }
 
   
 
     public String generateHTMLSummary(ScanResults combinedResults) throws Exception {
-        return SummaryUtils.generateSummary(combinedResults.getSastResults(), combinedResults.getDependencyScanResults(), config);
+        return SummaryUtils.generateSummary(combinedResults.getSastResults(), combinedResults.getOsaResults(), combinedResults.getScaResults(), config);
     }
 
-    public String generateHTMLSummary(SASTResults sastResults, DependencyScanResults dependencyScanResults) throws Exception {
-        return SummaryUtils.generateSummary(sastResults, dependencyScanResults, config);
+    public String generateHTMLSummary(SASTResults sastResults, OSAResults osaResults, SCAResults scaResults) throws Exception {
+        return SummaryUtils.generateSummary(sastResults, osaResults, scaResults, config);
     }
 
-  
+    public CxSASTClient getSastClient(){
+        return (CxSASTClient)scannersMap.get(ScannerType.SAST);
+    }
 
+    public CxOSAClient getOsaClient(){
+        return (CxOSAClient)scannersMap.get(ScannerType.OSA);
+    }
+
+    public SCAClient getScaClient(){
+        return (SCAClient)scannersMap.get(ScannerType.SCA);
+    }
+    
     public void close() {
 
-       getScannerList().forEach(scanner->{
-                scanner.getHttpClient().close();
+       scannersMap.values().forEach(scanner->{
+                scanner.close();
         });
     }
-
     
-    private List<IScanner> getScannerList(){
-        
-        List scanners = new LinkedList<IScanner>();
-                
-        if(sastClient !=null) {
-            scanners.add(sastClient);
-        }
-        if (osaClient != null) {
-            scanners.add(osaClient);
-        }
-        if (scaClient != null) {
-            scanners.add(scaClient);
-        }
-        return scanners;
-    }
-    //HELP config  Methods
-
-    
-
-    public String getLegacyClientToken() throws IOException, CxClientException {
-        LegacyClient legacyClient = getLegacyClient();
-        LoginSettings settings = legacyClient.getDefaultLoginSettings();
-        settings.setClientTypeForPasswordAuth(ClientType.CLI);
-        final TokenLoginResponse tokenLoginResponse = legacyClient.getHttpClient().generateToken(settings);
-        return tokenLoginResponse.getRefresh_token();
-    }
-
-    public void revokeToken(String token) throws IOException, CxClientException {
-        getScanner().getHttpClient().revokeToken(token);
-    }
-    
-
-    public List<Team> getTeamList() throws IOException, CxClientException {
-        
-        return getLegacyClient().getTeamList();
-
-    }
-
+  
     public void login() throws IOException, CxClientException {
         getScanner().login();
     }
-
-    public void loginLegacy(String version) throws IOException, CxClientException {
-        getLegacyClient().login(version);
-    }
+    
     
     private IScanner getScanner() {
-        List<IScanner> scanners = getScannerList();
 
-        if(getScannerList().size()!=1){
+        if(scannersMap.size()!=1){
             throw new CxClientException("Login is allowed when only one scanner is defined");
         }
-        return scanners.get(0);
+        return scannersMap.get(0);
     }
 
     private LegacyClient getLegacyClient() {
 
-        if(sastClient!= null) {
-            return  sastClient;
+        if(scannersMap.containsKey(ScannerType.SAST)) {
+            return  (LegacyClient) scannersMap.get(ScannerType.SAST);
         }
-        if(osaClient != null) {
-            return  osaClient;
+        if(scannersMap.containsKey(ScannerType.OSA)) {
+            return  (LegacyClient) scannersMap.get(ScannerType.OSA);
         }
         throw new UnsupportedOperationException();
     }
 
 
 
-
-    public void setOsaFSAProperties(Properties fsaConfig) {  //For CxMaven plugin
-        config.setOsaFsaConfig(fsaConfig);
-    }
-    //Private methods
 
   
  
@@ -318,21 +259,4 @@ public class CxClientDelegator {
 
   
 
-    public ResponseQueueScanStatus getStatus(String scanId) throws IOException {
-        return sastClient.getSASTScanStatus(scanId);
-    }
-
-
-
-    public ScanSettingResponse getScanSetting(Long projectId) throws IOException {
-        return sastClient.getScanSetting(projectId);
-    }
-
-    public List<LastScanResponse> getLastScansByProjectId(long projectId) throws IOException {
-        return sastClient.getLatestSASTStatus(projectId);
-    }
-
-    public List<Cookie> ssoLegacyLogin(){
-        return sastClient.getHttpClient().ssoLegacyLogin();
-    }
 }

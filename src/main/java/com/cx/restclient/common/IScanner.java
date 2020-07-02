@@ -17,8 +17,8 @@ public interface IScanner {
     public IResults waitForScanResults() throws CxClientException, InterruptedException;
 
     public IResults getLatestScanResults() throws CxClientException,  InterruptedException ;
-
-    public CxHttpClient getHttpClient();
     
     public void login() throws IOException;
+
+    void close();
 }

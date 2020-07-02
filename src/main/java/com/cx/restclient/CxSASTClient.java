@@ -42,7 +42,7 @@ import static com.cx.restclient.sast.utils.SASTUtils.*;
 /**
  * Created by Galn on 05/02/2018.
  */
-class CxSASTClient extends LegacyClient implements IScanner {
+public class CxSASTClient extends LegacyClient implements IScanner {
 
     public static final String JENKINS = "jenkins";
  
@@ -87,6 +87,9 @@ class CxSASTClient extends LegacyClient implements IScanner {
             return resolveCxARMStatus(cxARMStatus);
         }
     };
+
+
+
 
 
     CxSASTClient(Logger log, CxScanConfig config) throws MalformedURLException {

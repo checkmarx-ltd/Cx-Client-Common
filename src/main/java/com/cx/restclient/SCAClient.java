@@ -101,10 +101,7 @@ public class SCAClient implements IScanner {
         httpClient.addCustomHeader(TENANT_HEADER_NAME, getScaConfig().getTenant());
     }
 
-    @Override
-    public CxHttpClient getHttpClient(){
-        return httpClient;
-    }
+
     
     @Override
     public void init() {
@@ -305,6 +302,26 @@ public class SCAClient implements IScanner {
         httpClient.login(settings);
     }
 
+    public void close(){
+        httpClient.close();
+    }
+    
+    /**
+     * @param config The following config properties are used:
+     *               scaConfig
+     *               proxyConfig
+     *               cxOrigin
+     *               disableCertificateValidation
+     */
+    public void testScaConnection(CxScanConfig config, Logger log) throws CxClientException {
+        SCAClient client = new SCAClient(config, log);
+        try {
+            client.testConnection();
+        } catch (IOException e) {
+            throw new CxClientException(e);
+        }
+    }
+    
     private void resolveProject() throws IOException {
         String projectName = config.getProjectName();
         log.info(String.format("Getting project by name: '%s'", projectName));

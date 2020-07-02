@@ -4,20 +4,15 @@ package com.cx.restclient.sast.utils;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.CxArmConfig;
-import com.cx.restclient.dto.CxVersion;
-import com.cx.restclient.dto.EngineConfiguration;
-import com.cx.restclient.dto.LoginSettings;
-import com.cx.restclient.dto.Team;
+import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.osa.dto.ClientType;
-import com.cx.restclient.sast.dto.CreateProjectRequest;
-import com.cx.restclient.sast.dto.CxNameObj;
-import com.cx.restclient.sast.dto.Preset;
-import com.cx.restclient.sast.dto.Project;
+import com.cx.restclient.sast.dto.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpResponseException;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 
@@ -48,13 +43,9 @@ public class LegacyClient {
         validateConfig(config);
     }
 
-//    public LegacyClient(CxHttpClient client, CxScanConfig config, Logger log) {
-//
-//        this.config = config;
-//        this.httpClient =  client;
-//        this.log = log;
-//        validateConfig(config);
-//    }
+    public void close(){
+        httpClient.close();
+    }
 
     public long resolveProjectId() throws IOException {
         List<Project> projects = getProjectByName(config.getProjectName(), config.getTeamId(), teamPath);
@@ -96,6 +87,19 @@ public class LegacyClient {
     private List<Team> populateTeamList() throws IOException, CxClientException {
         return (List<Team>) httpClient.getRequest(CXTEAMS, CONTENT_TYPE_APPLICATION_JSON_V1, Team.class, 200, "team list", true);
     }
+
+
+    public String getToken() throws IOException, CxClientException {
+        LoginSettings settings = getDefaultLoginSettings();
+        settings.setClientTypeForPasswordAuth(ClientType.CLI);
+        final TokenLoginResponse tokenLoginResponse = getHttpClient().generateToken(settings);
+        return tokenLoginResponse.getRefresh_token();
+    }
+
+    public void revokeToken(String token) throws IOException, CxClientException {
+        getHttpClient().revokeToken(token);
+    }
+
     
     private Project createNewProject(CreateProjectRequest request, String teamPath) throws CxClientException, IOException {
         String json = convertToJson(request);
@@ -401,4 +405,7 @@ public class LegacyClient {
         httpClient.setTeamPathHeader(this.teamPath);
         return (List<CxNameObj>) httpClient.getRequest(SAST_ENGINE_CONFIG, CONTENT_TYPE_APPLICATION_JSON_V1, CxNameObj.class, 200, "engine configurations", true);
     }
+
+
+
 }

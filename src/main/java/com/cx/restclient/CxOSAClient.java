@@ -101,6 +101,11 @@ class CxOSAClient extends LegacyClient implements IScanner {
         
     }
 
+
+    public void setOsaFSAProperties(Properties fsaConfig) {  //For CxMaven plugin
+        config.setOsaFsaConfig(fsaConfig);
+    }
+
     private String resolveOSADependencies() throws JsonProcessingException {
         log.info("Scanning for CxOSA compatible files");
         Properties scannerProperties = config.getOsaFsaConfig();
@@ -285,5 +290,8 @@ class CxOSAClient extends LegacyClient implements IScanner {
             throw new CxClientException("projectId must be set before executing this method.");
         }
     }
+
+
+
 }
 

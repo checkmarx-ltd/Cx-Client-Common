@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 @Slf4j
 public class ConnectionTests extends CommonClientTest {
@@ -34,8 +35,9 @@ public class ConnectionTests extends CommonClientTest {
         SCAConfig scaConfig = TestingUtils.getScaConfig(props, false);
         config.setScaConfig(scaConfig);
         try {
-            CxClientDelegator.testScaConnection(config, log);
-        } catch (CxClientException e) {
+            CxClientDelegator delegator = new CxClientDelegator(config, log);
+            delegator.getScaClient().testScaConnection(config, log);
+        } catch (CxClientException | MalformedURLException e) {
             failOnException(e);
         }
     }

@@ -23,9 +23,9 @@ public class OsaScanTests extends CommonClientTest {
             client.createScan();
             ScanResults results = client.waitForScanResults();
             Assert.assertNotNull(results);
-            Assert.assertNull(results.getDependencyScanResults().getScaResults());
-            Assert.assertNotNull(results.getDependencyScanResults().getOsaResults());
-            Assert.assertNotNull("Expected valid osa scan id", results.getDependencyScanResults().getOsaResults().getOsaScanId());
+            Assert.assertNull(results.getScaResults());
+            Assert.assertNotNull(results.getOsaResults());
+            Assert.assertNotNull("Expected valid osa scan id", results.getOsaResults().getOsaScanId());
         } catch (Exception e) {
             failOnException(e);
         }

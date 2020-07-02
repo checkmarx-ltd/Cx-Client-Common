@@ -1,15 +1,18 @@
 package com.cx.restclient.dto;
 
 
+import com.cx.restclient.SCAClient;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
+import com.cx.restclient.sca.dto.SCAResults;
 
 import java.io.Serializable;
 
 public class ScanResults implements Serializable, IResults {
     private SASTResults sastResults = new SASTResults();
-    private DependencyScanResults dependencyScanResults = new DependencyScanResults();
-
+    private OSAResults osaResults = new OSAResults();
+    private SCAResults scaResults = new SCAResults(); 
+    
     private Exception sastCreateException = null;
     private Exception sastWaitException = null;
     private Exception osaCreateException = null;
@@ -19,20 +22,28 @@ public class ScanResults implements Serializable, IResults {
     public ScanResults() {
     }
 
+    public OSAResults getOsaResults() {
+        return osaResults;
+    }
+
+    public void setOsaResults(OSAResults osaResults) {
+        this.osaResults = osaResults;
+    }
+
+    public SCAResults getScaResults() {
+        return scaResults;
+    }
+
+    public void setScaResults(SCAResults scaResults) {
+        this.scaResults = scaResults;
+    }
+
     public SASTResults getSastResults() {
         return sastResults;
     }
 
     public void setSastResults(SASTResults sastResults) {
         this.sastResults = sastResults;
-    }
-
-    public DependencyScanResults getDependencyScanResults() {
-        return dependencyScanResults;
-    }
-
-    public void setDependencyScanResults(DependencyScanResults dependencyScanResults) {
-        this.dependencyScanResults = dependencyScanResults;
     }
 
     public Exception getSastCreateException() {

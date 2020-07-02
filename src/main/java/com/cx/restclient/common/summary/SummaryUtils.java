@@ -22,9 +22,8 @@ import java.util.stream.Collectors;
 
 public abstract class SummaryUtils {
 
-    public static String generateSummary(SASTResults sastResults, DependencyScanResults dependencyScanResults, CxScanConfig config) throws IOException, TemplateException {
-        OSAResults osaResults = dependencyScanResults.getOsaResults();
-        SCAResults scaResults = dependencyScanResults.getScaResults();
+    public static String generateSummary(SASTResults sastResults, OSAResults osaResults, SCAResults scaResults, CxScanConfig config) throws IOException, TemplateException {
+
         Configuration cfg = new Configuration(new Version("2.3.23"));
         cfg.setClassForTemplateLoading(SummaryUtils.class, "/com/cx/report");
         Template template = cfg.getTemplate("report.ftl");
@@ -43,7 +42,8 @@ public abstract class SummaryUtils {
 
         ScanResults scanResults = new ScanResults();
         scanResults.setSastResults(sastResults);
-        scanResults.setDependencyScanResults(dependencyScanResults);
+        scanResults.setOsaResults(osaResults);
+        scanResults.setScaResults(scaResults);
         ScanSummary scanSummary = new ScanSummary(config, scanResults);
 
         //calculated params:
