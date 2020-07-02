@@ -1,6 +1,6 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxClientWrapper;
+import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sca.dto.SCAConfig;
@@ -18,7 +18,7 @@ public class ConnectionTests extends CommonClientTest {
     public void ssoConnectionTest() {
         CxScanConfig config = initConfig();
         try {
-            CxClientWrapper client = new CxClientWrapper(config, log);
+            CxClientDelegator client = new CxClientDelegator(config, log);
             client.init();
         } catch (IOException | CxClientException e) {
             e.printStackTrace();
@@ -34,7 +34,7 @@ public class ConnectionTests extends CommonClientTest {
         SCAConfig scaConfig = TestingUtils.getScaConfig(props, false);
         config.setScaConfig(scaConfig);
         try {
-            CxClientWrapper.testScaConnection(config, log);
+            CxClientDelegator.testScaConnection(config, log);
         } catch (CxClientException e) {
             failOnException(e);
         }

@@ -1,8 +1,7 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxClientWrapper;
+import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScanResults;
 import com.cx.restclient.dto.DependencyScannerType;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.exception.CxClientException;
@@ -18,7 +17,7 @@ public class OsaScanTests extends CommonClientTest {
     @Test
     public void runOsaScan() throws MalformedURLException, CxClientException {
         CxScanConfig config = initOsaConfig();
-        CxClientWrapper client = new CxClientWrapper(config, log);
+        CxClientDelegator client = new CxClientDelegator(config, log);
         try {
             client.init();
             client.createScan();

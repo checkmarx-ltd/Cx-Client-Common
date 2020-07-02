@@ -1,6 +1,6 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxClientWrapper;
+import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.Team;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ public class GetTeamListTests extends CommonClientTest {
     public void getTeamListTest() {
         CxScanConfig config = initConfig();
         try {
-            CxClientWrapper client = new CxClientWrapper(config, log);
+            CxClientDelegator client = new CxClientDelegator(config, log);
             client.loginLegacy("9.0");
             List<Team> teams = client.getTeamList();
             Assert.assertNotNull(teams);

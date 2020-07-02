@@ -25,7 +25,7 @@ import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
  */
 //SHRAGA
 //System Holistic Rest Api Generic Application
-public class CxClientWrapper {
+public class CxClientDelegator {
 
     private static final String PRINT_LINE = "-----------------------------------------------------------------------------------------";
 
@@ -39,7 +39,7 @@ public class CxClientWrapper {
     private CxSASTClient sastClient;
     
      
-    public CxClientWrapper(CxScanConfig config, Logger log) throws MalformedURLException, CxClientException {
+    public CxClientDelegator(CxScanConfig config, Logger log) throws MalformedURLException, CxClientException {
 
         this.config = config;
         this.log = log;
@@ -58,7 +58,7 @@ public class CxClientWrapper {
 
 
 
-    public CxClientWrapper(String serverUrl, String username, String password, String origin, boolean disableCertificateValidation, Logger log) throws MalformedURLException, CxClientException {
+    public CxClientDelegator(String serverUrl, String username, String password, String origin, boolean disableCertificateValidation, Logger log) throws MalformedURLException, CxClientException {
         this(new CxScanConfig(serverUrl, username, password, origin, disableCertificateValidation), log);
     }
 

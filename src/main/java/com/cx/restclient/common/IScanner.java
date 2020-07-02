@@ -1,9 +1,6 @@
 package com.cx.restclient.common;
 
-import com.cx.restclient.CxClientWrapper;
-import com.cx.restclient.dto.DependencyScanResults;
 import com.cx.restclient.dto.IResults;
-import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 

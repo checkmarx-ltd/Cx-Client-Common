@@ -1,8 +1,7 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxClientWrapper;
+import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScanResults;
 import com.cx.restclient.dto.DependencyScannerType;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.exception.CxClientException;
@@ -185,7 +184,7 @@ public class ScaScanTests extends CommonClientTest {
     }
 
     private ScanResults scanUsing(CxScanConfig config) throws MalformedURLException, CxClientException {
-        CxClientWrapper client = new CxClientWrapper(config, log);
+        CxClientDelegator client = new CxClientDelegator(config, log);
         ScanResults results = null;
         try {
             client.init();

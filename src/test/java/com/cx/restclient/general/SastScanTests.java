@@ -1,11 +1,10 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxClientWrapper;
+import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.DependencyScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sast.dto.SASTResults;
-import com.cx.restclient.sca.dto.SCAResults;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -31,7 +30,7 @@ public class SastScanTests extends CommonClientTest {
     }
 
     private void runSastScan(CxScanConfig config) throws MalformedURLException, CxClientException {
-        CxClientWrapper client = new CxClientWrapper(config, log);
+        CxClientDelegator client = new CxClientDelegator(config, log);
         try {
             client.init();
             client.createScan();
