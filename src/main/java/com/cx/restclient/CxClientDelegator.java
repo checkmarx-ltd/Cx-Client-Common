@@ -29,10 +29,8 @@ public class CxClientDelegator {
 
     private static final String PRINT_LINE = "-----------------------------------------------------------------------------------------";
 
-
     private Logger log;
     private CxScanConfig config;
-    
 
     private CxOSAClient osaClient;
     private SCAClient scaClient;
@@ -81,7 +79,7 @@ public class CxClientDelegator {
     public void init() throws CxClientException, IOException {
         log.info("Initializing Cx client [" + getClientVersion() + "]");
         getScannerList().forEach(scanner->{
-            scanner.getHttpClient().close();
+            scanner.init();
         });
     }
 
@@ -91,6 +89,7 @@ public class CxClientDelegator {
         SASTResults sastResults = null;
         OSAResults osaResults = null;
         SCAResults scaResults = null;
+        
         
         if(sastClient !=null) {
             sastResults = (SASTResults)sastClient.createScan();
@@ -117,20 +116,12 @@ public class CxClientDelegator {
         scanResults.setDependencyScanResults(dependencyScanResults);
         return scanResults;
     }
-
-//    public String createDependencyScan() throws CxClientException {
-//        String scanId = getDependencyClient().createScan(dependencyScanResults);
-//        return scanId;
-//    }
+    
 
     public void cancelSASTScan() throws IOException, CxClientException {
         sastClient.cancelSASTScan();
     }
-
-//    public SASTResults waitForSASTResults() throws InterruptedException, CxClientException, IOException {
-//        sastResults = getSastClient().waitForSASTResults(sastScanId, projectId);
-//        return sastResults;
-//    }
+    
 
     public ScanResults waitForScanResults() throws InterruptedException, CxClientException, IOException {
 
@@ -175,15 +166,6 @@ public class CxClientDelegator {
         return combineResults( sastResults, osaResults, scaResults);
 
     }
-//    public DependencyScanResults waitForDependencyScanResults() throws CxClientException {
-//        getDependencyClient().waitForScanResults(dependencyScanResults);
-//        return dependencyScanResults;
-//    }
-
-//    public ScanResults getLatestDependencyScanResults() throws CxClientException {
-//        DependencyScanResults dependencyScanResults = getDependencyClient().getLatestScanResults();
-//        return dependencyScanResults;
-//    }
 
     public void printIsProjectViolated(ScanResults scanResults ) {
         if (config.getEnablePolicyViolations()) {
@@ -274,7 +256,7 @@ public class CxClientDelegator {
 
     
 
-    public String getTokenLegacyClient() throws IOException, CxClientException {
+    public String getLegacyClientToken() throws IOException, CxClientException {
         LegacyClient legacyClient = getLegacyClient();
         LoginSettings settings = legacyClient.getDefaultLoginSettings();
         settings.setClientTypeForPasswordAuth(ClientType.CLI);
