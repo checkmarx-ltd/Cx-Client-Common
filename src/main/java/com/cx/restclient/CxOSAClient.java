@@ -4,7 +4,6 @@ import com.cx.restclient.common.IScanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScanResults;
 import com.cx.restclient.dto.IResults;
 import com.cx.restclient.dto.Status;
 import com.cx.restclient.exception.CxClientException;

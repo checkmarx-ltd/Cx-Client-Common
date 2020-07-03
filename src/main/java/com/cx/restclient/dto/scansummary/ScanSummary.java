@@ -2,7 +2,7 @@ package com.cx.restclient.dto.scansummary;
 
 import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScanResults;
+
 import com.cx.restclient.dto.DependencyScannerType;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.osa.dto.OSAResults;

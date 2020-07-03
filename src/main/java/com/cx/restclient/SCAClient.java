@@ -3,7 +3,7 @@ package com.cx.restclient;
 import com.cx.restclient.common.IScanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScanResults;
+
 import com.cx.restclient.dto.IResults;
 import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.PathFilter;
@@ -117,7 +117,7 @@ public class SCAClient implements IScanner {
      * Waits for SCA scan to finish, then gets scan results.
      *
      * @returns  scan results will be written into this object
-     *               ({@link com.cx.restclient.dto.DependencyScanResults#setScaResults}).
+     *               ({@link com.cx.restclient.dto.IResults}).
      * @throws CxClientException in case of a network error, scan failure or when scan is aborted by timeout.
      */
     @Override
