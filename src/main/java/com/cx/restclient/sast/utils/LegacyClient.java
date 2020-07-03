@@ -12,7 +12,6 @@ import com.cx.restclient.osa.dto.ClientType;
 import com.cx.restclient.sast.dto.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 
@@ -30,7 +29,7 @@ import static com.cx.restclient.sast.utils.SASTParam.*;
 public class LegacyClient {
 
     private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/";
-    protected final CxHttpClient httpClient;
+    protected CxHttpClient httpClient;
     protected final CxScanConfig config;
     protected Logger log;
     private String teamPath;
@@ -38,8 +37,8 @@ public class LegacyClient {
     
     public LegacyClient(CxScanConfig config, Logger log) throws MalformedURLException {
         this.config = config;
-        this.httpClient =  initHttpClient(config, log);;
         this.log = log;
+        initHttpClient(config, log);
         validateConfig(config);
     }
 
@@ -70,7 +69,7 @@ public class LegacyClient {
 
         List<Team> teamList = populateTeamList();
         //If there is no chosen teamPath, just add first one from the teams list as default
-        if (StringUtils.isEmpty(teamPath.toString()) && teamList != null && !teamList.isEmpty()) {
+        if (StringUtils.isEmpty(teamPath) && teamList != null && !teamList.isEmpty()) {
             teamPath =  teamList.get(0).getFullName();
         }
         httpClient.setTeamPathHeader(teamPath);
@@ -80,11 +79,10 @@ public class LegacyClient {
     
     public  List<Team> getTeamList() throws IOException, CxClientException {
 
-        List<Team> teamList = populateTeamList();
-        return teamList;
+        return populateTeamList();
     }
 
-    private List<Team> populateTeamList() throws IOException, CxClientException {
+    private List<Team> populateTeamList() throws IOException {
         return (List<Team>) httpClient.getRequest(CXTEAMS, CONTENT_TYPE_APPLICATION_JSON_V1, Team.class, 200, "team list", true);
     }
 
@@ -101,7 +99,7 @@ public class LegacyClient {
     }
 
     
-    private Project createNewProject(CreateProjectRequest request, String teamPath) throws CxClientException, IOException {
+    private Project createNewProject(CreateProjectRequest request, String teamPath) throws IOException {
         String json = convertToJson(request);
         httpClient.setTeamPathHeader(teamPath);
         StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
@@ -123,9 +121,8 @@ public class LegacyClient {
         return projects;
     }
 
-    private CxHttpClient initHttpClient(CxScanConfig config, Logger log) throws MalformedURLException {
-
-        CxHttpClient httpClient = null;
+    private void initHttpClient(CxScanConfig config, Logger log) throws MalformedURLException {
+        
         if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
             httpClient = new CxHttpClient(
                     UrlUtils.parseURLToString(config.getUrl(), "CxRestAPI/"),
@@ -136,7 +133,6 @@ public class LegacyClient {
                     config.getProxyConfig(),
                     log);
         }
-        return httpClient;
     }
 
 
@@ -146,7 +142,7 @@ public class LegacyClient {
                 String version = getCxVersion();
                 login(version);
                 resolveTeam();
-                httpClient.setTeamPathHeader(this.teamPath.toString());
+                //httpClient.setTeamPathHeader(this.teamPath);
                 if (config.getSastEnabled()) {
                     resolvePreset();
                 }
@@ -262,11 +258,13 @@ public class LegacyClient {
     }
 
     private void resolveTeam() throws CxClientException, IOException {
+        
+        configureTeamPath();
+        
         if (config.getTeamId() == null) {
             config.setTeamId(getTeamIdByName(config.getTeamPath()));
         }
-
-        configureTeamPath();
+        
         printTeamPath();
         
         //httpClient.setTeamPathHeader(this.teamPath);
@@ -324,8 +322,7 @@ public class LegacyClient {
     }
 
     public List<Preset> getPresetList() throws IOException, CxClientException {
-        List<Team> teamList = getTeamList();
-        httpClient.setTeamPathHeader(this.teamPath);
+        configureTeamPath();
         return (List<Preset>) httpClient.getRequest(CXPRESETS, CONTENT_TYPE_APPLICATION_JSON_V1, Preset.class, 200, "preset list", true);
     }
 
@@ -401,8 +398,7 @@ public class LegacyClient {
 
 
     public List<CxNameObj> getConfigurationSetList() throws IOException, CxClientException {
-        List<Team> teamList = getTeamList();
-        httpClient.setTeamPathHeader(this.teamPath);
+        configureTeamPath();
         return (List<CxNameObj>) httpClient.getRequest(SAST_ENGINE_CONFIG, CONTENT_TYPE_APPLICATION_JSON_V1, CxNameObj.class, 200, "engine configurations", true);
     }
 

@@ -5,15 +5,14 @@ import com.cx.restclient.common.summary.SummaryUtils;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
-import com.cx.restclient.osa.dto.ClientType;
+
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.*;
-import com.cx.restclient.sast.utils.LegacyClient;
+
 import com.cx.restclient.sca.dto.SCAResults;
-import org.apache.http.cookie.Cookie;
+
 import org.slf4j.Logger;
 
-import javax.security.sasl.SaslClient;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
@@ -33,9 +32,9 @@ public class CxClientDelegator {
     private CxScanConfig config;
     
     
-    Map<ScannerType,IScanner> scannersMap = new HashMap<ScannerType,IScanner>();
+    Map<ScannerType,IScanner> scannersMap = new HashMap<>();
      
-    public CxClientDelegator(CxScanConfig config, Logger log) throws MalformedURLException, CxClientException {
+    public CxClientDelegator(CxScanConfig config, Logger log) throws MalformedURLException {
 
         this.config = config;
         this.log = log;
@@ -55,7 +54,7 @@ public class CxClientDelegator {
 
 
 
-    public CxClientDelegator(String serverUrl, String username, String password, String origin, boolean disableCertificateValidation, Logger log) throws MalformedURLException, CxClientException {
+    public CxClientDelegator(String serverUrl, String username, String password, String origin, boolean disableCertificateValidation, Logger log) throws MalformedURLException {
         this(new CxScanConfig(serverUrl, username, password, origin, disableCertificateValidation), log);
     }
 
@@ -70,20 +69,20 @@ public class CxClientDelegator {
                 version = properties.getProperty("version");
             }
         } catch (Exception e) {
-
+            throw new CxClientException(e.getMessage());
         }
         return version;
     }
 
-    public void init() throws CxClientException, IOException {
+    public void init()  {
         log.info("Initializing Cx client [" + getClientVersion() + "]");
-        scannersMap.values().forEach(scanner->{
-            scanner.init();
-        });
+        scannersMap.values().forEach(scanner->
+            scanner.init()
+        );
     }
 
   
-    public ScanResults createScan() throws CxClientException {
+    public ScanResults createScan()  {
    
         SASTResults sastResults = null;
         OSAResults osaResults = null;
@@ -115,7 +114,7 @@ public class CxClientDelegator {
     
 
 
-    public ScanResults waitForScanResults() throws InterruptedException, CxClientException, IOException {
+    public ScanResults waitForScanResults() throws InterruptedException {
 
         SASTResults sastResults = null;
         OSAResults osaResults = null;
@@ -138,7 +137,7 @@ public class CxClientDelegator {
         
     }
 
-    public ScanResults getLatestScanResults() throws  CxClientException, InterruptedException {
+    public ScanResults getLatestScanResults() throws InterruptedException {
 
         SASTResults sastResults = null;
         OSAResults osaResults = null;
@@ -219,13 +218,13 @@ public class CxClientDelegator {
     
     public void close() {
 
-       scannersMap.values().forEach(scanner->{
-                scanner.close();
-        });
+       scannersMap.values().forEach(scanner->
+                scanner.close()
+        );
     }
     
   
-    public void login() throws IOException, CxClientException {
+    public void login() throws IOException {
         getScanner().login();
     }
     
@@ -238,17 +237,7 @@ public class CxClientDelegator {
         return scannersMap.get(0);
     }
 
-    private LegacyClient getLegacyClient() {
-
-        if(scannersMap.containsKey(ScannerType.SAST)) {
-            return  (LegacyClient) scannersMap.get(ScannerType.SAST);
-        }
-        if(scannersMap.containsKey(ScannerType.OSA)) {
-            return  (LegacyClient) scannersMap.get(ScannerType.OSA);
-        }
-        throw new UnsupportedOperationException();
-    }
-
+  
 
 
 

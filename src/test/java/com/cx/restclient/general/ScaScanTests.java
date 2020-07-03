@@ -76,6 +76,7 @@ public class ScaScanTests extends CommonClientTest {
     }
 
     @Test
+    @Ignore()
     public void scan_onPremiseAuthentication() throws MalformedURLException {
         scanRemoteRepo(PUBLIC_REPO_PROP, true);
     }

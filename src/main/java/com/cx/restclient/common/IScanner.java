@@ -10,13 +10,13 @@ import java.io.IOException;
  * Dependency Scanner is an umbrella term for OSA and SCA.
  */
 public interface IScanner {
-    public void init() throws CxClientException;
+    public void init() ;
 
-    public IResults createScan() throws CxClientException;
+    public IResults createScan() ;
 
-    public IResults waitForScanResults() throws CxClientException, InterruptedException;
+    public IResults waitForScanResults() throws  InterruptedException;
 
-    public IResults getLatestScanResults() throws CxClientException,  InterruptedException ;
+    public IResults getLatestScanResults() throws  InterruptedException ;
     
     public void login() throws IOException;
 

@@ -35,17 +35,14 @@ import static com.cx.restclient.osa.utils.OSAUtils.writeJsonToFile;
  * Created by Galn on 05/02/2018.
  */
 class CxOSAClient extends LegacyClient implements IScanner {
-
-    private CxHttpClient httpClient;
-    private Logger log;
-    private CxScanConfig config;
+    
     private Waiter<OSAScanStatus> osaWaiter;
 
     private String scanId;
     private OSAResults osaResults;
 
 
-    public OSAScanStatus getStatus(String id) throws CxClientException, IOException {
+    public OSAScanStatus getStatus(String id) throws  IOException {
         return getOSAScanStatus(id);
     }
 
@@ -55,7 +52,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
         int retry = config.getConnectionRetries() != null ? config.getConnectionRetries() : 3;
         osaWaiter = new Waiter<OSAScanStatus>("CxOSA scan", interval, retry) {
             @Override
-            public OSAScanStatus getStatus(String id) throws CxClientException, IOException {
+            public OSAScanStatus getStatus(String id) throws IOException {
                 return getOSAScanStatus(id);
             }
 
@@ -65,7 +62,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
             }
 
             @Override
-            public OSAScanStatus resolveStatus(OSAScanStatus scanStatus) throws CxClientException {
+            public OSAScanStatus resolveStatus(OSAScanStatus scanStatus) {
                 return resolveOSAStatus(scanStatus);
             }
         };
@@ -73,7 +70,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
 
 
     @Override
-    public IResults createScan() throws CxClientException {
+    public IResults createScan()  {
         ensureProjectIdSpecified();
 
         log.info("----------------------------------- Create CxOSA Scan:------------------------------------");
@@ -133,7 +130,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
     }
 
     @Override
-    public IResults waitForScanResults() throws CxClientException {
+    public IResults waitForScanResults()  {
         ensureProjectIdSpecified();
 
         if (scanId == null) {
@@ -171,7 +168,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
         return osaResults;
     }
 
-    private OSAResults retrieveOSAResults(String scanId, OSAScanStatus osaScanStatus, long projectId) throws CxClientException, IOException {
+    private OSAResults retrieveOSAResults(String scanId, OSAScanStatus osaScanStatus, long projectId) throws IOException {
         OSASummaryResults osaSummaryResults = getOSAScanSummaryResults(scanId);
         List<Library> osaLibraries = getOSALibraries(scanId);
         List<CVE> osaVulnerabilities = getOSAVulnerabilities(scanId);
@@ -181,7 +178,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
         return results;
     }
 
-    private void resolveOSAViolation(OSAResults osaResults, long projectId) throws CxClientException {
+    private void resolveOSAViolation(OSAResults osaResults, long projectId)  {
         try {
             getProjectViolatedPolicies(httpClient, config.getCxARMUrl(), projectId, OPEN_SOURCE.value())
                     .forEach(osaResults::addPolicy);
@@ -191,7 +188,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
     }
 
     @Override
-    public IResults getLatestScanResults() throws CxClientException {
+    public IResults getLatestScanResults()  {
         ensureProjectIdSpecified();
 
         log.info("----------------------------------Get CxOSA Last Results:--------------------------------");
@@ -209,13 +206,11 @@ class CxOSAClient extends LegacyClient implements IScanner {
         }
 
         
-        DependencyScanResults result = new DependencyScanResults();
-        result.setOsaResults(osaResults != null ? osaResults : new OSAResults());
-        return result;
+        return osaResults;
     }
 
     //Private Methods
-    private String sendOSAScan(String osaDependenciesJson, long projectId) throws CxClientException, IOException {
+    private String sendOSAScan(String osaDependenciesJson, long projectId) throws IOException {
         log.info("Sending OSA scan request");
         CreateOSAScanResponse osaScan = sendOSARequest(projectId, osaDependenciesJson);
         String summaryLink = OSAUtils.composeProjectOSASummaryLink(config.getUrl(), projectId);
@@ -224,33 +219,33 @@ class CxOSAClient extends LegacyClient implements IScanner {
         return osaScan.getScanId();
     }
 
-    private CreateOSAScanResponse sendOSARequest(long projectId, String osaDependenciesJson) throws IOException, CxClientException {
+    private CreateOSAScanResponse sendOSARequest(long projectId, String osaDependenciesJson) throws IOException {
         CreateOSAScanRequest req = new CreateOSAScanRequest(projectId, osaDependenciesJson);
         StringEntity entity = new StringEntity(convertToJson(req), StandardCharsets.UTF_8);
         return httpClient.postRequest(OSA_SCAN_PROJECT, CONTENT_TYPE_APPLICATION_JSON_V1, entity, CreateOSAScanResponse.class, 201, "create OSA scan");
     }
 
-    private OSASummaryResults getOSAScanSummaryResults(String scanId) throws IOException, CxClientException {
+    private OSASummaryResults getOSAScanSummaryResults(String scanId) throws IOException {
         String relativePath = OSA_SCAN_SUMMARY + SCAN_ID_QUERY_PARAM + scanId;
         return httpClient.getRequest(relativePath, CONTENT_TYPE_APPLICATION_JSON_V1, OSASummaryResults.class, 200, "OSA scan summary results", false);
     }
 
-    private List<OSAScanStatus> getOSALastOSAStatus(long projectId) throws IOException, CxClientException {
+    private List<OSAScanStatus> getOSALastOSAStatus(long projectId) throws IOException {
         return (List<OSAScanStatus>) httpClient.getRequest(OSA_SCANS + PROJECT_ID_QUERY_PARAM + projectId, CONTENT_TYPE_APPLICATION_JSON_V1, OSAScanStatus.class, 200, " last OSA scan ID", true);
     }
 
-    private List<Library> getOSALibraries(String scanId) throws IOException, CxClientException {
+    private List<Library> getOSALibraries(String scanId) throws IOException {
         String relPath = OSA_SCAN_LIBRARIES + SCAN_ID_QUERY_PARAM + scanId + ITEM_PER_PAGE_QUERY_PARAM + MAX_ITEMS;
         return (List<Library>) httpClient.getRequest(relPath, CONTENT_TYPE_APPLICATION_JSON_V1, Library.class, 200, "OSA libraries", true);
     }
 
-    private List<CVE> getOSAVulnerabilities(String scanId) throws CxClientException, IOException {
+    private List<CVE> getOSAVulnerabilities(String scanId) throws IOException {
         String relPath = OSA_SCAN_VULNERABILITIES + SCAN_ID_QUERY_PARAM + scanId + ITEM_PER_PAGE_QUERY_PARAM + MAX_ITEMS;
         return (List<CVE>) httpClient.getRequest(relPath, CONTENT_TYPE_APPLICATION_JSON_V1, CVE.class, 200, "OSA vulnerabilities", true);
     }
 
     //Waiter - overload methods
-    private OSAScanStatus getOSAScanStatus(String scanId) throws CxClientException, IOException {
+    private OSAScanStatus getOSAScanStatus(String scanId) throws IOException {
         String relPath = OSA_SCAN_STATUS.replace("{scanId}", scanId);
         OSAScanStatus scanStatus = httpClient.getRequest(relPath, CONTENT_TYPE_APPLICATION_JSON_V1, OSAScanStatus.class, 200, "OSA scan status", false);
         int stateId = scanStatus.getState().getId();
@@ -272,7 +267,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
                 "Status: " + scanStatus.getState().getName());
     }
 
-    private OSAScanStatus resolveOSAStatus(OSAScanStatus scanStatus) throws CxClientException {
+    private OSAScanStatus resolveOSAStatus(OSAScanStatus scanStatus)  {
         if (scanStatus == null) {
             throw new CxClientException("OSA scan cannot be completed.");
         } else if (Status.FAILED == scanStatus.getBaseStatus()) {
@@ -285,7 +280,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
         return scanStatus;
     }
 
-    private void ensureProjectIdSpecified() throws CxClientException {
+    private void ensureProjectIdSpecified()  {
         if (projectId == 0) {
             throw new CxClientException("projectId must be set before executing this method.");
         }

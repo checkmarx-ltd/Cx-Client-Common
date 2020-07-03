@@ -12,7 +12,7 @@ import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
-import com.cx.restclient.sast.dto.SASTResults;
+
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.cx.restclient.sca.SCAWaiter;
 import com.cx.restclient.sca.dto.*;
@@ -270,9 +270,9 @@ public class SCAClient implements IScanner {
     @Override
     public IResults getLatestScanResults() {
         // TODO: implement when someone actually needs this.
-        //return null;
+
         //WA for SCA async mode - do not fail in NullPointerException. New feature is opened for next release to support SCA async mode.
-        return new DependencyScanResults();
+        return new SCAResults();
     }
 
     void testConnection() throws IOException {
@@ -313,7 +313,7 @@ public class SCAClient implements IScanner {
      *               cxOrigin
      *               disableCertificateValidation
      */
-    public void testScaConnection(CxScanConfig config, Logger log) throws CxClientException {
+    public void testScaConnection(CxScanConfig config, Logger log)  {
         SCAClient client = new SCAClient(config, log);
         try {
             client.testConnection();
