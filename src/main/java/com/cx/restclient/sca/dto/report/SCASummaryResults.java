@@ -7,11 +7,11 @@ import java.io.Serializable;
 
 @Getter
 @Setter
-public class SCASummaryResults implements Serializable {
+public class SCASummaryResults extends SummaryResults implements Serializable {
     private String riskReportId;
-    private int highVulnerabilityCount;
-    private int mediumVulnerabilityCount;
-    private int lowVulnerabilityCount;
+    public int highVulnerabilityCount;
+    public int mediumVulnerabilityCount;
+    public int lowVulnerabilityCount;
     private int totalPackages;
     private int directPackages;
     private String createdOn;

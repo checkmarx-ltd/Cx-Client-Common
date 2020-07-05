@@ -3,8 +3,8 @@ package com.cx.restclient.common.summary;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
 
-import com.cx.restclient.dto.DependencyScannerType;
 import com.cx.restclient.dto.ScanResults;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.scansummary.ScanSummary;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
@@ -142,7 +142,7 @@ public abstract class SummaryUtils {
             }
 */
 
-        if (config.getScannerType() == DependencyScannerType.OSA || config.getScannerType() == DependencyScannerType
+        if (config.getScannerType() == ScannerType.OSA || config.getScannerType() == ScannerType
         .SCA) {
             if (dependencyResult!=null && dependencyResult.isResultReady()) {
                 boolean thresholdExceeded = scanSummary.isOsaThresholdExceeded();
@@ -189,7 +189,7 @@ public abstract class SummaryUtils {
                         ));
             }
 
-            if (config.getScannerType() == DependencyScannerType.OSA &&
+            if (config.getScannerType() == ScannerType.OSA &&
                     osaResults.getOsaPolicies().size() > 0) {
                 policyViolated = true;
                 policies.putAll(osaResults.getOsaPolicies().stream().collect(

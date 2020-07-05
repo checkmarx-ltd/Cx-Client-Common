@@ -2,8 +2,9 @@ package com.cx.restclient.general;
 
 import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScannerType;
+
 import com.cx.restclient.dto.ScanResults;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sca.dto.RemoteRepositoryInfo;
 import com.cx.restclient.sca.dto.SCAConfig;
@@ -247,7 +248,7 @@ public class ScaScanTests extends CommonClientTest {
 
     private static CxScanConfig initScaConfig(boolean useOnPremAuthentication) {
         CxScanConfig config = new CxScanConfig();
-        config.setDependencyScannerType(DependencyScannerType.SCA);
+        config.setScannerType(ScannerType.SCA);
         config.setSastEnabled(false);
         config.setProjectName(props.getProperty("sca.projectName"));
 

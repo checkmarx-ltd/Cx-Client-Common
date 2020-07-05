@@ -1,6 +1,7 @@
 package com.cx.restclient.configuration;
 
 import com.cx.restclient.dto.*;
+import com.cx.restclient.sca.dto.ASTConfig;
 import com.cx.restclient.sca.dto.SCAConfig;
 import com.cx.restclient.sast.dto.ReportType;
 import org.apache.commons.lang3.StringUtils;
@@ -105,10 +106,12 @@ public class CxScanConfig implements Serializable {
     private String defaultProjectName;
 
     private SCAConfig scaConfig;
-    private DependencyScannerType dependencyScannerType;
+    private ScannerType scannerType;
     private List<Cookie> sessionCookies = new ArrayList<>();
     private ProxyConfig proxyConfig;
 
+    private ASTConfig astConfig;
+        
     public CxScanConfig() {
     }
 
@@ -499,7 +502,7 @@ public class CxScanConfig implements Serializable {
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
-        return getScannerType() != DependencyScannerType.NONE &&
+        return (getScannerType() == ScannerType.SAST || getScannerType() == ScannerType.SCA) &&
                 getOsaThresholdsEnabled() &&
                 (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
     }
@@ -724,12 +727,12 @@ public class CxScanConfig implements Serializable {
         this.scaConfig = scaConfig;
     }
 
-    public DependencyScannerType getScannerType() {
-        return dependencyScannerType;
+    public ScannerType getScannerType() {
+        return scannerType;
     }
 
-    public void setDependencyScannerType(DependencyScannerType scannerType) {
-        this.dependencyScannerType = scannerType;
+    public void setScannerType(ScannerType scannerType) {
+        this.scannerType = scannerType;
     }
 
     /**
@@ -738,7 +741,7 @@ public class CxScanConfig implements Serializable {
      * Otherwise, these properties are optional.
      */
     public boolean isSastOrOSAEnabled() {
-        return sastEnabled || dependencyScannerType == DependencyScannerType.OSA;
+        return sastEnabled || scannerType == ScannerType.OSA;
     }
 
     public ProxyConfig getProxyConfig() {
@@ -762,5 +765,13 @@ public class CxScanConfig implements Serializable {
 
     public void setToken(TokenLoginResponse token) {
         this.token = token;
+    }
+
+    public ASTConfig getAstConfig() {
+        return astConfig;
+    }
+
+    public void setAstConfig(ASTConfig astConfig) {
+        this.astConfig = astConfig;
     }
 }

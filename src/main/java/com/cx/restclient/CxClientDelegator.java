@@ -3,7 +3,7 @@ package com.cx.restclient;
 import com.cx.restclient.common.IScanner;
 import com.cx.restclient.common.summary.SummaryUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScannerType;
+
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
@@ -44,9 +44,9 @@ public class CxClientDelegator implements IScanner {
             scannersMap.put(ScannerType.SAST, new CxSASTClient(log, config));
         }
 
-        if (config.getScannerType() == DependencyScannerType.OSA) {
+        if (config.getScannerType() == ScannerType.OSA) {
             scannersMap.put(ScannerType.OSA, new CxOSAClient(log, config));
-        } else if (config.getScannerType() == DependencyScannerType.SCA) {
+        } else if (config.getScannerType() == ScannerType.SCA) {
             scannersMap.put(ScannerType.SCA, new SCAClient(config, log));
         }
     }

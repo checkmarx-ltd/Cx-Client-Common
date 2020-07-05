@@ -2,8 +2,9 @@ package com.cx.restclient.general;
 
 import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScannerType;
+
 import com.cx.restclient.dto.ScanResults;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -33,7 +34,7 @@ public class OsaScanTests extends CommonClientTest {
 
     private CxScanConfig initOsaConfig() {
         CxScanConfig config = new CxScanConfig();
-        config.setDependencyScannerType(DependencyScannerType.OSA);
+        config.setScannerType(ScannerType.OSA);
         config.setSastEnabled(false);
         config.setSourceDir(props.getProperty("dependencyScanSourceDir"));
         config.setReportsDir(new File("C:\\report"));
