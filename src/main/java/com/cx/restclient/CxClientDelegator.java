@@ -193,19 +193,9 @@ public class CxClientDelegator implements  IScanner{
         );
     }
     
-  
-    public void login() throws IOException {
-        getScanner().login();
-    }
-    
-    
-    private IScanner getScanner() {
 
-        if(scannersMap.size()!=1){
-            throw new CxClientException("Login is allowed when only one scanner is defined");
-        }
-        return scannersMap.get(0);
-    }
+    
+    
 
   
 

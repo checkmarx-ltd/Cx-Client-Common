@@ -9,9 +9,9 @@ import com.cx.restclient.sca.dto.SCAResults;
 import java.io.Serializable;
 
 public class ScanResults implements Serializable, IResults {
-    private SASTResults sastResults = new SASTResults();
-    private OSAResults osaResults = new OSAResults();
-    private SCAResults scaResults = new SCAResults(); 
+    private SASTResults sastResults ;
+    private OSAResults osaResults ;
+    private SCAResults scaResults ; 
     
     private Exception sastCreateException = null;
     private Exception sastWaitException = null;

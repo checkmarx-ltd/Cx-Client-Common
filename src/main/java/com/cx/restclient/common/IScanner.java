@@ -16,8 +16,6 @@ public interface IScanner {
     public ScanResults waitForScanResults() ;
 
     public ScanResults getLatestScanResults()  ;
-    
-    public void login() throws IOException;
 
     public void close();
 }
