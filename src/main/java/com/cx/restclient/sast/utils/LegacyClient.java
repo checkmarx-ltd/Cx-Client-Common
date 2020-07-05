@@ -9,7 +9,10 @@ import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.osa.dto.ClientType;
-import com.cx.restclient.sast.dto.*;
+import com.cx.restclient.sast.dto.CreateProjectRequest;
+import com.cx.restclient.sast.dto.CxNameObj;
+import com.cx.restclient.sast.dto.Preset;
+import com.cx.restclient.sast.dto.Project;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.entity.StringEntity;
@@ -26,7 +29,11 @@ import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLIC
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 import static com.cx.restclient.sast.utils.SASTParam.*;
 
-public class LegacyClient {
+/**
+ * Common parent for SAST and OSA clients.
+ * Extracted from {@link com.cx.restclient.CxClientDelegator} for better maintainability.
+ */
+public abstract class LegacyClient {
 
     private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/";
     protected CxHttpClient httpClient;
@@ -370,10 +377,9 @@ public class LegacyClient {
 
     public List<Project> getAllProjects() throws IOException, CxClientException {
         List<Project> projects = null;
-        List<Team> teamList = getTeamList();
+        configureTeamPath();
 
         try {
-            httpClient.setTeamPathHeader(this.teamPath);
             projects = (List<Project>) httpClient.getRequest(SAST_GET_ALL_PROJECTS, CONTENT_TYPE_APPLICATION_JSON_V1, Project.class, 200, "all projects", true);
         } catch (HttpResponseException ex) {
             if (ex.getStatusCode() != 404) {

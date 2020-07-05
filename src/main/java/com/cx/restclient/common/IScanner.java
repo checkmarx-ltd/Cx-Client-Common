@@ -1,21 +1,18 @@
 package com.cx.restclient.common;
 
-import com.cx.restclient.dto.IResults;
 import com.cx.restclient.dto.ScanResults;
 
-import java.io.IOException;
-
 /**
- * Dependency Scanner is an umbrella term for OSA and SCA.
+ * Common functionality for vulnerability scanners.
  */
 public interface IScanner {
-    public void init() ;
+    void init();
 
-    public ScanResults createScan() ;
+    ScanResults createScan();
 
-    public ScanResults waitForScanResults() ;
+    ScanResults waitForScanResults();
 
-    public ScanResults getLatestScanResults()  ;
+    ScanResults getLatestScanResults();
 
-    public void close();
+    void close();
 }
