@@ -5,9 +5,9 @@ public enum ScannerType {
      * Indicates that dependency scan should not be performed.
      */
     SAST("CxSAST"),
-
     OSA("CxOSA"),
     SCA("CxSCA"),
+    AST("CxAST"),
     ALL("ALL");
     
     private final String displayName;
