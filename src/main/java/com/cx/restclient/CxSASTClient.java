@@ -1,6 +1,6 @@
 package com.cx.restclient;
 
-import com.cx.restclient.common.IScanner;
+import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
@@ -9,6 +9,7 @@ import com.cx.restclient.exception.CxClientException;
 
 import com.cx.restclient.sast.dto.*;
 import com.cx.restclient.sast.utils.LegacyClient;
+
 import com.cx.restclient.sast.utils.SASTUtils;
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.google.gson.Gson;
@@ -42,7 +43,7 @@ import static com.cx.restclient.sast.utils.SASTUtils.*;
 /**
  * Created by Galn on 05/02/2018.
  */
-public class CxSASTClient extends LegacyClient implements IScanner {
+public class CxSASTClient extends LegacyClient implements Scanner {
 
     public static final String JENKINS = "jenkins";
  
@@ -52,7 +53,7 @@ public class CxSASTClient extends LegacyClient implements IScanner {
     private static final String SCAN_ID_PATH_PARAM = "{scanId}";
     private static final String PROJECT_ID_PATH_PARAM = "{projectId}";
     private long scanId;
-    //private SASTResults sastResults = new SASTResults();
+    private SASTResults sastResults = new SASTResults();
     
     private Waiter<ReportStatus> reportWaiter = new Waiter<ReportStatus>("Scan report", 10, 3) {
         @Override
@@ -292,8 +293,8 @@ public class CxSASTClient extends LegacyClient implements IScanner {
 
     //GET SAST results + reports
     @Override
-    public ScanResults waitForScanResults() {
-        SASTResults sastResults;
+    public Results waitForScanResults() {
+        //SASTResults sastResults;
 
         log.info("------------------------------------Get CxSAST Results:-----------------------------------");
         //wait for SAST scan to finish
@@ -339,8 +340,8 @@ public class CxSASTClient extends LegacyClient implements IScanner {
         }catch (IOException e){
             throw new CxClientException(e.getMessage());
         }
-        scanResults.setSastResults(sastResults);
-        return scanResults;
+
+        return sastResults;
     }
 
     private void resolveSASTViolation(SASTResults sastResults, long projectId)  {
@@ -355,7 +356,7 @@ public class CxSASTClient extends LegacyClient implements IScanner {
 
     private SASTResults retrieveSASTResults(long scanId, long projectId) throws  IOException {
 
-        SASTResults sastResults = scanResults.getSastResults();
+       
         SASTStatisticsResponse statisticsResults = getScanStatistics(scanId);
         
         sastResults.setResults(scanId, statisticsResults, config.getUrl(), projectId);
@@ -372,20 +373,20 @@ public class CxSASTClient extends LegacyClient implements IScanner {
     }
 
     @Override
-    public ScanResults getLatestScanResults() {
+    public SASTResults getLatestScanResults() {
         
         try {
             log.info("---------------------------------Get Last CxSAST Results:--------------------------------");
             List<LastScanResponse> scanList = getLatestSASTStatus(projectId);
             for (LastScanResponse s : scanList) {
                 if (CurrentStatus.FINISHED.value().equals(s.getStatus().getName())) {
-                    return new ScanResults(retrieveSASTResults(s.getId(), projectId));
+                    return retrieveSASTResults(s.getId(), projectId);
                 }
             }
         }catch(IOException e){
             throw new CxClientException(e.getMessage());
         }
-        return new ScanResults(ScannerType.SAST);
+        return new SASTResults();
     }
 
     //Cancel SAST Scan
@@ -542,13 +543,13 @@ public class CxSASTClient extends LegacyClient implements IScanner {
  
 
     @Override
-    public ScanResults createScan() {
+    public Results createScan() {
 
-        scanResults = new ScanResults(ScannerType.SAST);
+
         this.scanId  = createSASTScan(projectId);
-        scanResults.getSastResults().setSastScanLink(config.getUrl(), this.scanId, projectId);
-        scanResults.getSastResults().setScanId(this.scanId);
-        return scanResults;
+        sastResults.setSastScanLink(config.getUrl(), this.scanId, projectId);
+        sastResults.setScanId(this.scanId);
+        return sastResults;
     }
 
     

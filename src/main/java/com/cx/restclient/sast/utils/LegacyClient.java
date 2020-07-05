@@ -9,6 +9,7 @@ import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.osa.dto.ClientType;
+
 import com.cx.restclient.sast.dto.CreateProjectRequest;
 import com.cx.restclient.sast.dto.CxNameObj;
 import com.cx.restclient.sast.dto.Preset;
@@ -41,7 +42,7 @@ public abstract class LegacyClient {
     protected Logger log;
     private String teamPath;
     protected long projectId;
-    protected ScanResults scanResults;
+
     
     public LegacyClient(CxScanConfig config, Logger log) throws MalformedURLException {
         this.config = config;

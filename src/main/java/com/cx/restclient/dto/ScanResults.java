@@ -1,92 +1,69 @@
 package com.cx.restclient.dto;
 
 
+import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
+import com.cx.restclient.sca.dto.ASTResults;
 import com.cx.restclient.sca.dto.SCAResults;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
-public class ScanResults implements Serializable, IResults {
-    private SASTResults sastResults;
-    private OSAResults osaResults;
-    private SCAResults scaResults;
-
+public class ScanResults implements Serializable, Results {
+    
+    Map<ScannerType, Results> resultsMap = new HashMap<>();
+    
     private Exception sastCreateException = null;
     private Exception sastWaitException = null;
     private Exception osaCreateException = null;
     private Exception osaWaitException = null;
     private Exception generalException = null;
 
-    public ScanResults(ScannerType type) {
-        build(type);
-    }
-
+ 
     public ScanResults() {
     }
-
-    public ScanResults merge(ScanResults scanResults) {
-        if (sastResults == null) {
-            this.sastResults = scanResults.getSastResults();
+    
+    public Map<ScannerType, Results> getResults(){
+        return resultsMap;
+    }
+    
+    public void put(ScannerType type, Results results) {
+        if(resultsMap.containsKey(type)){
+            throw new CxClientException("Results already contain type " + type);
         }
-        if (osaResults == null) {
-            this.osaResults = scanResults.getOsaResults();
-        }
-        if (scaResults == null) {
-            this.scaResults = scanResults.getScaResults();
-        }
-        return this;
+        resultsMap.put(type, results);
     }
 
-    public ScanResults(SASTResults sastResults) {
-        this.sastResults = sastResults;
+    public Map<ScannerType, Results> getResultsMap() {
+        return resultsMap;
     }
 
-    public ScanResults(OSAResults osaResults) {
-        this.osaResults = osaResults;
+    public Results get(ScannerType type) {
+        return resultsMap.get(type);
     }
 
-    public ScanResults(SCAResults scaResults) {
-        this.scaResults = scaResults;
-    }
-
-    public ScanResults build(ScannerType type) {
-        if (ScannerType.SAST.equals(type)) {
-            sastResults = new SASTResults();
-        }
-        if (ScannerType.OSA.equals(type)) {
-            osaResults = new OSAResults();
-        }
-        if (ScannerType.SCA.equals(type)) {
-            scaResults = new SCAResults();
-        }
-        return this;
-    }
 
     public OSAResults getOsaResults() {
-        return osaResults;
+        return resultsMap.containsKey(ScannerType.OSA) ? (OSAResults)resultsMap.get(ScannerType.OSA) : null;
     }
 
-    public void setOsaResults(OSAResults osaResults) {
-        this.osaResults = osaResults;
+    public ASTResults getAstResults() {
+        return resultsMap.containsKey(ScannerType.AST) ? (ASTResults)resultsMap.get(ScannerType.AST) : null;
     }
 
     public SCAResults getScaResults() {
-        return scaResults;
+        return resultsMap.containsKey(ScannerType.SCA) ? (SCAResults)resultsMap.get(ScannerType.SCA) : null;
     }
 
-    public void setScaResults(SCAResults scaResults) {
-        this.scaResults = scaResults;
-    }
 
     public SASTResults getSastResults() {
-        return sastResults;
+        return resultsMap.containsKey(ScannerType.SAST) ? (SASTResults)resultsMap.get(ScannerType.SCA) : null;
+
     }
 
-    public void setSastResults(SASTResults sastResults) {
-        this.sastResults = sastResults;
-    }
-
+   
     public Exception getSastCreateException() {
         return sastCreateException;
     }
@@ -126,6 +103,5 @@ public class ScanResults implements Serializable, IResults {
     public void setGeneralException(Exception generalException) {
         this.generalException = generalException;
     }
-
 
 }

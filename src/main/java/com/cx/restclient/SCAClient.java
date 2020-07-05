@@ -1,6 +1,6 @@
 package com.cx.restclient;
 
-import com.cx.restclient.common.IScanner;
+import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
 
@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * SCA - Software Composition Analysis - is the successor of OSA.
  */
-public class SCAClient implements IScanner {
+public class SCAClient implements Scanner {
 
     public static final String ENCODING = StandardCharsets.UTF_8.name();
 
@@ -115,11 +115,11 @@ public class SCAClient implements IScanner {
      * Waits for SCA scan to finish, then gets scan results.
      *
      * @returns  scan results will be written into this object
-     *               ({@link com.cx.restclient.dto.IResults}).
+     *               ({@link Results}).
      * @throws CxClientException in case of a network error, scan failure or when scan is aborted by timeout.
      */
     @Override
-    public ScanResults waitForScanResults() {
+    public Results waitForScanResults() {
         log.info("------------------------------------Get CxSCA Results:-----------------------------------");
 
         log.info("Waiting for CxSCA scan to finish");
@@ -127,15 +127,15 @@ public class SCAClient implements IScanner {
         waiter.waitForScanToFinish(scanId);
         log.info("CxSCA scan finished successfully. Retrieving CxSCA scan results.");
 
-        ScanResults scaResult = retrieveScanResults();
-        scaResult.getScaResults().setScaResultReady(true);
+        SCAResults scaResult = retrieveScanResults();
+        scaResult.setScaResultReady(true);
         return scaResult; 
     }
 
     @Override
-    public ScanResults createScan() {
+    public Results createScan() {
         log.info("----------------------------------- Creating CxSCA Scan:------------------------------------");
-        ScanResults scanResults = new ScanResults(ScannerType.SCA);
+        SCAResults scaResults = new SCAResults();
         scanId = null;
         try {
             SourceLocationType locationType = getScaConfig().getSourceLocationType();
@@ -148,8 +148,8 @@ public class SCAClient implements IScanner {
             this.scanId = extractScanIdFrom(response);
             log.info(String.format("Scan started successfully. Scan ID: %s", scanId));
 
-            scanResults.getScaResults().setScanId(scanId);
-            return  scanResults;
+            scaResults.setScanId(scanId);
+            return  scaResults;
             
         } catch (IOException e) {
             throw new CxClientException("Error creating CxSCA scan.", e);
@@ -266,11 +266,11 @@ public class SCAClient implements IScanner {
     }
 
     @Override
-    public ScanResults getLatestScanResults() {
+    public SCAResults getLatestScanResults() {
         // TODO: implement when someone actually needs this.
 
         //WA for SCA async mode - do not fail in NullPointerException. New feature is opened for next release to support SCA async mode.
-        return new ScanResults(ScannerType.SCA);
+        return new SCAResults();
     }
 
     void testConnection() throws IOException {
@@ -368,7 +368,7 @@ public class SCAClient implements IScanner {
         return newProject.getId();
     }
 
-    private ScanResults retrieveScanResults() {
+    private SCAResults retrieveScanResults() {
         try {
             String reportId = getReportId();
 
@@ -391,7 +391,7 @@ public class SCAClient implements IScanner {
             scaResults.setScaResultReady(true);
             log.info("Retrieved SCA results successfully.");
             
-            return new ScanResults(scaResults);
+            return scaResults;
         } catch (IOException e) {
             throw new CxClientException("Error retrieving CxSCA scan results.", e);
         }

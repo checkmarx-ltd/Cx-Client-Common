@@ -23,16 +23,18 @@ public class ScanSummary {
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     private final boolean policyViolated;
 
-    public ScanSummary(CxScanConfig config, ScanResults scanResults) {
+    public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, SCAResults scaResults) {
         scannerType = config.getScannerType();
 
-        addSastThresholdErrors(config, scanResults.getSastResults());
-        addDependencyScanThresholdErrors(config, scanResults.getOsaResults(), scanResults.getScaResults());
+        addSastThresholdErrors(config, sastResults);
+        addDependencyScanThresholdErrors(config, osaResults, scaResults);
 
-        addNewResultThresholdErrors(config, scanResults.getSastResults());
+        addNewResultThresholdErrors(config, sastResults);
 
-        policyViolated = determinePolicyViolation(config, scanResults);
+        policyViolated = determinePolicyViolation(config, sastResults, osaResults);
     }
+
+
 
     @Override
     public String toString() {
@@ -151,13 +153,13 @@ public class ScanSummary {
         }
     }
 
-    private static boolean determinePolicyViolation(CxScanConfig config, ScanResults scanResults) {
+    private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults , OSAResults osaResults ) {
 
-        SASTResults sastResults = scanResults.getSastResults();
+
 
         return config.getEnablePolicyViolations() &&
-                ((scanResults.getOsaResults() != null &&
-                     scanResults.getOsaResults().getOsaPolicies().size() > 0) ||
+                ((osaResults != null &&
+                     osaResults.getOsaPolicies().size() > 0) ||
                         (sastResults != null && sastResults.getSastPolicies().size() > 0));
     }
 

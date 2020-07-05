@@ -1,6 +1,6 @@
 package com.cx.restclient.sca.dto;
 
-import com.cx.restclient.dto.IResults;
+import com.cx.restclient.dto.Results;
 import com.cx.restclient.sca.dto.report.Finding;
 import com.cx.restclient.sca.dto.report.Package;
 import com.cx.restclient.sca.dto.report.SCASummaryResults;
@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.List;
 
 
-public class SCAResults implements Serializable, IResults {
+public class SCAResults implements Serializable, Results {
     private String scanId;
     private SCASummaryResults summary;
     private String webReportLink;

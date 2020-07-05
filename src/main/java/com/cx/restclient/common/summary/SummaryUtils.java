@@ -40,11 +40,8 @@ public abstract class SummaryUtils {
 
         templateData.put("dependencyResult", dependencyResult !=null ? dependencyResult : new DependencyResult());
 
-        ScanResults scanResults = new ScanResults();
-        scanResults.setSastResults(sastResults);
-        scanResults.setOsaResults(osaResults);
-        scanResults.setScaResults(scaResults);
-        ScanSummary scanSummary = new ScanSummary(config, scanResults);
+
+        ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
 
         //calculated params:
 

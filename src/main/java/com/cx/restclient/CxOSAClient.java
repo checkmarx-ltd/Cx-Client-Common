@@ -1,6 +1,6 @@
 package com.cx.restclient;
 
-import com.cx.restclient.common.IScanner;
+import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
@@ -32,20 +32,19 @@ import static com.cx.restclient.osa.utils.OSAUtils.writeJsonToFile;
 /**
  * Created by Galn on 05/02/2018.
  */
-class CxOSAClient extends LegacyClient implements IScanner {
+class CxOSAClient extends LegacyClient implements Scanner {
     
     private Waiter<OSAScanStatus> osaWaiter;
 
     private String scanId;
-    //private OSAResults osaResults;
-
-
+    private OSAResults osaResults;
+    
 
     public OSAScanStatus getStatus(String id) throws  IOException {
         return getOSAScanStatus(id);
     }
 
-    public CxOSAClient(Logger log, CxScanConfig config) throws MalformedURLException {
+    public CxOSAClient(CxScanConfig config, Logger log) throws MalformedURLException {
         super(config, log);
         int interval = config.getOsaProgressInterval() != null ? config.getOsaProgressInterval() : 20;
         int retry = config.getConnectionRetries() != null ? config.getConnectionRetries() : 3;
@@ -69,7 +68,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
 
 
     @Override
-    public ScanResults createScan()  {
+    public Results createScan()  {
         ensureProjectIdSpecified();
 
         log.info("----------------------------------- Create CxOSA Scan:------------------------------------");
@@ -90,10 +89,10 @@ class CxOSAClient extends LegacyClient implements IScanner {
             throw new CxClientException("Error sending OSA scan request.", e);
         }
 
-        scanResults = new ScanResults(ScannerType.OSA);
-        scanResults.getOsaResults().setOsaProjectSummaryLink(config.getUrl(), projectId);
-        scanResults.getOsaResults().setOsaScanId(scanId);
-        return scanResults;
+
+        osaResults.setOsaProjectSummaryLink(config.getUrl(), projectId);
+        osaResults.setOsaScanId(scanId);
+        return osaResults;
         
     }
 
@@ -129,7 +128,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
     }
 
     @Override
-    public ScanResults waitForScanResults()  {
+    public Results waitForScanResults()  {
         ensureProjectIdSpecified();
 
         if (scanId == null) {
@@ -145,7 +144,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
 
         log.info("Creating OSA reports");
 
-        OSAResults osaResults;
+        //OSAResults osaResults;
         try {
             osaResults = retrieveOSAResults(scanId, osaScanStatus, projectId);
         } catch (IOException e) {
@@ -159,13 +158,12 @@ class CxOSAClient extends LegacyClient implements IScanner {
         OSAUtils.printOSAResultsToConsole(osaResults, config.getEnablePolicyViolations(), log);
 
         if (config.getReportsDir() != null) {
-            writeJsonToFile(OSA_SUMMARY_NAME, osaResults.getResults(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
-            writeJsonToFile(OSA_LIBRARIES_NAME, osaResults.getOsaLibraries(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
-            writeJsonToFile(OSA_VULNERABILITIES_NAME, osaResults.getOsaVulnerabilities(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
+            writeJsonToFile(OSA_SUMMARY_NAME, osaResults, config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
+            writeJsonToFile(OSA_LIBRARIES_NAME, osaResults, config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
+            writeJsonToFile(OSA_VULNERABILITIES_NAME, osaResults, config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
         }
 
-        scanResults.setOsaResults(osaResults);
-        return scanResults;
+        return osaResults;
     }
 
     private OSAResults retrieveOSAResults(String scanId, OSAScanStatus osaScanStatus, long projectId) throws IOException {
@@ -188,7 +186,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
     }
 
     @Override
-    public ScanResults getLatestScanResults()  {
+    public Results getLatestScanResults()  {
         ensureProjectIdSpecified();
 
         log.info("----------------------------------Get CxOSA Last Results:--------------------------------");
@@ -205,7 +203,7 @@ class CxOSAClient extends LegacyClient implements IScanner {
             throw new CxClientException("Error getting last scan results.");
         }
         
-        return new ScanResults(osaResults);
+        return osaResults;
     }
 
     //Private Methods
