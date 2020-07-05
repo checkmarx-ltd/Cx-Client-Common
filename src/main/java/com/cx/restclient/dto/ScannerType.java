@@ -7,8 +7,9 @@ public enum ScannerType {
     SAST("CxSAST"),
 
     OSA("CxOSA"),
-    SCA("CxSCA");
-
+    SCA("CxSCA"),
+    ALL("ALL");
+    
     private final String displayName;
 
     ScannerType(String displayName) {

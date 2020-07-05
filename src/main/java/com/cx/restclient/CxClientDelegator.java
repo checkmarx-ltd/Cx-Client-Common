@@ -24,13 +24,12 @@ import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
  * Created by Galn on 05/02/2018.
  */
 
-public class CxClientDelegator {
+public class CxClientDelegator implements  IScanner{
 
     private static final String PRINT_LINE = "-----------------------------------------------------------------------------------------";
 
     private Logger log;
     private CxScanConfig config;
-    
     
     Map<ScannerType,IScanner> scannersMap = new HashMap<>();
      
@@ -74,6 +73,7 @@ public class CxClientDelegator {
         return version;
     }
 
+    @Override
     public void init()  {
         log.info("Initializing Cx client [" + getClientVersion() + "]");
         scannersMap.values().forEach(scanner->
@@ -81,81 +81,51 @@ public class CxClientDelegator {
         );
     }
 
-  
+
+    @Override
     public ScanResults createScan()  {
-   
-        SASTResults sastResults = null;
-        OSAResults osaResults = null;
-        SCAResults scaResults = null;
 
-        if(scannersMap.containsKey(ScannerType.SAST)){
-            sastResults = (SASTResults)scannersMap.get(ScannerType.SAST).createScan();
-        }
-
-        if (scannersMap.containsKey(ScannerType.OSA)) {
-            osaResults = (OSAResults)scannersMap.get(ScannerType.OSA).createScan();
-        }
-
-        if (scannersMap.containsKey(ScannerType.SCA)) {
-            scaResults = (SCAResults)scannersMap.get(ScannerType.SCA).createScan();
-        }
-
-       return combineResults( sastResults, osaResults, scaResults);
+        ScanResults scanResults = new ScanResults();
+        
+        scannersMap.values().forEach(scanner-> {
+                    ScanResults scanResultsNew;
+                    scanResultsNew = scanner.createScan();
+                    scanResults.build(scanResultsNew);
+                }
+        );
+ 
+       return scanResults;
 
     }
 
-    private ScanResults combineResults(SASTResults sastResults, OSAResults osaResults, SCAResults scaResults) {
+
+
+    @Override
+    public ScanResults waitForScanResults() {
+
         ScanResults scanResults = new ScanResults();
-        scanResults.setOsaResults(osaResults);
-        scanResults.setScaResults(scaResults);
-        scanResults.setSastResults(sastResults);
+
+        scannersMap.values().forEach(scanner -> {
+                    ScanResults scanResultsNew = scanner.waitForScanResults();
+                    scanResults.build(scanResultsNew);
+                }
+        );
+        
         return scanResults;
     }
-    
 
+    @Override
+    public ScanResults getLatestScanResults() {
 
-    public ScanResults waitForScanResults() throws InterruptedException {
+        ScanResults scanResults = new ScanResults();
 
-        SASTResults sastResults = null;
-        OSAResults osaResults = null;
-        SCAResults scaResults = null;
+        scannersMap.values().forEach(scanner -> {
+                    ScanResults scanResultsNew = scanner.getLatestScanResults();
+                    scanResults.build(scanResultsNew);
+                }
+        );
 
-        if(scannersMap.containsKey(ScannerType.SAST)){
-            sastResults = (SASTResults)scannersMap.get(ScannerType.SAST).waitForScanResults();
-        }
-
-        if (scannersMap.containsKey(ScannerType.OSA)) {
-            osaResults = (OSAResults)scannersMap.get(ScannerType.OSA).waitForScanResults();
-        }
-
-        if (scannersMap.containsKey(ScannerType.SCA)) {
-            scaResults = (SCAResults)scannersMap.get(ScannerType.SCA).waitForScanResults();
-        }
-
-
-        return combineResults( sastResults, osaResults, scaResults);
-        
-    }
-
-    public ScanResults getLatestScanResults() throws InterruptedException {
-
-        SASTResults sastResults = null;
-        OSAResults osaResults = null;
-        SCAResults scaResults = null;
-
-        if(scannersMap.containsKey(ScannerType.SAST)){
-            sastResults = (SASTResults)scannersMap.get(ScannerType.SAST).getLatestScanResults();
-        }
-
-        if (scannersMap.containsKey(ScannerType.OSA)) {
-            osaResults = (OSAResults)scannersMap.get(ScannerType.OSA).getLatestScanResults();
-        }
-
-        if (scannersMap.containsKey(ScannerType.SCA)) {
-            scaResults = (SCAResults)scannersMap.get(ScannerType.SCA).getLatestScanResults();
-        }
-
-        return combineResults( sastResults, osaResults, scaResults);
+        return scanResults;
 
     }
 

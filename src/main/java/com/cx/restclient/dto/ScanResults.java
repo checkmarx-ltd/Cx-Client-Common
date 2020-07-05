@@ -19,9 +19,51 @@ public class ScanResults implements Serializable, IResults {
     private Exception osaWaitException = null;
     private Exception generalException = null;
 
+    public ScanResults(ScannerType type) {
+        build(type);
+    }
     public ScanResults() {
+ 
     }
 
+    public ScanResults(ScanResults scanResults) {
+        build(scanResults);
+    }
+
+    public void build(ScanResults scanResults) {
+        this.sastResults = scanResults.getSastResults();
+        this.osaResults = scanResults.getOsaResults();
+        this.scaResults = scanResults.getScaResults();
+    }
+
+    public ScanResults(SASTResults sastResults) {
+        this.sastResults = sastResults;
+    }
+    public ScanResults(OSAResults osaResults) {
+        this.osaResults = osaResults;
+    }
+
+    public ScanResults(SCAResults scaResults) {
+        this.scaResults = scaResults;
+    }
+    public ScanResults build(ScannerType type){
+        if(ScannerType.SAST.equals(type)){
+            sastResults = new SASTResults();
+        }
+        if(ScannerType.OSA.equals(type)){
+            osaResults = new OSAResults();
+        }
+        if(ScannerType.SCA.equals(type)){
+            scaResults = new SCAResults();
+        }
+        if(ScannerType.ALL.equals(type)){
+            sastResults = new SASTResults();
+            osaResults = new OSAResults();
+            scaResults = new SCAResults();
+        }
+        return this;
+    }
+    
     public OSAResults getOsaResults() {
         return osaResults;
     }
@@ -85,4 +127,6 @@ public class ScanResults implements Serializable, IResults {
     public void setGeneralException(Exception generalException) {
         this.generalException = generalException;
     }
+
+
 }

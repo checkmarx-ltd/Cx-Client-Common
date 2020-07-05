@@ -1,8 +1,7 @@
 package com.cx.restclient.common;
 
 import com.cx.restclient.dto.IResults;
-import com.cx.restclient.exception.CxClientException;
-import com.cx.restclient.httpClient.CxHttpClient;
+import com.cx.restclient.dto.ScanResults;
 
 import java.io.IOException;
 
@@ -12,13 +11,13 @@ import java.io.IOException;
 public interface IScanner {
     public void init() ;
 
-    public IResults createScan() ;
+    public ScanResults createScan() ;
 
-    public IResults waitForScanResults() throws  InterruptedException;
+    public ScanResults waitForScanResults() ;
 
-    public IResults getLatestScanResults() throws  InterruptedException ;
+    public ScanResults getLatestScanResults()  ;
     
     public void login() throws IOException;
 
-    void close();
+    public void close();
 }

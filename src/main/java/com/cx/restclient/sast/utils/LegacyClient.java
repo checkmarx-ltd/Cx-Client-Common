@@ -34,6 +34,7 @@ public class LegacyClient {
     protected Logger log;
     private String teamPath;
     protected long projectId;
+    protected ScanResults scanResults;
     
     public LegacyClient(CxScanConfig config, Logger log) throws MalformedURLException {
         this.config = config;
