@@ -332,7 +332,8 @@ pipeline {
             }
             steps {
                 script {
-                    sh "docker run --rm --name publish-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -v /root/.gnupg:/root/.gnupg -w /usr/src/cx-common maven:3.6.1-jdk-8 mvn deploy -P release"
+                    //sh "docker run --rm --name publish-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -v /root/.gnupg:/root/.gnupg -w /usr/src/cx-common maven:3.6.1-jdk-8 mvn deploy -P release"
+                    sh "mvn deploy -P release"
                 }
             }
         }
