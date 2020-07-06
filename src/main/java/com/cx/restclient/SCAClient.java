@@ -305,16 +305,15 @@ public class SCAClient implements Scanner {
     }
     
     /**
-     * @param config The following config properties are used:
+     *  The following config properties are used:
      *               scaConfig
      *               proxyConfig
      *               cxOrigin
      *               disableCertificateValidation
      */
-    public void testScaConnection(CxScanConfig config, Logger log)  {
-        SCAClient client = new SCAClient(config, log);
+    public void testScaConnection()  {
         try {
-            client.testConnection();
+            testConnection();
         } catch (IOException e) {
             throw new CxClientException(e);
         }

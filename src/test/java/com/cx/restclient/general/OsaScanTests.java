@@ -34,7 +34,7 @@ public class OsaScanTests extends CommonClientTest {
 
     private CxScanConfig initOsaConfig() {
         CxScanConfig config = new CxScanConfig();
-        config.setScannerType(ScannerType.OSA);
+        config.addScannerType(ScannerType.OSA);
         config.setSastEnabled(false);
         config.setSourceDir(props.getProperty("dependencyScanSourceDir"));
         config.setReportsDir(new File("C:\\report"));

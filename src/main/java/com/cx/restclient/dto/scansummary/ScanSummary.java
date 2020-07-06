@@ -3,7 +3,6 @@ package com.cx.restclient.dto.scansummary;
 import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.configuration.CxScanConfig;
 
-import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.osa.dto.OSASummaryResults;
@@ -13,18 +12,19 @@ import com.cx.restclient.sca.dto.report.SCASummaryResults;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Collects errors from a provided ScanResults object, based on scan config.
  */
 public class ScanSummary {
-    private final ScannerType scannerType;
+    private final Set<ScannerType> scannerTypes;
     private final List<ThresholdError> thresholdErrors = new ArrayList<>();
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     private final boolean policyViolated;
 
     public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, SCAResults scaResults) {
-        scannerType = config.getScannerType();
+        scannerTypes = config.getScannerTypes();
 
         addSastThresholdErrors(config, sastResults);
         addDependencyScanThresholdErrors(config, osaResults, scaResults);
@@ -41,7 +41,7 @@ public class ScanSummary {
         StringBuilder result = new StringBuilder();
 
         for (ThresholdError error : thresholdErrors) {
-            String sourceForDisplay = (error.getSource() == ErrorSource.SAST) ? "SAST" : scannerType.toString();
+            String sourceForDisplay = (error.getSource() == ErrorSource.SAST) ? "SAST" : ScannerType.SAST.toString();
 
             result.append(String.format("%s %s severity results are above threshold. Results: %d. Threshold: %d.\n",
                     sourceForDisplay,

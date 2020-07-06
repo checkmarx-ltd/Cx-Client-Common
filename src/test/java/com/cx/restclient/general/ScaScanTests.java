@@ -248,7 +248,7 @@ public class ScaScanTests extends CommonClientTest {
 
     private static CxScanConfig initScaConfig(boolean useOnPremAuthentication) {
         CxScanConfig config = new CxScanConfig();
-        config.setScannerType(ScannerType.SCA);
+        config.addScannerType(ScannerType.SCA);
         config.setSastEnabled(false);
         config.setProjectName(props.getProperty("sca.projectName"));
 

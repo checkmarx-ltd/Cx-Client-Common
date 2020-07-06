@@ -57,7 +57,7 @@ public class SastScanTests extends CommonClientTest {
         config.setTeamPath("\\CxServer");
         config.setSynchronous(true);
         config.setGeneratePDFReport(true);
-        config.setScannerType(ScannerType.SAST);
+        config.addScannerType(ScannerType.SAST);
         config.setPresetName("Default");
 //        config.setPresetId(7);
 

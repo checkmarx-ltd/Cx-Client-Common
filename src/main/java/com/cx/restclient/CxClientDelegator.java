@@ -41,13 +41,14 @@ public class CxClientDelegator implements Scanner {
         this.log = log;
 
 
-        if (config.getSastEnabled()) {
+        if (config.isSastEnabled()) {
             scannersMap.put(ScannerType.SAST, new CxSASTClient(log, config));
         }
-
-        if (config.getScannerType() == ScannerType.OSA) {
+        
+        if (config.isOsaEnabled()) {
             scannersMap.put(ScannerType.OSA, new CxOSAClient(config, log));
-        } else if (config.getScannerType() == ScannerType.SCA) {
+        } 
+        else if (config.isScaEnabled()) {
             scannersMap.put(ScannerType.SCA, new SCAClient(config, log));
         }
     }

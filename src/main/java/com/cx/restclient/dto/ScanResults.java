@@ -59,7 +59,7 @@ public class ScanResults implements Serializable, Results {
 
 
     public SASTResults getSastResults() {
-        return resultsMap.containsKey(ScannerType.SAST) ? (SASTResults)resultsMap.get(ScannerType.SCA) : null;
+        return resultsMap.containsKey(ScannerType.SAST) ? (SASTResults)resultsMap.get(ScannerType.SAST) : null;
 
     }
 

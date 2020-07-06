@@ -15,6 +15,7 @@ public class GetTeamListTests extends CommonClientTest {
     @Test
     public void getTeamListTest() {
         CxScanConfig config = initConfig();
+        config.setSastEnabled(true);
         try {
             CxClientDelegator client = new CxClientDelegator(config, log);
             CxSASTClient sastClient =  client.getSastClient();

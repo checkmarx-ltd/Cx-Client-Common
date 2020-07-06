@@ -152,7 +152,7 @@ public abstract class LegacyClient {
                 login(version);
                 resolveTeam();
                 //httpClient.setTeamPathHeader(this.teamPath);
-                if (config.getSastEnabled()) {
+                if (config.isSastEnabled()) {
                     resolvePreset();
                 }
                 if (config.getEnablePolicyViolations()) {

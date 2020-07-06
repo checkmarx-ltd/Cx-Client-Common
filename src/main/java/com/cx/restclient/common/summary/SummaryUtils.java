@@ -3,7 +3,6 @@ package com.cx.restclient.common.summary;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
 
-import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.scansummary.ScanSummary;
 import com.cx.restclient.osa.dto.OSAResults;
@@ -49,7 +48,7 @@ public abstract class SummaryUtils {
         boolean policyViolated = false;
         int policyViolatedCount = 0;
         //sast:
-        if (config.getSastEnabled()) {
+        if (config.isSastEnabled()) {
             if (sastResults.isSastResultsReady()) {
                 boolean sastThresholdExceeded = scanSummary.isSastThresholdExceeded();
                 boolean sastNewResultsExceeded = scanSummary.isSastThresholdForNewResultsExceeded();
@@ -139,12 +138,11 @@ public abstract class SummaryUtils {
             }
 */
 
-        if (config.getScannerType() == ScannerType.OSA || config.getScannerType() == ScannerType
-        .SCA) {
+        if (config.isOsaEnabled() || config.isScaEnabled()) {
             if (dependencyResult!=null && dependencyResult.isResultReady()) {
                 boolean thresholdExceeded = scanSummary.isOsaThresholdExceeded();
                 templateData.put("dependencyThresholdExceeded", thresholdExceeded);
-                if(config.getSastEnabled()){
+                if(config.isSastEnabled()){
                     buildFailed |= thresholdExceeded || buildFailed;
                 }else{
                     buildFailed |= thresholdExceeded;
@@ -175,7 +173,7 @@ public abstract class SummaryUtils {
         if (config.getEnablePolicyViolations()) {
             Map<String, String> policies = new HashMap<String, String>();
 
-            if (config.getSastEnabled() && sastResults.getSastPolicies().size() > 0) {
+            if (config.isSastEnabled() && sastResults.getSastPolicies().size() > 0) {
                 policyViolated = true;
                 policies = sastResults.getSastPolicies().stream().collect(
                         Collectors.toMap(Policy::getPolicyName,
@@ -186,7 +184,7 @@ public abstract class SummaryUtils {
                         ));
             }
 
-            if (config.getScannerType() == ScannerType.OSA &&
+            if (config.isOsaEnabled() &&
                     osaResults.getOsaPolicies().size() > 0) {
                 policyViolated = true;
                 policies.putAll(osaResults.getOsaPolicies().stream().collect(
