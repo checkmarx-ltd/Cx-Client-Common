@@ -23,7 +23,7 @@ pipeline {
     agent { node { label 'CxSDLC-Slave' } }
     options {
         timestamps()
-        timeout(time: 1, unit: 'HOURS')
+        timeout(time: 2, unit: 'HOURS')
         //skipDefaultCheckout()
     }
     stages {
@@ -85,7 +85,7 @@ pipeline {
         stage('System Tests') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-")
+                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
                 }
             }
             parallel {
@@ -327,13 +327,13 @@ pipeline {
         stage('Publish to Maven Central') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
+                    BRANCH_NAME == 'master'
                 }
             }
             steps {
                 script {
                     //sh "docker run --rm --name publish-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -v /root/.gnupg:/root/.gnupg -w /usr/src/cx-common maven:3.6.1-jdk-8 mvn deploy -P release"
-                    sh "mvn deploy -P release"
+                    sh "mvn deploy -P release -DskipTests"
                 }
             }
         }
