@@ -11,6 +11,7 @@ import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
 import com.cx.restclient.sca.dto.SCAResults;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 
 import java.net.MalformedURLException;
@@ -42,7 +43,7 @@ public class CxClientDelegator implements Scanner {
 
 
         if (config.isSastEnabled()) {
-            scannersMap.put(ScannerType.SAST, new CxSASTClient(log, config));
+            scannersMap.put(ScannerType.SAST, new CxSASTClient(config, log));
         }
         
         if (config.isOsaEnabled()) {
@@ -135,17 +136,17 @@ public class CxClientDelegator implements Scanner {
             log.info("Policy Management: ");
             log.info("--------------------");
 
-            Results osaResults = scanResults.get(ScannerType.OSA);
-            Results sastResults = scanResults.get(ScannerType.SAST);
+            OSAResults osaResults = (OSAResults)scanResults.get(ScannerType.OSA);
+            SASTResults sastResults = (SASTResults)scanResults.get(ScannerType.SAST);
             
             boolean hasOsaViolations =
                     osaResults != null &&
-                            ((OSAResults)osaResults).getOsaPolicies() != null &&
-                            !((OSAResults)osaResults).getOsaPolicies().isEmpty();
+                            osaResults.getOsaPolicies() != null &&
+                            !osaResults.getOsaPolicies().isEmpty();
 
             boolean hasSastPolicies = false;
 
-            if (sastResults != null && !((SASTResults)sastResults).getSastPolicies().isEmpty()) {
+            if (sastResults != null && CollectionUtils.isNotEmpty(sastResults.getSastPolicies())) {
                 hasSastPolicies = true;
             }
 
@@ -155,10 +156,10 @@ public class CxClientDelegator implements Scanner {
             } else {
                 log.info(PROJECT_POLICY_VIOLATED_STATUS);
                 if (hasSastPolicies) {
-                    log.info("SAST violated policies names: " + getPoliciesNames(((SASTResults)sastResults).getSastPolicies()));
+                    log.info("SAST violated policies names: " + getPoliciesNames(sastResults.getSastPolicies()));
                 }
                 if (hasOsaViolations) {
-                    log.info("OSA violated policies names: " + getPoliciesNames(((OSAResults)osaResults).getOsaPolicies()));
+                    log.info("OSA violated policies names: " + getPoliciesNames(osaResults.getOsaPolicies()));
                 }
                 log.info(PRINT_LINE);
             }

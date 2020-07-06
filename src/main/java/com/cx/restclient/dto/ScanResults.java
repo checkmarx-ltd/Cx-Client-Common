@@ -46,20 +46,20 @@ public class ScanResults implements Serializable, Results {
 
 
     public OSAResults getOsaResults() {
-        return resultsMap.containsKey(ScannerType.OSA) ? (OSAResults)resultsMap.get(ScannerType.OSA) : null;
+        return (OSAResults)resultsMap.get(ScannerType.OSA);
     }
 
     public ASTResults getAstResults() {
-        return resultsMap.containsKey(ScannerType.AST) ? (ASTResults)resultsMap.get(ScannerType.AST) : null;
+        return (ASTResults)resultsMap.get(ScannerType.AST);
     }
 
     public SCAResults getScaResults() {
-        return resultsMap.containsKey(ScannerType.SCA) ? (SCAResults)resultsMap.get(ScannerType.SCA) : null;
+        return (SCAResults)resultsMap.get(ScannerType.SCA);
     }
 
 
     public SASTResults getSastResults() {
-        return resultsMap.containsKey(ScannerType.SAST) ? (SASTResults)resultsMap.get(ScannerType.SAST) : null;
+        return (SASTResults)resultsMap.get(ScannerType.SAST);
 
     }
 

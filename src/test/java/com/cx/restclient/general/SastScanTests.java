@@ -45,7 +45,6 @@ public class SastScanTests extends CommonClientTest {
 
     private CxScanConfig initSastConfig() {
         CxScanConfig config = new CxScanConfig();
-        config.setSastEnabled(true);
         config.setReportsDir(new File("C:\\report"));
         config.setSourceDir(props.getProperty("sastSource"));
         config.setUsername(props.getProperty("username"));

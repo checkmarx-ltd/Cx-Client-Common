@@ -13,8 +13,8 @@ import java.util.List;
 
 import static com.cx.restclient.common.ShragaUtils.formatDate;
 
-public class DependencyResult  implements Results {
-    private ScannerType dependencyType;
+public class DependencyScanResult implements Results {
+    private ScannerType scannerType;
     private boolean resultReady;
     private int highVulnerability;
     private int mediumVulnerability;
@@ -29,10 +29,10 @@ public class DependencyResult  implements Results {
     private List<CVEReportTableRow> dependencyLowCVEReportTable = new ArrayList<CVEReportTableRow>();
     private int totalLibraries;
 
-    DependencyResult(){}
+    DependencyScanResult(){}
 
-    DependencyResult(SCAResults scaResults){
-        this.dependencyType = ScannerType.SCA;
+    DependencyScanResult(SCAResults scaResults){
+        this.scannerType = ScannerType.SCA;
         this.highVulnerability = scaResults.getSummary().getHighVulnerabilityCount();
         this.mediumVulnerability = scaResults.getSummary().getMediumVulnerabilityCount();
         this.lowVulnerability = scaResults.getSummary().getLowVulnerabilityCount();
@@ -48,8 +48,8 @@ public class DependencyResult  implements Results {
     }
 
 
-    DependencyResult(OSAResults osaResults){
-        this.dependencyType = ScannerType.OSA;
+    DependencyScanResult(OSAResults osaResults){
+        this.scannerType = ScannerType.OSA;
         this.highVulnerability = osaResults.getResults().getTotalHighVulnerabilities();
         this.mediumVulnerability = osaResults.getResults().getTotalMediumVulnerabilities();
         this.lowVulnerability = osaResults.getResults().getTotalLowVulnerabilities();
@@ -93,12 +93,12 @@ public class DependencyResult  implements Results {
         }
     }
 
-    public ScannerType getDependencyType() {
-        return dependencyType;
+    public ScannerType getScannerType() {
+        return scannerType;
     }
 
-    public void setDependencyType(ScannerType dependencyType) {
-        this.dependencyType = dependencyType;
+    public void setScannerType(ScannerType scannerType) {
+        this.scannerType = scannerType;
     }
 
     public boolean isResultReady() {

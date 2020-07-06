@@ -3,7 +3,6 @@ package com.cx.restclient.common.summary;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
 
-import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.scansummary.ScanSummary;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
@@ -35,9 +34,9 @@ public abstract class SummaryUtils {
         templateData.put("osa", osaResults != null ? osaResults : new OSAResults());
         templateData.put("sca", scaResults != null ? scaResults : new SCAResults());
 
-        DependencyResult dependencyResult = resolveDependencyResult(osaResults,scaResults);
+        DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults,scaResults);
 
-        templateData.put("dependencyResult", dependencyResult !=null ? dependencyResult : new DependencyResult());
+        templateData.put("dependencyResult", dependencyScanResult !=null ? dependencyScanResult : new DependencyScanResult());
 
 
         ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
@@ -139,7 +138,7 @@ public abstract class SummaryUtils {
 */
 
         if (config.isOsaEnabled() || config.isScaEnabled()) {
-            if (dependencyResult!=null && dependencyResult.isResultReady()) {
+            if (dependencyScanResult !=null && dependencyScanResult.isResultReady()) {
                 boolean thresholdExceeded = scanSummary.isOsaThresholdExceeded();
                 templateData.put("dependencyThresholdExceeded", thresholdExceeded);
                 if(config.isSastEnabled()){
@@ -149,10 +148,9 @@ public abstract class SummaryUtils {
                 }
 
                 //calculate dependency results bars:
-                //DependencyResult dependencyResult1 = dependencyResult;
-                int dependencyHigh = dependencyResult.getHighVulnerability();
-                int dependencyMedium = dependencyResult.getMediumVulnerability();
-                int dependencyLow = dependencyResult.getLowVulnerability();
+                int dependencyHigh = dependencyScanResult.getHighVulnerability();
+                int dependencyMedium = dependencyScanResult.getMediumVulnerability();
+                int dependencyLow = dependencyScanResult.getLowVulnerability();
                 float dependencyMaxCount = Math.max(dependencyHigh, Math.max(dependencyMedium,dependencyLow));
                 float dependencyBarNorm = dependencyMaxCount * 10f / 9f;
 
@@ -211,16 +209,16 @@ public abstract class SummaryUtils {
         return writer.toString();
     }
 
-    private static DependencyResult resolveDependencyResult(OSAResults osaResults, SCAResults scaResults){
-        DependencyResult dependencyResult;
+    private static DependencyScanResult resolveDependencyResult(OSAResults osaResults, SCAResults scaResults){
+        DependencyScanResult dependencyScanResult;
         if(osaResults!=null){
-            dependencyResult = new  DependencyResult(osaResults);
+            dependencyScanResult = new DependencyScanResult(osaResults);
         }else if(scaResults!=null){
-            dependencyResult = new DependencyResult(scaResults);
+            dependencyScanResult = new DependencyScanResult(scaResults);
         }else{
-            dependencyResult = null;
+            dependencyScanResult = null;
         }
-        return dependencyResult;
+        return dependencyScanResult;
     }
 
     private static float calculateNewBarHeight(int newCount, int count, float totalHeight) {

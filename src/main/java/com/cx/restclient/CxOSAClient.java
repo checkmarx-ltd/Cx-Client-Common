@@ -144,7 +144,6 @@ class CxOSAClient extends LegacyClient implements Scanner {
 
         log.info("Creating OSA reports");
 
-        //OSAResults osaResults;
         try {
             osaResults = retrieveOSAResults(scanId, osaScanStatus, projectId);
         } catch (IOException e) {
@@ -158,9 +157,9 @@ class CxOSAClient extends LegacyClient implements Scanner {
         OSAUtils.printOSAResultsToConsole(osaResults, config.getEnablePolicyViolations(), log);
 
         if (config.getReportsDir() != null) {
-            writeJsonToFile(OSA_SUMMARY_NAME, osaResults, config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
-            writeJsonToFile(OSA_LIBRARIES_NAME, osaResults, config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
-            writeJsonToFile(OSA_VULNERABILITIES_NAME, osaResults, config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
+            writeJsonToFile(OSA_SUMMARY_NAME, osaResults.getResults(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
+            writeJsonToFile(OSA_LIBRARIES_NAME, osaResults.getOsaLibraries(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
+            writeJsonToFile(OSA_VULNERABILITIES_NAME, osaResults.getOsaVulnerabilities(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
         }
 
         return osaResults;

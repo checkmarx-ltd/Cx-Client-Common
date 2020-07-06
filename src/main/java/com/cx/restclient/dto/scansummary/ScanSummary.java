@@ -34,17 +34,13 @@ public class ScanSummary {
         policyViolated = determinePolicyViolation(config, sastResults, osaResults);
     }
 
-
-
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
 
         for (ThresholdError error : thresholdErrors) {
-            String sourceForDisplay = (error.getSource() == ErrorSource.SAST) ? "SAST" : ScannerType.SAST.toString();
-
-            result.append(String.format("%s %s severity results are above threshold. Results: %d. Threshold: %d.\n",
-                    sourceForDisplay,
+            // TODO: Include dependency scanner type into the message.
+            result.append(String.format("%s severity results are above threshold. Results: %d. Threshold: %d.\n",
                     error.getSeverity().toString().toLowerCase(),
                     error.getValue(),
                     error.getThreshold()));

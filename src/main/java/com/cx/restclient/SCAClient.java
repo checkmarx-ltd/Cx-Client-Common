@@ -114,8 +114,6 @@ public class SCAClient implements Scanner {
     /**
      * Waits for SCA scan to finish, then gets scan results.
      *
-     * @returns  scan results will be written into this object
-     *               ({@link Results}).
      * @throws CxClientException in case of a network error, scan failure or when scan is aborted by timeout.
      */
     @Override

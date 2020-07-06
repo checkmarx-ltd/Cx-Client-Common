@@ -9,9 +9,9 @@ import java.io.Serializable;
 @Setter
 public class SCASummaryResults extends SummaryResults implements Serializable {
     private String riskReportId;
-    public int highVulnerabilityCount;
-    public int mediumVulnerabilityCount;
-    public int lowVulnerabilityCount;
+    private int highVulnerabilityCount;
+    private int mediumVulnerabilityCount;
+    private int lowVulnerabilityCount;
     private int totalPackages;
     private int directPackages;
     private String createdOn;

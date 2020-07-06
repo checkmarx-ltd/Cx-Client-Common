@@ -151,7 +151,9 @@ public class CxScanConfig implements Serializable {
         if(sastEnabled){
             scannerTypes.add(ScannerType.SAST);
         }
-        
+        else {
+            scannerTypes.remove(ScannerType.SAST);
+        }
     }
 
     
@@ -519,7 +521,7 @@ public class CxScanConfig implements Serializable {
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
-        return (isSastEnabled() || isScaEnabled()) &&
+        return (isOsaEnabled() || isScaEnabled()) &&
                 getOsaThresholdsEnabled() &&
                 (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
     }

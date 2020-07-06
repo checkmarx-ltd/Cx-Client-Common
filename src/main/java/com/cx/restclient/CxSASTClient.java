@@ -160,7 +160,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     };
 
 
-    CxSASTClient(Logger log, CxScanConfig config) throws MalformedURLException {
+    CxSASTClient(CxScanConfig config, Logger log) throws MalformedURLException {
         super( config, log );
 
         int interval = config.getProgressInterval() != null ? config.getProgressInterval() : 20;
