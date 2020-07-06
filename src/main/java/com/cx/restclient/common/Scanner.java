@@ -9,7 +9,7 @@ import com.cx.restclient.dto.ScanResults;
 public interface Scanner {
     void init();
 
-    Results createScan();
+    Results initiateScan();
 
     Results waitForScanResults();
 

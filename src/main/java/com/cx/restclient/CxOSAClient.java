@@ -68,7 +68,7 @@ class CxOSAClient extends LegacyClient implements Scanner {
 
 
     @Override
-    public Results createScan()  {
+    public Results initiateScan()  {
         ensureProjectIdSpecified();
 
         log.info("----------------------------------- Create CxOSA Scan:------------------------------------");

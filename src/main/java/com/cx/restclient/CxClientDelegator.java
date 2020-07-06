@@ -83,13 +83,13 @@ public class CxClientDelegator implements Scanner {
 
 
     @Override
-    public ScanResults createScan() {
+    public ScanResults initiateScan() {
 
         ScanResults scanResultsCombined = new ScanResults();
 
         scannersMap.entrySet().forEach(scannerEntry -> {
                     Scanner scanner = scannerEntry.getValue();
-                    Results scanResults = scanner.createScan();
+                    Results scanResults = scanner.initiateScan();
                     scanResultsCombined.put(scannerEntry.getKey(), scanResults);
                 }
         );

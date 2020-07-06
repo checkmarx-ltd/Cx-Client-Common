@@ -543,7 +543,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
  
 
     @Override
-    public Results createScan() {
+    public Results initiateScan() {
 
 
         this.scanId  = createSASTScan(projectId);

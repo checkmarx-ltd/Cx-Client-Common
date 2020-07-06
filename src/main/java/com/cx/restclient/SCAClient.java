@@ -131,7 +131,7 @@ public class SCAClient implements Scanner {
     }
 
     @Override
-    public Results createScan() {
+    public Results initiateScan() {
         log.info("----------------------------------- Creating CxSCA Scan:------------------------------------");
         SCAResults scaResults = new SCAResults();
         scanId = null;
