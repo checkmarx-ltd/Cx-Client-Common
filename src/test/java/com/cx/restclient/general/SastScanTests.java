@@ -34,7 +34,7 @@ public class SastScanTests extends CommonClientTest {
         CxClientDelegator client = new CxClientDelegator(config, log);
         try {
             client.init();
-            client.createScan();
+            client.initiateScan();
             SASTResults results =  client.waitForScanResults().getSastResults();
             Assert.assertNotNull(results);
             Assert.assertNotEquals("Expected valid SAST scan id", 0, results.getScanId());

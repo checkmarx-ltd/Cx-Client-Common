@@ -190,7 +190,7 @@ public class ScaScanTests extends CommonClientTest {
         ScanResults results = null;
         try {
             client.init();
-            client.createScan();
+            client.initiateScan();
             results = client.waitForScanResults();
         } catch (Exception e) {
             failOnException(e);

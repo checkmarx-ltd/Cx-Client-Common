@@ -21,7 +21,7 @@ public class OsaScanTests extends CommonClientTest {
         CxClientDelegator client = new CxClientDelegator(config, log);
         try {
             client.init();
-            client.createScan();
+            client.initiateScan();
             ScanResults results = client.waitForScanResults();
             Assert.assertNotNull(results);
             Assert.assertNull(results.getScaResults());
