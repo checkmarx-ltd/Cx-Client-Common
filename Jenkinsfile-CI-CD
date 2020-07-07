@@ -2,7 +2,7 @@
 @Library('cx-jenkins-pipeline-kit') _
 
 def workspace
-def cxCommonVersion
+def cxCommonVersion = "${BUILD_TAG}"
 def vmName = "${BUILD_TAG}-CxSAST"
 def ipAddress89
 def ipAddress90
@@ -37,18 +37,18 @@ pipeline {
             }
         }
 
-        stage('Change Version in POM') {
+        stage('Get Version from POM') {
+            when {
+                expression {
+                    BRANCH_NAME == 'master'
+                }
+            }
             steps {
                 script {
-                    if (BRANCH_NAME == "master") {
-                        //todo: get cxCommonVersion from POM file
-                        cxCommonVersion = "2020\\.2\\.20\\.SCA"
-                        // remove -SNAPSHOT
-                        sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
-                    } else {
-                        cxCommonVersion = "${BUILD_TAG}"
-                        //sh "sed -e 's/2020\\.2\\.20\\.SCA/${cxCommonVersion}/g' -i ./pom.xml"
-                    }
+                    //todo: get cxCommonVersion from POM file
+                    cxCommonVersion = "2020\\.2\\.20\\.SCA"
+                    // remove -SNAPSHOT if exist
+                    sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
                 }
             }
         }
