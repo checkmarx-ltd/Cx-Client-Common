@@ -52,7 +52,9 @@ public abstract class LegacyClient {
     }
 
     public void close(){
-        httpClient.close();
+        if(httpClient != null) {
+            httpClient.close();
+        }
     }
 
     public long resolveProjectId() throws IOException {

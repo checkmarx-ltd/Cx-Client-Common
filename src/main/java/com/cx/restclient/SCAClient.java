@@ -299,7 +299,9 @@ public class SCAClient implements Scanner {
     }
 
     public void close(){
-        httpClient.close();
+        if(httpClient != null) {
+            httpClient.close();
+        }
     }
     
     /**

@@ -37,7 +37,7 @@ class CxOSAClient extends LegacyClient implements Scanner {
     private Waiter<OSAScanStatus> osaWaiter;
 
     private String scanId;
-    private OSAResults osaResults;
+    private OSAResults osaResults = new OSAResults();
     
 
     public OSAScanStatus getStatus(String id) throws  IOException {
