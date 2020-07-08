@@ -40,15 +40,19 @@ pipeline {
         stage('Get Version from POM') {
             when {
                 expression {
-                    BRANCH_NAME == 'master'
+                    BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
                 }
             }
             steps {
                 script {
-                    //todo: get cxCommonVersion from POM file
-                    cxCommonVersion = "2020\\.2\\.20\\.SCA"
-                    // remove -SNAPSHOT if exist
+                    // remove -SNAPSHOT if exist (temporary)
                     sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
+                    // get version from POM
+                    sh "mvn resources:resources"
+                    def commonPropertiesContent = readFile "${target/classes/common.properties}"
+                    echo "commonPropertiesContent = " + commonPropertiesContent
+                    cxCommonVersion = commonPropertiesContent.substring(10)
+                    echo "cxCommonVersion = " + cxCommonVersion
                 }
             }
         }
@@ -63,6 +67,7 @@ pipeline {
 
         stage('UT-IT & Sonar') {
             parallel {
+
                 stage('Run Unit & Integration Tests') {
                     steps {
                         script {
