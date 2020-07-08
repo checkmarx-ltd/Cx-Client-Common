@@ -3,6 +3,7 @@ package com.cx.restclient.general;
 import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
 
+import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sast.dto.SASTResults;
@@ -31,35 +32,9 @@ public class SastScanTests extends CommonClientTest {
     }
 
     private void runSastScan(CxScanConfig config) throws MalformedURLException, CxClientException {
-        CxClientDelegator client = new CxClientDelegator(config, log);
-        try {
-            client.init();
-            client.initiateScan();
-            SASTResults results =  client.waitForScanResults().getSastResults();
-            Assert.assertNotNull(results);
-            Assert.assertNotEquals("Expected valid SAST scan id", 0, results.getScanId());
-        } catch (Exception e) {
-            failOnException(e);
-        }
+        ScanResults results = runScan(config);
+        Assert.assertNotEquals("Expected valid SAST scan id", 0, results.getSastResults().getScanId());
     }
 
-    private CxScanConfig initSastConfig() {
-        CxScanConfig config = new CxScanConfig();
-        config.setReportsDir(new File("C:\\report"));
-        config.setSourceDir(props.getProperty("sastSource"));
-        config.setUsername(props.getProperty("username"));
-        config.setPassword(props.getProperty("password"));
-        config.setUrl(props.getProperty("serverUrl"));
-        config.setCxOrigin("common");
-        config.setProjectName("sastOnlyScan");
-        config.setPresetName("Default");
-        config.setTeamPath("\\CxServer");
-        config.setSynchronous(true);
-        config.setGeneratePDFReport(true);
-        config.addScannerType(ScannerType.SAST);
-        config.setPresetName("Default");
-//        config.setPresetId(7);
-
-        return config;
-    }
+ 
 }

@@ -18,41 +18,11 @@ public class OsaScanTests extends CommonClientTest {
     @Test
     public void runOsaScan() throws MalformedURLException, CxClientException {
         CxScanConfig config = initOsaConfig();
-        CxClientDelegator client = new CxClientDelegator(config, log);
-        try {
-            client.init();
-            client.initiateScan();
-            ScanResults results = client.waitForScanResults();
-            Assert.assertNotNull(results);
-            Assert.assertNull(results.getScaResults());
-            Assert.assertNotNull(results.getOsaResults());
-            Assert.assertNotNull("Expected valid osa scan id", results.getOsaResults().getOsaScanId());
-        } catch (Exception e) {
-            failOnException(e);
-        }
+        ScanResults results = runScan(config);
+        Assert.assertNull(results.getScaResults());
+        Assert.assertNotNull(results.getOsaResults());
+        Assert.assertNotNull("Expected valid osa scan id", results.getOsaResults().getOsaScanId());
     }
 
-    private CxScanConfig initOsaConfig() {
-        CxScanConfig config = new CxScanConfig();
-        config.addScannerType(ScannerType.OSA);
-        config.setSastEnabled(false);
-        config.setSourceDir(props.getProperty("dependencyScanSourceDir"));
-        config.setReportsDir(new File("C:\\report"));
-        config.setUrl(props.getProperty("serverUrl"));
-        config.setUsername(props.getProperty("username"));
-        config.setPassword(props.getProperty("password"));
-
-        config.setCxOrigin("common");
-        config.setProjectName("osaOnlyScan");
-        config.setPresetName("Default");
-        config.setTeamPath("\\CxServer");
-        config.setSynchronous(true);
-        config.setGeneratePDFReport(true);
-
-        config.setOsaRunInstall(true);
-        config.setOsaThresholdsEnabled(true);
-        config.setPublic(true);
-
-        return config;
-    }
+    
 }
