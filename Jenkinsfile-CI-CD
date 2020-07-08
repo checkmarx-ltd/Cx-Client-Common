@@ -49,7 +49,7 @@ pipeline {
                     sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
                     // get version from POM
                     sh "mvn resources:resources"
-                    def commonPropertiesContent = readFile "${target/classes/common.properties}"
+                    def commonPropertiesContent = readFile "./target/classes/common.properties"
                     echo "commonPropertiesContent = " + commonPropertiesContent
                     cxCommonVersion = commonPropertiesContent.substring(10)
                     echo "cxCommonVersion = " + cxCommonVersion
