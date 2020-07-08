@@ -413,5 +413,12 @@ public abstract class LegacyClient {
     }
 
 
+    public String getTeamPath() {
+        return teamPath;
+    }
+
+    public void setTeamPath(String teamPath) {
+        this.teamPath = teamPath;
+    }
 
 }
