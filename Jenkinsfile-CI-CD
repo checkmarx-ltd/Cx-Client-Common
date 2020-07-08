@@ -31,28 +31,16 @@ pipeline {
         stage('Pipeline Info') {
             steps {
                 script {
-                    sh 'printenv'
+                    if (BRANCH_NAME == 'master') {
+                        // remove -SNAPSHOT if exist (temporary)
+                        sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
+                        // get version from POM
+                        sh "mvn resources:resources"
+                        def commonPropertiesContent = readFile "./target/classes/common.properties"
+                        cxCommonVersion = commonPropertiesContent.substring(10)
+                    }
                     workspace = pwd()
-                }
-            }
-        }
-
-        stage('Get Version from POM') {
-            when {
-                expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
-                }
-            }
-            steps {
-                script {
-                    // remove -SNAPSHOT if exist (temporary)
-                    sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
-                    // get version from POM
-                    sh "mvn resources:resources"
-                    def commonPropertiesContent = readFile "./target/classes/common.properties"
-                    echo "commonPropertiesContent = " + commonPropertiesContent
-                    cxCommonVersion = commonPropertiesContent.substring(10)
-                    echo "cxCommonVersion = " + cxCommonVersion
+                    sh 'printenv'
                 }
             }
         }
