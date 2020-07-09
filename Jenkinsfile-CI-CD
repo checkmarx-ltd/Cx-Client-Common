@@ -89,6 +89,7 @@ pipeline {
                                 script {
                                     kit.Create_Vm_Terraform(vmName + "-8.9", vmTemplate89, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
                                     ipAddress89 = kit.getIpAddress(vmName + "-8.9", provider)
+                                    echo "ipAddress89 = ${ipAddress89}"
                                 }
                             }
                         }
@@ -152,6 +153,7 @@ pipeline {
                                 script {
                                     kit.Create_Vm_Terraform(vmName + "-9.0", vmTemplate90, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
                                     ipAddress90 = kit.getIpAddress(vmName + "-9.0", provider)
+                                    echo "ipAddress90 = ${ipAddress90}"
                                 }
                             }
                         }
@@ -215,6 +217,7 @@ pipeline {
                                 script {
                                     kit.Create_Vm_Terraform(vmName + "-9.2", vmTemplate92, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
                                     ipAddress92 = kit.getIpAddress(vmName + "-9.2", provider)
+                                    echo "ipAddress92 = ${ipAddress92}"
                                 }
                             }
                         }
