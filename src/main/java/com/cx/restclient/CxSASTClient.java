@@ -374,7 +374,8 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     @Override
     public SASTResults getLatestScanResults() {
-        
+
+        sastResults  = new SASTResults();
         try {
             log.info("---------------------------------Get Last CxSAST Results:--------------------------------");
             List<LastScanResponse> scanList = getLatestSASTStatus(projectId);
@@ -386,7 +387,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         }catch(IOException e){
             throw new CxClientException(e.getMessage());
         }
-        return new SASTResults();
+        return sastResults;
     }
 
     //Cancel SAST Scan
@@ -545,7 +546,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     @Override
     public Results initiateScan() {
 
-
+        sastResults = new SASTResults();
         this.scanId  = createSASTScan(projectId);
         sastResults.setSastScanLink(config.getUrl(), this.scanId, projectId);
         sastResults.setScanId(this.scanId);

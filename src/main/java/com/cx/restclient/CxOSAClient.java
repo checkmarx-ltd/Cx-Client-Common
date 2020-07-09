@@ -69,6 +69,9 @@ class CxOSAClient extends LegacyClient implements Scanner {
 
     @Override
     public Results initiateScan()  {
+        
+        osaResults = new OSAResults();
+        
         ensureProjectIdSpecified();
 
         log.info("----------------------------------- Create CxOSA Scan:------------------------------------");
@@ -186,6 +189,8 @@ class CxOSAClient extends LegacyClient implements Scanner {
 
     @Override
     public Results getLatestScanResults()  {
+        osaResults = new OSAResults();
+        
         ensureProjectIdSpecified();
 
         log.info("----------------------------------Get CxOSA Last Results:--------------------------------");

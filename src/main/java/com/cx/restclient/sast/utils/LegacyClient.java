@@ -38,7 +38,7 @@ public abstract class LegacyClient {
 
     private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/";
     protected CxHttpClient httpClient;
-    protected final CxScanConfig config;
+    protected CxScanConfig config;
     protected Logger log;
     private String teamPath;
     protected long projectId;
@@ -49,6 +49,10 @@ public abstract class LegacyClient {
         this.log = log;
         initHttpClient(config, log);
         validateConfig(config);
+    }
+
+    public void setConfig(CxScanConfig config) {
+        this.config = config;
     }
 
     public void close(){
