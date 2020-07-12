@@ -4,21 +4,30 @@
 def workspace
 def cxCommonVersion = "${BUILD_TAG}"
 def vmName = "${BUILD_TAG}-CxSAST"
+def vmTemplate89 = "CxSDLC-Template-CxSAST-8-9"
 def ipAddress89
+def vmTemplate90 = "CxSDLC-Template-CxSAST-9-0"
 def ipAddress90
+def vmTemplate92 = "CxSDLC-Template-CxSAST-9-2"
 def ipAddress92
+def ram = "12000"
+def cpu = "4"
+def provider = "VMWARE"
+def decommissionPeriod = "1 hour"
+def vmwareNetwork = "Lab"
+def automationBranch = "9.0.0"
 
 pipeline {
     parameters {
-        string(name: "vmTemplate89",defaultValue: "CxSDLC-Template-CxSAST-8-9", description: "Template for 8.9 VM")
-        string(name: "vmTemplate90",defaultValue: "CxSDLC-Template-CxSAST-9-0", description: "Template for 9.0 VM")
-        string(name: "vmTemplate92",defaultValue: "CxSDLC-Template-CxSAST-9-2", description: "Template for 9.2 VM")
-        string(name: "ram",defaultValue: "12000", description: "Server memory")
-        string(name: "cpu",defaultValue: "4", description: "")
-        string(name: "provider",defaultValue: "VMWARE", description: "IAAS platform to be used")
-        string(name: "decommissionPeriod",defaultValue: "1 hour", description: "Decommission period")
-        string(name: "vmwareNetwork",defaultValue: "Lab", description: "vmware network for new VMs")
-        choice(name: 'automationBranch', choices: ['9.0.0', 'master', '9.2.0i','9.3.0-QM', '9.3-WO-NQM', '9.0.0-QM', '8.9.0', 'cd-add-resources'], description: ' master ->For CX 8.8.X 8.7.0 -> For CX 8.7.X 8.6.0 -> For CX 8.6.X')
+        string(name: "vmTemplate89",defaultValue: "${vmTemplate89}", description: "Template for 8.9 VM")
+        string(name: "vmTemplate90",defaultValue: "${vmTemplate90}", description: "Template for 9.0 VM")
+        string(name: "vmTemplate92",defaultValue: "${vmTemplate92}", description: "Template for 9.2 VM")
+        string(name: "ram",defaultValue: "${ram}", description: "Server memory")
+        string(name: "cpu",defaultValue: "${cpu}", description: "")
+        string(name: "provider",defaultValue: "${provider}", description: "IAAS platform to be used")
+        string(name: "decommissionPeriod",defaultValue: "${decommissionPeriod}", description: "Decommission period")
+        string(name: "vmwareNetwork",defaultValue: "${vmwareNetwork}", description: "vmware network for new VMs")
+        choice(name: 'automationBranch', choices: ['9.0.0', 'cd-add-resources'], description: 'automation branch')
     }
     agent { node { label 'CxSDLC-Slave' } }
     options {
