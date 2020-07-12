@@ -4,8 +4,11 @@
 def workspace
 def cxCommonVersion = "${BUILD_TAG}"
 def vmName = "${BUILD_TAG}-CxSAST"
+def vmTemplate89 = "CxSDLC-Template-CxSAST-8-9"
 def ipAddress89
+def vmTemplate89 = "CxSDLC-Template-CxSAST-9-0"
 def ipAddress90
+def vmTemplate89 = "CxSDLC-Template-CxSAST-9-2"
 def ipAddress92
 
 pipeline {
