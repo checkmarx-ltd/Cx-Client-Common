@@ -26,6 +26,7 @@ pipeline {
         timeout(time: 2, unit: 'HOURS')
         //skipDefaultCheckout()
         //just open new PR for checking
+        // number 2
     }
     stages {
 
