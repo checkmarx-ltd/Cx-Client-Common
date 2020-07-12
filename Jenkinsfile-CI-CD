@@ -47,6 +47,7 @@ pipeline {
                         sh "mvn resources:resources"
                         def commonPropertiesContent = readFile "./target/classes/common.properties"
                         cxCommonVersion = commonPropertiesContent.substring(10)
+                        sh "echo justForCheck"
                     }
                     workspace = pwd()
                     sh 'printenv'
