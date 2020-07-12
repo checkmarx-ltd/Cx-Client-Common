@@ -2,9 +2,8 @@ package com.cx.restclient.dto.scansummary;
 
 import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.DependencyScannerType;
-import com.cx.restclient.dto.ScanResults;
+
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.osa.dto.OSASummaryResults;
 import com.cx.restclient.sast.dto.SASTResults;
@@ -13,25 +12,26 @@ import com.cx.restclient.sca.dto.report.SCASummaryResults;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Collects errors from a provided ScanResults object, based on scan config.
  */
 public class ScanSummary {
-    private final DependencyScannerType dependencyScannerType;
+    private final Set<ScannerType> scannerTypes;
     private final List<ThresholdError> thresholdErrors = new ArrayList<>();
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     private final boolean policyViolated;
 
-    public ScanSummary(CxScanConfig config, ScanResults scanResults) {
-        dependencyScannerType = config.getDependencyScannerType();
+    public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, SCAResults scaResults) {
+        scannerTypes = config.getScannerTypes();
 
-        addSastThresholdErrors(config, scanResults.getSastResults());
-        addDependencyScanThresholdErrors(config, scanResults.getDependencyScanResults());
+        addSastThresholdErrors(config, sastResults);
+        addDependencyScanThresholdErrors(config, osaResults, scaResults);
 
-        addNewResultThresholdErrors(config, scanResults.getSastResults());
+        addNewResultThresholdErrors(config, sastResults);
 
-        policyViolated = determinePolicyViolation(config, scanResults);
+        policyViolated = determinePolicyViolation(config, sastResults, osaResults);
     }
 
     @Override
@@ -39,10 +39,8 @@ public class ScanSummary {
         StringBuilder result = new StringBuilder();
 
         for (ThresholdError error : thresholdErrors) {
-            String sourceForDisplay = (error.getSource() == ErrorSource.SAST) ? "SAST" : dependencyScannerType.toString();
-
-            result.append(String.format("%s %s severity results are above threshold. Results: %d. Threshold: %d.\n",
-                    sourceForDisplay,
+            // TODO: Include dependency scanner type into the message.
+            result.append(String.format("%s severity results are above threshold. Results: %d. Threshold: %d.\n",
                     error.getSeverity().toString().toLowerCase(),
                     error.getValue(),
                     error.getThreshold()));
@@ -93,10 +91,9 @@ public class ScanSummary {
         }
     }
 
-    private void addDependencyScanThresholdErrors(CxScanConfig config, DependencyScanResults dependencyScanResults) {
-        if (config.isOSAThresholdEffectivelyEnabled() && dependencyScanResults != null) {
-            SCAResults scaResults = dependencyScanResults.getScaResults();
-            OSAResults osaResults = dependencyScanResults.getOsaResults();
+    private void addDependencyScanThresholdErrors(CxScanConfig config, OSAResults osaResults, SCAResults scaResults ) {
+        if (config.isOSAThresholdEffectivelyEnabled() && (scaResults != null) || osaResults!= null) {
+
             int totalHigh = 0, totalMedium = 0, totalLow = 0;
             boolean hasSummary = false;
 
@@ -152,14 +149,13 @@ public class ScanSummary {
         }
     }
 
-    private static boolean determinePolicyViolation(CxScanConfig config, ScanResults scanResults) {
-        DependencyScanResults dependencyScanResults = scanResults.getDependencyScanResults();
-        SASTResults sastResults = scanResults.getSastResults();
+    private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults , OSAResults osaResults ) {
+
+
 
         return config.getEnablePolicyViolations() &&
-                ((dependencyScanResults != null &&
-                        dependencyScanResults.getOsaResults() != null &&
-                        dependencyScanResults.getOsaResults().getOsaPolicies().size() > 0) ||
+                ((osaResults != null &&
+                     osaResults.getOsaPolicies().size() > 0) ||
                         (sastResults != null && sastResults.getSastPolicies().size() > 0));
     }
 

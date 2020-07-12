@@ -1,16 +1,16 @@
 package com.cx.restclient;
 
-import com.cx.restclient.common.DependencyScanner;
+import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.LoginSettings;
-import com.cx.restclient.dto.PathFilter;
+
+import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
+
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.cx.restclient.sca.SCAWaiter;
 import com.cx.restclient.sca.dto.*;
@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * SCA - Software Composition Analysis - is the successor of OSA.
  */
-public class SCAClient implements DependencyScanner {
+public class SCAClient implements Scanner {
 
     public static final String ENCODING = StandardCharsets.UTF_8.name();
 
@@ -81,7 +81,7 @@ public class SCAClient implements DependencyScanner {
     private final CxScanConfig config;
 
     // This class uses its own instance of CxHttpClient, because SCA has a different base URL and Access Control server.
-    private final CxHttpClient httpClient;
+        private final CxHttpClient httpClient;
 
     private String projectId;
     private String scanId;
@@ -99,6 +99,8 @@ public class SCAClient implements DependencyScanner {
         httpClient.addCustomHeader(TENANT_HEADER_NAME, getScaConfig().getTenant());
     }
 
+
+    
     @Override
     public void init() {
         try {
@@ -112,12 +114,10 @@ public class SCAClient implements DependencyScanner {
     /**
      * Waits for SCA scan to finish, then gets scan results.
      *
-     * @param target scan results will be written into this object
-     *               ({@link com.cx.restclient.dto.DependencyScanResults#setScaResults}).
      * @throws CxClientException in case of a network error, scan failure or when scan is aborted by timeout.
      */
     @Override
-    public void waitForScanResults(DependencyScanResults target) {
+    public Results waitForScanResults() {
         log.info("------------------------------------Get CxSCA Results:-----------------------------------");
 
         log.info("Waiting for CxSCA scan to finish");
@@ -127,13 +127,13 @@ public class SCAClient implements DependencyScanner {
 
         SCAResults scaResult = retrieveScanResults();
         scaResult.setScaResultReady(true);
-        target.setScaResults(scaResult);
+        return scaResult; 
     }
 
     @Override
-    public String createScan(DependencyScanResults target) {
+    public Results initiateScan() {
         log.info("----------------------------------- Creating CxSCA Scan:------------------------------------");
-
+        SCAResults scaResults = new SCAResults();
         scanId = null;
         try {
             SourceLocationType locationType = getScaConfig().getSourceLocationType();
@@ -143,13 +143,16 @@ public class SCAClient implements DependencyScanner {
             } else {
                 response = submitSourcesFromLocalDir();
             }
-            scanId = extractScanIdFrom(response);
+            this.scanId = extractScanIdFrom(response);
             log.info(String.format("Scan started successfully. Scan ID: %s", scanId));
+
+            scaResults.setScanId(scanId);
+            return  scaResults;
+            
         } catch (IOException e) {
             throw new CxClientException("Error creating CxSCA scan.", e);
         }
-
-        return scanId;
+        
     }
 
     private static String extractScanIdFrom(HttpResponse response) {
@@ -261,9 +264,11 @@ public class SCAClient implements DependencyScanner {
     }
 
     @Override
-    public DependencyScanResults getLatestScanResults() {
+    public SCAResults getLatestScanResults() {
         // TODO: implement when someone actually needs this.
-        return null;
+
+        //WA for SCA async mode - do not fail in NullPointerException. New feature is opened for next release to support SCA async mode.
+        return new SCAResults();
     }
 
     void testConnection() throws IOException {
@@ -272,7 +277,7 @@ public class SCAClient implements DependencyScanner {
         getProjects();
     }
 
-    private void login() throws IOException {
+    public void login() throws IOException {
         log.info("Logging into CxSCA.");
         SCAConfig scaConfig = getScaConfig();
 
@@ -293,6 +298,27 @@ public class SCAClient implements DependencyScanner {
         httpClient.login(settings);
     }
 
+    public void close(){
+        if(httpClient != null) {
+            httpClient.close();
+        }
+    }
+    
+    /**
+     *  The following config properties are used:
+     *               scaConfig
+     *               proxyConfig
+     *               cxOrigin
+     *               disableCertificateValidation
+     */
+    public void testScaConnection()  {
+        try {
+            testConnection();
+        } catch (IOException e) {
+            throw new CxClientException(e);
+        }
+    }
+    
     private void resolveProject() throws IOException {
         String projectName = config.getProjectName();
         log.info(String.format("Getting project by name: '%s'", projectName));
@@ -345,25 +371,26 @@ public class SCAClient implements DependencyScanner {
         try {
             String reportId = getReportId();
 
-            SCAResults result = new SCAResults();
-            result.setScanId(scanId);
+            SCAResults scaResults = new SCAResults();
+            scaResults.setScanId(scanId);
 
             SCASummaryResults scanSummary = getSummaryReport(reportId);
-            result.setSummary(scanSummary);
+            scaResults.setSummary(scanSummary);
             printSummary(scanSummary, scanId);
 
             List<Finding> findings = getFindings(reportId);
-            result.setFindings(findings);
+            scaResults.setFindings(findings);
 
             List<Package> packages = getPackages(reportId);
-            result.setPackages(packages);
+            scaResults.setPackages(packages);
 
             String reportLink = getWebReportLink(reportId);
-            result.setWebReportLink(reportLink);
-            printWebReportLink(result);
-            result.setScaResultReady(true);
+            scaResults.setWebReportLink(reportLink);
+            printWebReportLink(scaResults);
+            scaResults.setScaResultReady(true);
             log.info("Retrieved SCA results successfully.");
-            return result;
+            
+            return scaResults;
         } catch (IOException e) {
             throw new CxClientException("Error retrieving CxSCA scan results.", e);
         }
