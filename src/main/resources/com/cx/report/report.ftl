@@ -944,22 +944,22 @@
                     Checkmarx scan found the following issues:
                 </p>
                 <ul>
-                    <#if config.sastEnabled && !sast.sastResultsReady>
+                    <#if config.isSastEnabled() && !sast.sastResultsReady>
                         <li>SAST Scan Failed</li>
                     </#if>
-                    <#if config.dependencyScannerType == "OSA" && !dependencyResult.resultReady>
+                    <#if config.isOsaEnabled() && !dependencyResult.resultReady>
                         <li>OSA Scan Failed</li>
                     </#if>
                     <#if policyViolated>
                         <li>${policyViolatedCount} ${policyLabel}  Violated</li>
                     </#if>
-                    <#if config.sastEnabled && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded) && (config.dependencyScannerType == "OSA" || config.dependencyScannerType == "SCA") && dependencyResult.resultReady && dependencyThresholdExceeded>
+                    <#if config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded) && (config.isOsaEnabled() || config.isScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
-                    <#elseif config.sastEnabled && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded)>
+                    <#elseif config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded)>
                         <li>Exceeded CxSAST Vulnerability Threshold</li>
-                    <#elseif config.dependencyScannerType == "OSA" && dependencyResult.resultReady && dependencyThresholdExceeded>
+                    <#elseif config.isOsaEnabled() && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxOSA Vulnerability Threshold</li>
-                    <#elseif config.dependencyScannerType == "SCA" && dependencyResult.resultReady && dependencyThresholdExceeded>
+                    <#elseif config.isScaEnabled() && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxSCA Vulnerability Threshold</li>
                     <#else>
                         <li>CxScan Failed</li>
@@ -1014,8 +1014,8 @@
         <div class="summary-section">
             <div id="summary-results" class="summary-results">
 
-            <#if config.sastEnabled>
-                <div class="sast-summary <#if config.dependencyScannerType == "NONE">chart-large</#if>" id="sast-summary">
+            <#if config.isSastEnabled()>
+                <div class="sast-summary <#if config.isSastEnabled() >chart-large</#if>" id="sast-summary">
                     <div class="summary-report-title sast">
                         <div class="summary-title-text sast">CxSAST Vulnerabilities Status</div>
                         <#if sast.sastResultsReady>
@@ -1311,10 +1311,10 @@
                 </div>
             </#if>
 
-            <#if config.dependencyScannerType == "OSA" || config.dependencyScannerType == "SCA">
-        <div class="osa-summary <#if !config.sastEnabled>sast-summary chart-large</#if>" id="osa-summary">
+            <#if config.isOsaEnabled()|| config.isScaEnabled() >
+        <div class="osa-summary <#if !config.isSastEnabled()>sast-summary chart-large</#if>" id="osa-summary">
             <div class="summary-report-title osa">
-                <div class="summary-title-text osa">Cx${config.dependencyScannerType} Vulnerabilities & Libraries</div>
+                <div class="summary-title-text osa">Cx${dependencyResult.scannerType} Vulnerabilities & Libraries</div>
                 <#if dependencyResult.resultReady>
                     <div id="osa-title-links" class="title-links">
                         <div class="link-to-result summary-link">
@@ -1855,7 +1855,7 @@
     </div>
 </div>-->
 
-    <#if config.sastEnabled && config.generateXmlReport &&sast.sastResultsReady>
+    <#if config.isSastEnabled() && config.generateXmlReport &&sast.sastResultsReady>
         <#if sast.high gt 0 || sast.medium gt 0 || sast.low gt 0>
             <div id="sast-full" class="sast-full full-results-section">
                 <div class="summary-table-row cxsast-full">
@@ -2239,13 +2239,13 @@
         </#if>
     </#if>
 
-    <#if config.dependencyScannerType != "NONE" && dependencyResult.resultReady>
+    <#if !config.isSastEnabled() && dependencyResult.resultReady>
         <#if dependencyResult.dependencyHighCVEReportTable?size gt 0 || dependencyResult.dependencyMediumCVEReportTable?size gt 0 || dependencyResult.dependencyLowCVEReportTable?size gt 0>
             <div id="osa-full" class="osa-full full-results-section">
                 <div class="summary-table-row cxosa-full">
                     <div class="title-column">
                         <div class="summary-title">
-                            <div class="sum1">Cx${config.dependencyScannerType}</div>
+                            <div class="sum1">Cx${dependencyResult.scannerType}</div>
                             <div class="sum1">Full Report</div>
                         </div>
                         <div class="detailed-report">
@@ -2581,7 +2581,7 @@
         </#if>
     </#if>
 
-    <#if (config.dependencyScannerType == "OSA" || config.dependencyScannerType == "SCA"|| config.sastEnabled) &&  policyViolated>
+    <#if (config.isOsaEnabled() || config.isScaEnabled()|| config.isSastEnabled()) &&  policyViolated>
 
         <#if policyViolatedCount gt 0>
         <div class="osa-full full-results-section">
