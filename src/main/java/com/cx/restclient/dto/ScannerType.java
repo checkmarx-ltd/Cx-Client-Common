@@ -1,17 +1,14 @@
 package com.cx.restclient.dto;
 
-public enum DependencyScannerType {
-    /**
-     * Indicates that dependency scan should not be performed.
-     */
-    NONE("None"),
-
+public enum ScannerType {
+    SAST("CxSAST"),
+    AST("AST"),
     OSA("CxOSA"),
     SCA("CxSCA");
 
     private final String displayName;
 
-    DependencyScannerType(String displayName) {
+    ScannerType(String displayName) {
         this.displayName = displayName;
     }
 

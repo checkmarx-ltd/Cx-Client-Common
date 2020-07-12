@@ -1,18 +1,11 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxShragaClient;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.DependencyScannerType;
+
+import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sca.dto.RemoteRepositoryInfo;
-import com.cx.restclient.sca.dto.SCAConfig;
-import com.cx.restclient.sca.dto.SCAResults;
 import com.cx.restclient.sca.dto.SourceLocationType;
-import com.cx.restclient.sca.dto.report.Finding;
-import com.cx.restclient.sca.dto.report.Package;
-import com.cx.restclient.sca.dto.report.SCASummaryResults;
-import com.cx.utility.TestingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -20,7 +13,6 @@ import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -33,19 +25,13 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
 
 @Slf4j
-public class ScaScanTests extends CommonClientTest {
-
-    // Storing the test project as an archive to avoid cluttering the current project
-    // and also to prevent false positives during a vulnerability scan of the current project.
-    private static final String PACKED_SOURCES_TO_SCAN = "sources-to-scan.zip";
-    private static final String PUBLIC_REPO_PROP = "sca.remoteRepoUrl.public";
-    private static final String PRIVATE_REPO_PROP = "sca.remoteRepoUrl.private";
+public class ScaScanTests extends AbstractScaScanTests {
+    
 
     @Test
     public void scan_localDirUpload() throws IOException, CxClientException {
@@ -58,24 +44,16 @@ public class ScaScanTests extends CommonClientTest {
             sourcesDir = extractTestProjectFromResources();
             config.setSourceDir(sourcesDir.toString());
 
-            DependencyScanResults scanResults = scanUsing(config);
+            ScanResults scanResults = runScan(config);
             verifyScanResults(scanResults);
         } finally {
             deleteDir(sourcesDir);
         }
     }
+    
 
     @Test
-    public void scan_remotePublicRepo() throws MalformedURLException {
-        scanRemoteRepo(PUBLIC_REPO_PROP, false);
-    }
-
-    @Test
-    public void scan_remotePrivateRepo() throws MalformedURLException {
-        scanRemoteRepo(PRIVATE_REPO_PROP, false);
-    }
-
-    @Test
+    @Ignore()
     public void scan_onPremiseAuthentication() throws MalformedURLException {
         scanRemoteRepo(PUBLIC_REPO_PROP, true);
     }
@@ -85,22 +63,14 @@ public class ScaScanTests extends CommonClientTest {
     public void runScaScanWithProxy() throws MalformedURLException, CxClientException {
         CxScanConfig config = initScaConfig(false);
         setProxy(config);
-        DependencyScanResults scanResults = scanUsing(config);
+        ScanResults scanResults = runScan(config);
         verifyScanResults(scanResults);
     }
 
-    private void scanRemoteRepo(String repoUrlProp, boolean useOnPremAuthentication) throws MalformedURLException {
-        CxScanConfig config = initScaConfig(useOnPremAuthentication);
-        config.getScaConfig().setSourceLocationType(SourceLocationType.REMOTE_REPOSITORY);
-        RemoteRepositoryInfo repoInfo = new RemoteRepositoryInfo();
+    protected void scanRemoteRepo(String repoUrlProp, boolean useOnPremAuthentication) throws MalformedURLException {
+        CxScanConfig config = initScaConfig(repoUrlProp, useOnPremAuthentication);
 
-        URL repoUrl = new URL(props.getProperty(repoUrlProp));
-        repoInfo.setUrl(repoUrl);
-
-        config.getScaConfig().setRemoteRepositoryInfo(repoInfo);
-
-
-        DependencyScanResults scanResults = scanUsing(config);
+        ScanResults scanResults = runScan(config);
         verifyScanResults(scanResults);
     }
 
@@ -183,76 +153,5 @@ public class ScaScanTests extends CommonClientTest {
                 .getResourceAsStream(srcResourceName);
     }
 
-    private DependencyScanResults scanUsing(CxScanConfig config) throws MalformedURLException, CxClientException {
-        CxShragaClient client = new CxShragaClient(config, log);
-        DependencyScanResults results = null;
-        try {
-            client.init();
-            client.createDependencyScan();
-            results = client.waitForDependencyScanResults();
-        } catch (Exception e) {
-            failOnException(e);
-        }
-        return results;
-    }
 
-    private void verifyScanResults(DependencyScanResults results) {
-        assertNotNull("Scan results are null.", results);
-        assertNull("OSA results are not null.", results.getOsaResults());
-
-        SCAResults scaResults = results.getScaResults();
-        assertNotNull("SCA results are null", scaResults);
-        assertTrue("Scan ID is empty", StringUtils.isNotEmpty(scaResults.getScanId()));
-        assertTrue("Web report link is empty", StringUtils.isNotEmpty(scaResults.getWebReportLink()));
-
-        verifySummary(scaResults.getSummary());
-        verifyPackages(scaResults);
-        verifyFindings(scaResults);
-    }
-
-    private void verifySummary(SCASummaryResults summary) {
-        assertNotNull("SCA summary is null", summary);
-        assertTrue("SCA hasn't found any packages.", summary.getTotalPackages() > 0);
-
-        boolean anyVulnerabilitiesDetected = summary.getHighVulnerabilityCount() > 0 ||
-                summary.getMediumVulnerabilityCount() > 0 ||
-                summary.getLowVulnerabilityCount() > 0;
-        assertTrue("Expected that at least one vulnerability would be detected.", anyVulnerabilitiesDetected);
-    }
-
-    private void verifyPackages(SCAResults scaResults) {
-        List<Package> packages = scaResults.getPackages();
-
-        assertNotNull("Packages are null.", packages);
-        assertFalse("Response contains no packages.", packages.isEmpty());
-
-        assertEquals("Actual package count differs from package count in summary.",
-                scaResults.getSummary().getTotalPackages(),
-                packages.size());
-    }
-
-    private void verifyFindings(SCAResults scaResults) {
-        List<Finding> findings = scaResults.getFindings();
-        SCASummaryResults summary = scaResults.getSummary();
-        assertNotNull("Findings are null", findings);
-        assertFalse("Response contains no findings.", findings.isEmpty());
-
-        // Special check due to a case-sensitivity issue.
-        boolean allSeveritiesAreSpecified = findings.stream()
-                .allMatch(finding -> finding.getSeverity() != null);
-
-        assertTrue("Some of the findings have severity set to null.", allSeveritiesAreSpecified);
-    }
-
-    private static CxScanConfig initScaConfig(boolean useOnPremAuthentication) {
-        CxScanConfig config = new CxScanConfig();
-        config.setDependencyScannerType(DependencyScannerType.SCA);
-        config.setSastEnabled(false);
-        config.setProjectName(props.getProperty("sca.projectName"));
-
-        SCAConfig sca = TestingUtils.getScaConfig(props, useOnPremAuthentication);
-        config.setScaConfig(sca);
-
-        return config;
-    }
 }
