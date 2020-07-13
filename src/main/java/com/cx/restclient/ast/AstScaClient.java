@@ -13,14 +13,17 @@ import com.cx.restclient.ast.dto.sca.report.Package;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-
-import com.cx.restclient.dto.*;
+import com.cx.restclient.dto.LoginSettings;
+import com.cx.restclient.dto.PathFilter;
+import com.cx.restclient.dto.Results;
+import com.cx.restclient.dto.ScanResults;
+import com.cx.restclient.dto.ScannerType;
+import com.cx.restclient.dto.SourceLocationType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
-
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -62,7 +65,6 @@ public class AstScaClient extends AstClient implements Scanner {
             // e.g. "High" (in JSON) -> Severity.HIGH (in Java).
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
 
-    private static final String CLOUD_ACCESS_CONTROL_BASE_URL = "https://platform.checkmarx.net";
 
     private String projectId;
     private String scanId;
@@ -253,15 +255,14 @@ public class AstScaClient extends AstClient implements Scanner {
         LoginSettings settings = new LoginSettings();
 
         String acUrl = scaConfig.getAccessControlUrl();
-        boolean isAccessControlInCloud = (acUrl != null && acUrl.startsWith(CLOUD_ACCESS_CONTROL_BASE_URL));
-        log.info(isAccessControlInCloud ? "Using cloud authentication." : "Using on-premise authentication.");
 
         settings.setAccessControlBaseUrl(acUrl);
         settings.setUsername(scaConfig.getUsername());
         settings.setPassword(scaConfig.getPassword());
         settings.setTenant(scaConfig.getTenant());
 
-        ClientType clientType = isAccessControlInCloud ? ClientType.SCA_CLI : ClientType.RESOURCE_OWNER;
+        ClientTypeResolver resolver = new ClientTypeResolver();
+        ClientType clientType = resolver.determineClientType(acUrl);
         settings.setClientTypeForPasswordAuth(clientType);
 
         httpClient.login(settings);
@@ -275,7 +276,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     /**
      * The following config properties are used:
-     * scaConfig
+     * astScaConfig
      * proxyConfig
      * cxOrigin
      * disableCertificateValidation

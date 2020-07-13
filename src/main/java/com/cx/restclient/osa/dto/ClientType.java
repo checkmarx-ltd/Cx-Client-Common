@@ -1,14 +1,18 @@
 package com.cx.restclient.osa.dto;
 
-public enum ClientType {
+public class ClientType {
 
-    RESOURCE_OWNER("resource_owner_client", "sast_rest_api cxarm_api",
-            "014DF517-39D1-4453-B7B3-9930C563627C"),
+    public static final ClientType RESOURCE_OWNER = new ClientType("resource_owner_client",
+            "sast_rest_api cxarm_api",
+            "014DF517-39D1-4453-B7B3-9930C563627C");
 
-    CLI("cli_client", "sast_rest_api offline_access",
-            "B9D84EA8-E476-4E83-A628-8A342D74D3BD"),
+    public static final ClientType CLI = new ClientType("cli_client",
+            "sast_rest_api offline_access",
+            "B9D84EA8-E476-4E83-A628-8A342D74D3BD");
 
-    SCA_CLI("sca_resource_owner", "sca_api offline_access", "");
+    public static final ClientType SCA_CLI = new ClientType("sca_resource_owner",
+            "sca_api offline_access",
+            "");
 
     private String clientId;
     private String scopes;
