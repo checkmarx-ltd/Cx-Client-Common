@@ -18,7 +18,7 @@ public class ClientType {
     private String scopes;
     private String clientSecret;
 
-    ClientType(String clientId, String scopes, String clientSecret) {
+    public ClientType(String clientId, String scopes, String clientSecret) {
         this.clientId = clientId;
         this.scopes = scopes;
         this.clientSecret = clientSecret;
