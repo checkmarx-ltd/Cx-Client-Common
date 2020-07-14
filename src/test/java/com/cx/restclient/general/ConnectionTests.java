@@ -1,15 +1,17 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxShragaClient;
+import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
-import com.cx.restclient.sca.dto.SCAConfig;
+import com.cx.restclient.ast.dto.sca.AstScaConfig;
 import com.cx.utility.TestingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 @Slf4j
 public class ConnectionTests extends CommonClientTest {
@@ -18,7 +20,7 @@ public class ConnectionTests extends CommonClientTest {
     public void ssoConnectionTest() {
         CxScanConfig config = initConfig();
         try {
-            CxShragaClient client = new CxShragaClient(config, log);
+            CxClientDelegator client = new CxClientDelegator(config, log);
             client.init();
         } catch (IOException | CxClientException e) {
             e.printStackTrace();
@@ -31,11 +33,13 @@ public class ConnectionTests extends CommonClientTest {
     public void scaConnectionTest() {
         CxScanConfig config = new CxScanConfig();
         config.setCxOrigin("common");
-        SCAConfig scaConfig = TestingUtils.getScaConfig(props, false);
-        config.setScaConfig(scaConfig);
+        AstScaConfig scaConfig = TestingUtils.getScaConfig(props, false);
+        config.setAstScaConfig(scaConfig);
+        config.addScannerType(ScannerType.AST_SCA);
         try {
-            CxShragaClient.testScaConnection(config, log);
-        } catch (CxClientException e) {
+            CxClientDelegator delegator = new CxClientDelegator(config, log);
+            delegator.getScaClient().testScaConnection();
+        } catch (CxClientException | MalformedURLException e) {
             failOnException(e);
         }
     }

@@ -2,21 +2,16 @@ package com.cx.restclient.common.summary;
 
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
-import com.cx.restclient.dto.DependencyScanResults;
-import com.cx.restclient.dto.DependencyScannerType;
-import com.cx.restclient.dto.ScanResults;
+
 import com.cx.restclient.dto.scansummary.ScanSummary;
-import com.cx.restclient.exception.CxClientException;
-import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.osa.dto.OSAResults;
-import com.cx.restclient.osa.dto.OSASummaryResults;
 import com.cx.restclient.sast.dto.SASTResults;
-import com.cx.restclient.sca.dto.SCAResults;
-import com.cx.restclient.sca.dto.report.SCASummaryResults;
+import com.cx.restclient.ast.dto.sca.AstScaResults;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.Version;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -25,38 +20,37 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class SummaryUtils {
+    private SummaryUtils() {
+    }
 
-    public static String generateSummary(SASTResults sastResults, DependencyScanResults dependencyScanResults, CxScanConfig config) throws IOException, TemplateException {
-        OSAResults osaResults = dependencyScanResults.getOsaResults();
-        SCAResults scaResults = dependencyScanResults.getScaResults();
+    public static String generateSummary(SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults, CxScanConfig config) throws IOException, TemplateException {
+
         Configuration cfg = new Configuration(new Version("2.3.23"));
         cfg.setClassForTemplateLoading(SummaryUtils.class, "/com/cx/report");
         Template template = cfg.getTemplate("report.ftl");
 
-        Map<String, Object> templateData = new HashMap<String, Object>();
+        Map<String, Object> templateData = new HashMap<>();
         templateData.put("config", config);
-        templateData.put("sast", sastResults);
+        templateData.put("sast", sastResults != null ? sastResults : new SASTResults());
 
         // TODO: null value for "osa" should be handled inside the template.
         templateData.put("osa", osaResults != null ? osaResults : new OSAResults());
-        templateData.put("sca", scaResults != null ? scaResults : new SCAResults());
+        templateData.put("sca", scaResults != null ? scaResults : new AstScaResults());
 
-        DependencyResult dependencyResult = resolveDependencyResult(osaResults,scaResults);
+        DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults,scaResults);
 
-        templateData.put("dependencyResult", dependencyResult !=null ? dependencyResult : new DependencyResult());
+        templateData.put("dependencyResult", dependencyScanResult !=null ? dependencyScanResult : new DependencyScanResult());
 
-        ScanResults scanResults = new ScanResults();
-        scanResults.setSastResults(sastResults);
-        scanResults.setDependencyScanResults(dependencyScanResults);
-        ScanSummary scanSummary = new ScanSummary(config, scanResults);
+
+        ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
 
         //calculated params:
 
         boolean buildFailed = false;
         boolean policyViolated = false;
-        int policyViolatedCount = 0;
+        int policyViolatedCount;
         //sast:
-        if (config.getSastEnabled()) {
+        if (config.isSastEnabled()) {
             if (sastResults.isSastResultsReady()) {
                 boolean sastThresholdExceeded = scanSummary.isSastThresholdExceeded();
                 boolean sastNewResultsExceeded = scanSummary.isSastThresholdForNewResultsExceeded();
@@ -127,7 +121,7 @@ public abstract class SummaryUtils {
                 buildFailed |= thresholdExceeded;
 
                 //calculate sca bars:
-                SCASummaryResults scaSummaryResults = scaResults.getSummary();
+                AstScaSummaryResults scaSummaryResults = scaResults.getSummary();
                 int scaHigh = scaSummaryResults.getHighVulnerabilityCount();
                 int scaMedium = scaSummaryResults.getMediumVulnerabilityCount();
                 int scaLow = scaSummaryResults.getLowVulnerabilityCount();
@@ -146,22 +140,20 @@ public abstract class SummaryUtils {
             }
 */
 
-        if (config.getDependencyScannerType() == DependencyScannerType.OSA || config.getDependencyScannerType() == DependencyScannerType
-        .SCA) {
-            if (dependencyResult!=null && dependencyResult.isResultReady()) {
+        if (config.isOsaEnabled() || config.isAstScaEnabled()) {
+            if (dependencyScanResult !=null && dependencyScanResult.isResultReady()) {
                 boolean thresholdExceeded = scanSummary.isOsaThresholdExceeded();
                 templateData.put("dependencyThresholdExceeded", thresholdExceeded);
-                if(config.getSastEnabled()){
+                if(config.isSastEnabled()){
                     buildFailed |= thresholdExceeded || buildFailed;
                 }else{
                     buildFailed |= thresholdExceeded;
                 }
 
                 //calculate dependency results bars:
-                //DependencyResult dependencyResult1 = dependencyResult;
-                int dependencyHigh = dependencyResult.getHighVulnerability();
-                int dependencyMedium = dependencyResult.getMediumVulnerability();
-                int dependencyLow = dependencyResult.getLowVulnerability();
+                int dependencyHigh = dependencyScanResult.getHighVulnerability();
+                int dependencyMedium = dependencyScanResult.getMediumVulnerability();
+                int dependencyLow = dependencyScanResult.getLowVulnerability();
                 float dependencyMaxCount = Math.max(dependencyHigh, Math.max(dependencyMedium,dependencyLow));
                 float dependencyBarNorm = dependencyMaxCount * 10f / 9f;
 
@@ -180,27 +172,24 @@ public abstract class SummaryUtils {
 
 
         if (config.getEnablePolicyViolations()) {
-            Map<String, String> policies = new HashMap<String, String>();
+            Map<String, String> policies = new HashMap<>();
 
-            if (config.getSastEnabled() && sastResults.getSastPolicies().size() > 0) {
+            if (config.isSastEnabled() && !sastResults.getSastPolicies().isEmpty()) {
                 policyViolated = true;
                 policies = sastResults.getSastPolicies().stream().collect(
                         Collectors.toMap(Policy::getPolicyName,
                                 Policy::getRuleName,
-                                (left, right) -> {
-                                    return left;
-                                }
+                                (left, right) -> left
                         ));
             }
 
-            if (config.getDependencyScannerType() == DependencyScannerType.OSA &&
-                    osaResults.getOsaPolicies().size() > 0) {
+            if (Boolean.TRUE.equals(config.isOsaEnabled())
+                    && osaResults != null
+                    && CollectionUtils.isNotEmpty(osaResults.getOsaPolicies())) {
                 policyViolated = true;
                 policies.putAll(osaResults.getOsaPolicies().stream().collect(
                         Collectors.toMap(Policy::getPolicyName, Policy::getRuleName,
-                                (left, right) -> {
-                                    return left;
-                                })));
+                                (left, right) -> left)));
             }
 
             policyViolatedCount = policies.size();
@@ -220,16 +209,16 @@ public abstract class SummaryUtils {
         return writer.toString();
     }
 
-    private static DependencyResult resolveDependencyResult(OSAResults osaResults, SCAResults scaResults){
-        DependencyResult dependencyResult;
+    private static DependencyScanResult resolveDependencyResult(OSAResults osaResults, AstScaResults scaResults){
+        DependencyScanResult dependencyScanResult;
         if(osaResults!=null){
-            dependencyResult = new  DependencyResult(osaResults);
+            dependencyScanResult = new DependencyScanResult(osaResults);
         }else if(scaResults!=null){
-            dependencyResult = new DependencyResult(scaResults);
+            dependencyScanResult = new DependencyScanResult(scaResults);
         }else{
-            dependencyResult = null;
+            dependencyScanResult = null;
         }
-        return dependencyResult;
+        return dependencyScanResult;
     }
 
     private static float calculateNewBarHeight(int newCount, int count, float totalHeight) {

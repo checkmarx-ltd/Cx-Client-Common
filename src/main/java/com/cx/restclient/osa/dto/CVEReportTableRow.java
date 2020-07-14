@@ -1,6 +1,6 @@
 package com.cx.restclient.osa.dto;
 
-import com.cx.restclient.sca.dto.report.Finding;
+import com.cx.restclient.ast.dto.sca.report.Finding;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.Serializable;

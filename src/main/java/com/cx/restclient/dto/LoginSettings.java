@@ -1,11 +1,13 @@
 package com.cx.restclient.dto;
 
 import com.cx.restclient.osa.dto.ClientType;
+import lombok.NoArgsConstructor;
 import org.apache.http.cookie.Cookie;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor
 public class LoginSettings {
     private String accessControlBaseUrl;
     private String username;

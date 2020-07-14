@@ -1,8 +1,10 @@
 package com.cx.restclient.general;
 
-import com.cx.restclient.CxShragaClient;
+import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.DependencyScannerType;
+
+import com.cx.restclient.dto.ScanResults;
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sast.dto.SASTResults;
 import lombok.extern.slf4j.Slf4j;
@@ -30,36 +32,9 @@ public class SastScanTests extends CommonClientTest {
     }
 
     private void runSastScan(CxScanConfig config) throws MalformedURLException, CxClientException {
-        CxShragaClient client = new CxShragaClient(config, log);
-        try {
-            client.init();
-            client.createSASTScan();
-            SASTResults results = client.waitForSASTResults();
-            Assert.assertNotNull(results);
-            Assert.assertNotEquals("Expected valid SAST scan id", 0, results.getScanId());
-        } catch (Exception e) {
-            failOnException(e);
-        }
+        ScanResults results = runScan(config);
+        Assert.assertNotEquals("Expected valid SAST scan id", 0, results.getSastResults().getScanId());
     }
 
-    private CxScanConfig initSastConfig() {
-        CxScanConfig config = new CxScanConfig();
-        config.setSastEnabled(true);
-        config.setReportsDir(new File("C:\\report"));
-        config.setSourceDir(props.getProperty("sastSource"));
-        config.setUsername(props.getProperty("username"));
-        config.setPassword(props.getProperty("password"));
-        config.setUrl(props.getProperty("serverUrl"));
-        config.setCxOrigin("common");
-        config.setProjectName("sastOnlyScan");
-        config.setPresetName("Default");
-        config.setTeamPath("\\CxServer");
-        config.setSynchronous(true);
-        config.setGeneratePDFReport(true);
-        config.setDependencyScannerType(DependencyScannerType.NONE);
-        config.setPresetName("Default");
-//        config.setPresetId(7);
-
-        return config;
-    }
+ 
 }

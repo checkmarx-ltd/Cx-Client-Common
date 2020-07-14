@@ -1,10 +1,12 @@
 package com.cx.restclient.configuration;
 
+import com.cx.restclient.ast.dto.sast.AstSastConfig;
 import com.cx.restclient.dto.*;
-import com.cx.restclient.sca.dto.SCAConfig;
 import com.cx.restclient.sast.dto.ReportType;
+import com.cx.restclient.ast.dto.sca.AstScaConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.cookie.Cookie;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
@@ -13,8 +15,6 @@ import java.util.*;
  * Created by galn on 21/12/2016.
  */
 public class CxScanConfig implements Serializable {
-
-    private Boolean sastEnabled = false;
 
     private String cxOrigin;
     private CxVersion cxVersion;
@@ -104,10 +104,13 @@ public class CxScanConfig implements Serializable {
     private Integer maxZipSize;
     private String defaultProjectName;
 
-    private SCAConfig scaConfig;
-    private DependencyScannerType dependencyScannerType;
-    private List<Cookie> sessionCookies = new ArrayList<>();
+    private AstScaConfig astScaConfig;
+    private AstSastConfig astSastConfig;
+
+    private final Set<ScannerType> scannerTypes = new HashSet<>();
+    private final List<Cookie> sessionCookies = new ArrayList<>();
     private ProxyConfig proxyConfig;
+
 
     public CxScanConfig() {
     }
@@ -127,12 +130,28 @@ public class CxScanConfig implements Serializable {
         this.disableCertificateValidation = disableCertificateValidation;
     }
 
-    public Boolean getSastEnabled() {
-        return sastEnabled;
+    public boolean isSastEnabled() {
+        return scannerTypes.contains(ScannerType.SAST) ;
     }
 
-    public void setSastEnabled(Boolean sastEnabled) {
-        this.sastEnabled = sastEnabled;
+    public boolean isOsaEnabled() {
+        return scannerTypes.contains(ScannerType.OSA) ;
+    }
+
+    public boolean isAstScaEnabled() {
+        return scannerTypes.contains(ScannerType.AST_SCA) ;
+    }
+
+    public boolean isAstSastEnabled() {
+        return scannerTypes.contains(ScannerType.AST_SAST) ;
+    }
+
+    public void setSastEnabled(boolean sastEnabled) {
+        if (sastEnabled) {
+            scannerTypes.add(ScannerType.SAST);
+        } else {
+            scannerTypes.remove(ScannerType.SAST);
+        }
     }
 
     public String getCxOrigin() {
@@ -495,11 +514,11 @@ public class CxScanConfig implements Serializable {
     }
 
     public boolean isSASTThresholdEffectivelyEnabled() {
-        return getSastEnabled() && getSastThresholdsEnabled() && (getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null);
+        return isSastEnabled() && getSastThresholdsEnabled() && (getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null);
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
-        return getDependencyScannerType() != DependencyScannerType.NONE &&
+        return (isOsaEnabled() || isAstScaEnabled()) &&
                 getOsaThresholdsEnabled() &&
                 (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
     }
@@ -716,29 +735,37 @@ public class CxScanConfig implements Serializable {
         reports.put(ReportType.RTF, rtfReportPath);
     }
 
-    public SCAConfig getScaConfig() {
-        return scaConfig;
+    public AstScaConfig getAstScaConfig() {
+        return astScaConfig;
     }
 
-    public void setScaConfig(SCAConfig scaConfig) {
-        this.scaConfig = scaConfig;
+    public void setAstScaConfig(AstScaConfig astScaConfig) {
+        this.astScaConfig = astScaConfig;
     }
 
-    public DependencyScannerType getDependencyScannerType() {
-        return dependencyScannerType;
+    public AstSastConfig getAstSastConfig() {
+        return astSastConfig;
     }
 
-    public void setDependencyScannerType(DependencyScannerType scannerType) {
-        this.dependencyScannerType = scannerType;
+    public void setAstSastConfig(AstSastConfig astConfig) {
+        this.astSastConfig = astConfig;
+    }
+
+    public Set<ScannerType> getScannerTypes() {
+        return scannerTypes;
+    }
+
+    public void addScannerType(ScannerType scannerType) {
+        this.scannerTypes.add(scannerType);
     }
 
     /**
-     * SAST and OSA are currently deployed on-premises, whereas SCA is deployed in a cloud.
+     * SAST and OSA are currently deployed on-premises, whereas AST-SCA is deployed in a cloud.
      * If SAST or OSA are enabled, some of the config properties are mandatory (url, username, password etc).
      * Otherwise, these properties are optional.
      */
     public boolean isSastOrOSAEnabled() {
-        return sastEnabled || dependencyScannerType == DependencyScannerType.OSA;
+        return isSastEnabled() || isOsaEnabled();
     }
 
     public ProxyConfig getProxyConfig() {
@@ -752,6 +779,7 @@ public class CxScanConfig implements Serializable {
     public void addCookie(Cookie cookie){
         this.sessionCookies.add(cookie);
     }
+
     public List<Cookie> getSessionCookie() {
         return this.sessionCookies;
     }
