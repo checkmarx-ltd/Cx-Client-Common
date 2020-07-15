@@ -1,18 +1,17 @@
 package com.cx.restclient.ast;
 
-import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.ClientType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
@@ -30,6 +29,7 @@ public class ClientTypeResolver {
 
     /**
      * Determines which scopes and client secret must be used for SCA login.
+     *
      * @param accessControlServerBaseUrl used to determine scopes supported by this server.
      * @return client settings for the provided AC server.
      */
@@ -37,16 +37,22 @@ public class ClientTypeResolver {
         String fullUrl = getFullUrl(accessControlServerBaseUrl);
         JsonNode response = getConfigResponse(fullUrl);
         Set<String> supportedScopes = getSupportedScopes(response);
-        Set<String> scopesForAuth;
-        String clientSecret;
+        Set<String> scopesToUse = getScopesForAuth(supportedScopes);
+
+        String clientSecret = scopesToUse.equals(scopesForOnPremAuth) ? ClientType.RESOURCE_OWNER.getClientSecret() : "";
+
+        String scopesForRequest = String.join(" ", scopesToUse);
+        return new ClientType(ClientType.RESOURCE_OWNER.getClientId(), scopesForRequest, clientSecret);
+    }
+
+    private Set<String> getScopesForAuth(Set<String> supportedScopes) {
+        Set<String> result;
         if (supportedScopes.containsAll(scopesForCloudAuth)) {
             log.info("Using cloud authentication.");
-            scopesForAuth = scopesForCloudAuth;
-            clientSecret = "";
+            result = scopesForCloudAuth;
         } else if (supportedScopes.containsAll(scopesForOnPremAuth)) {
             log.info("Using on-premise authentication.");
-            scopesForAuth = scopesForOnPremAuth;
-            clientSecret = ClientType.RESOURCE_OWNER.getClientSecret();
+            result = scopesForOnPremAuth;
         } else {
             String message = String.format("Access control server doesn't support the necessary scopes (either %s or %s)." +
                             " It only supports the following scopes: %s.",
@@ -56,17 +62,14 @@ public class ClientTypeResolver {
 
             throw new CxClientException(message);
         }
-
-        log.debug(String.format("Using scopes: %s", scopesForAuth));
-
-        String scopesForRequest = String.join(" ", scopesForAuth);
-        return new ClientType(ClientType.RESOURCE_OWNER.getClientId(), scopesForRequest, clientSecret);
+        log.debug(String.format("Using scopes: %s", result));
+        return result;
     }
 
     private JsonNode getConfigResponse(String fullUrl) {
         HttpGet request = new HttpGet(fullUrl);
-        try (CloseableHttpClient apacheClient = HttpClients.createDefault()) {
-            HttpResponse response = apacheClient.execute(request);
+        try (CloseableHttpClient apacheClient = HttpClients.createDefault();
+             CloseableHttpResponse response = apacheClient.execute(request)) {
             return objectMapper.readTree(response.getEntity().getContent());
         } catch (Exception e) {
             throw new CxClientException("Error getting OpenID config response.", e);
@@ -84,13 +87,9 @@ public class ClientTypeResolver {
     }
 
     private static String getFullUrl(String baseUrl) {
-        try {
-            log.debug(String.format("Getting full OpenID configuration URL using the base URL: %s", baseUrl));
-            String result = UrlUtils.parseURLToString(baseUrl, WELL_KNOWN_CONFIG_PATH);
-            log.debug("Full URL: {}", result);
-            return result;
-        } catch (MalformedURLException e) {
-            throw new CxClientException("Invalid URL is provided.", e);
-        }
+        String result = StringUtils.appendIfMissing(baseUrl, "/") + WELL_KNOWN_CONFIG_PATH;
+        log.debug(String.format("Using OpenID configuration URL: %s", result));
+        return result;
+
     }
 }
