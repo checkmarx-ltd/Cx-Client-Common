@@ -28,8 +28,13 @@ public class ClientTypeResolver {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ClientType determineClientType(String discoveryBaseUrl) {
-        String fullUrl = getFullUrl(discoveryBaseUrl);
+    /**
+     * Determines which scopes and client secret must be used for SCA login.
+     * @param accessControlServerBaseUrl used to determine scopes supported by this server.
+     * @return client settings for the provided AC server.
+     */
+    public ClientType determineClientType(String accessControlServerBaseUrl) {
+        String fullUrl = getFullUrl(accessControlServerBaseUrl);
         JsonNode response = getConfigResponse(fullUrl);
         Set<String> supportedScopes = getSupportedScopes(response);
         Set<String> scopesForAuth;

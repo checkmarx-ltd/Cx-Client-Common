@@ -27,7 +27,7 @@ import java.util.UUID;
 import static org.junit.Assert.fail;
 
 @Slf4j
-public class AstScaTests extends AbstractScaScanTests {
+public class AstScaTests extends ScaTestsBase {
     @Test
     public void scan_localDirUpload() throws IOException, CxClientException {
         CxScanConfig config = initScaConfig(false);

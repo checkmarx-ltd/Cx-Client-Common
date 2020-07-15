@@ -102,12 +102,12 @@ public abstract class CommonClientTest {
         CxClientDelegator client = new CxClientDelegator(config, log);
         try {
             client.init();
-            System.out.println("Initiate scan for the following scanners: " + config.getScannerTypes());
+            log.info("Initiate scan for the following scanners: " + config.getScannerTypes());
             client.initiateScan();
-            System.out.println("Waiting for results of " + config.getScannerTypes());
+            log.info("Waiting for results of " + config.getScannerTypes());
             ScanResults results =  client.waitForScanResults();
             Assert.assertNotNull(results);
-            System.out.println("Results retrieved" );
+            log.info("Results retrieved" );
             return results;
         } catch (Exception e) {
             failOnException(e);
@@ -121,7 +121,7 @@ public abstract class CommonClientTest {
     
     protected CxScanConfig initOsaConfig(CxScanConfig config, String projectName) {
 
-        System.out.println("Scan ProjectName " + projectName);
+        log.info("Scan ProjectName " + projectName);
         config.addScannerType(ScannerType.OSA);
         config.setSourceDir(props.getProperty("dependencyScanSourceDir"));
         config.setReportsDir(new File("C:\\report"));
