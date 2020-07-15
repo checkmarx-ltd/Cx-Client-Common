@@ -86,7 +86,7 @@ pipeline {
         stage('System Tests') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") && CHANGE_TARGET == 'master'
+                    BRANCH_NAME == 'master' //|| BRANCH_NAME.startsWith("PR-") && CHANGE_TARGET == 'master'
                 }
             }
             parallel {
