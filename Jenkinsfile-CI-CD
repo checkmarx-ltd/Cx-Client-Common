@@ -299,7 +299,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            sh "ghr -t ${GITHUB_TOKEN} -u checkmarx-ltd -n ${cxCommonVersion} -r Cx-Client-Common -c ${GIT_PREVIOUS_COMMIT} -delete ${cxCommonVersion} ./target/cx-client-common-${cxCommonVersion}.jar"
+                            sh "ghr -t ${GITHUB_TOKEN} -u checkmarx-ltd -n ${cxCommonVersion} -r Cx-Client-Common -c ${GIT_COMMIT} -delete ${cxCommonVersion} ./target/cx-client-common-${cxCommonVersion}.jar"
                         }
                     }
                 }
