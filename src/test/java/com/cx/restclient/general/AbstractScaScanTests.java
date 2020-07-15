@@ -20,25 +20,11 @@ import static org.junit.Assert.*;
 
 @Slf4j
 public  abstract class AbstractScaScanTests extends CommonClientTest {
-
     // Storing the test project as an archive to avoid cluttering the current project
     // and also to prevent false positives during a vulnerability scan of the current project.
     protected static final String PACKED_SOURCES_TO_SCAN = "sources-to-scan.zip";
     protected static final String PUBLIC_REPO_PROP = "astSca.remoteRepoUrl.public";
     protected static final String PRIVATE_REPO_PROP = "astSca.remoteRepoUrl.private";
-
-
-    @Test
-    public void scan_remotePublicRepo() throws MalformedURLException {
-        scanRemoteRepo(PUBLIC_REPO_PROP, false);
-    }
-
-    @Test
-    public void scan_remotePrivateRepo() throws MalformedURLException {
-        scanRemoteRepo(PRIVATE_REPO_PROP, false);
-    }
-
-    protected abstract void scanRemoteRepo(String privateRepoProp, boolean useOnPremAuthentication) throws MalformedURLException;
 
     protected CxScanConfig initScaConfig(String repoUrlProp, boolean useOnPremAuthentication) throws MalformedURLException {
         CxScanConfig config = initScaConfig(useOnPremAuthentication);
@@ -54,7 +40,6 @@ public  abstract class AbstractScaScanTests extends CommonClientTest {
     }
 
     protected void verifyScanResults(ScanResults results) {
-        
         assertNotNull("Scan results are null.", results);
         assertNull("OSA results are not null.", results.getOsaResults());
 
@@ -65,7 +50,6 @@ public  abstract class AbstractScaScanTests extends CommonClientTest {
         assertTrue("Scan ID is empty", StringUtils.isNotEmpty(scaResults.getScanId()));
         assertTrue("Web report link is empty", StringUtils.isNotEmpty(scaResults.getWebReportLink()));
 
-        
         verifySummary(scaResults.getSummary());
         verifyPackages(scaResults);
         verifyFindings(scaResults);
