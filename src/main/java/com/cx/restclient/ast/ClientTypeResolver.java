@@ -20,22 +20,25 @@ import java.util.Set;
 
 @Slf4j
 public class ClientTypeResolver {
+    private static final String WELL_KNOWN_CONFIG_PATH = "identity/.well-known/openid-configuration";
+    private static final String SCOPES_JSON_PROP = "scopes_supported";
+
     private static final Set<String> scopesForCloudAuth = new HashSet<>(Arrays.asList("sca_api", "offline_access"));
     private static final Set<String> scopesForOnPremAuth = new HashSet<>(Arrays.asList("sast_rest_api", "cxarm_api"));
-    private static final String WELL_KNOWN_CONFIG_PATH = "identity/.well-known/openid-configuration";
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public ClientType determineClientType(String discoveryBaseUrl) {
         String fullUrl = getFullUrl(discoveryBaseUrl);
         JsonNode response = getConfigResponse(fullUrl);
-        Set<String> scopesSupported = getScopesSupported(response);
+        Set<String> supportedScopes = getSupportedScopes(response);
         Set<String> scopesForAuth;
         String clientSecret;
-        if (scopesSupported.containsAll(scopesForCloudAuth)) {
+        if (supportedScopes.containsAll(scopesForCloudAuth)) {
             log.info("Using cloud authentication.");
             scopesForAuth = scopesForCloudAuth;
             clientSecret = "";
-        } else if (scopesSupported.containsAll(scopesForOnPremAuth)) {
+        } else if (supportedScopes.containsAll(scopesForOnPremAuth)) {
             log.info("Using on-premise authentication.");
             scopesForAuth = scopesForOnPremAuth;
             clientSecret = ClientType.RESOURCE_OWNER.getClientSecret();
@@ -44,10 +47,12 @@ public class ClientTypeResolver {
                             " It only supports the following scopes: %s.",
                     scopesForCloudAuth,
                     scopesForOnPremAuth,
-                    scopesSupported);
+                    supportedScopes);
 
             throw new CxClientException(message);
         }
+
+        log.debug(String.format("Using scopes: %s", scopesForAuth));
 
         String scopesForRequest = String.join(" ", scopesForAuth);
         return new ClientType(ClientType.RESOURCE_OWNER.getClientId(), scopesForRequest, clientSecret);
@@ -63,24 +68,24 @@ public class ClientTypeResolver {
         }
     }
 
-    private static Set<String> getScopesSupported(JsonNode response) {
+    private static Set<String> getSupportedScopes(JsonNode response) {
         Set<String> result = null;
         if (response != null) {
-            TypeReference<Set<String>> ref = new TypeReference<Set<String>>() {
+            TypeReference<Set<String>> typeRef = new TypeReference<Set<String>>() {
             };
-            result = objectMapper.convertValue(response.get("scopes_supported"), ref);
+            result = objectMapper.convertValue(response.get(SCOPES_JSON_PROP), typeRef);
         }
         return Optional.ofNullable(result).orElse(new HashSet<>());
     }
 
     private static String getFullUrl(String baseUrl) {
         try {
+            log.debug(String.format("Getting full OpenID configuration URL using the base URL: %s", baseUrl));
             String result = UrlUtils.parseURLToString(baseUrl, WELL_KNOWN_CONFIG_PATH);
-            log.debug("Using discovery URL: {}", result);
+            log.debug("Full URL: {}", result);
             return result;
         } catch (MalformedURLException e) {
-            String message = String.format("Invalid base URL for OpenID configuration: %s", baseUrl);
-            throw new CxClientException(message, e);
+            throw new CxClientException("Invalid URL is provided.", e);
         }
     }
 }
