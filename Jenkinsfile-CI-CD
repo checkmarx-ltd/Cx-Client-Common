@@ -334,7 +334,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts "*.zip, ./target/cx-client-common-${cxCommonVersion}.jar"
+            archiveArtifacts "*.zip, target/cx-client-common-${cxCommonVersion}.jar"
         }
         cleanup {
             cleanWs()
