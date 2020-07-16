@@ -48,10 +48,8 @@ public class ClientTypeResolver {
     private Set<String> getScopesForAuth(Set<String> supportedScopes) {
         Set<String> result;
         if (supportedScopes.containsAll(scopesForCloudAuth)) {
-            log.info("Using cloud authentication.");
             result = scopesForCloudAuth;
         } else if (supportedScopes.containsAll(scopesForOnPremAuth)) {
-            log.info("Using on-premise authentication.");
             result = scopesForOnPremAuth;
         } else {
             String message = String.format("Access control server doesn't support the necessary scopes (either %s or %s)." +

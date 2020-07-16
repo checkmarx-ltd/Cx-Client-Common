@@ -12,16 +12,18 @@ import java.net.MalformedURLException;
 
 @Slf4j
 public class SastScanTests extends CommonClientTest {
+    private static final String PROJECT_NAME = "sastOnlyScan";
+
     @Test
     public void runSastScan() throws MalformedURLException, CxClientException {
-        CxScanConfig config = initSastConfig();
+        CxScanConfig config = initSastConfig(new CxScanConfig(), PROJECT_NAME);
         runSastScan(config);
     }
 
     @Test
     @Ignore("There is no stable environment for this test")
     public void runSastScanWithProxy() throws MalformedURLException, CxClientException {
-        CxScanConfig config = initSastConfig();
+        CxScanConfig config = initSastConfig(new CxScanConfig(), PROJECT_NAME);
         setProxy(config);
         runSastScan(config);
     }

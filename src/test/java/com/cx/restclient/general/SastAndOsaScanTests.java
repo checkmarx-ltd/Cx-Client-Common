@@ -16,8 +16,8 @@ public class SastAndOsaScanTests extends CommonClientTest {
     @Test
     public void runSastAndOsaScan() throws MalformedURLException, CxClientException {
         String projectName = "SastAndOsa";
-        CxScanConfig config = initSastConfig(projectName);
-        config = initOsaConfig(config,projectName);
+        CxScanConfig config = initSastConfig(new CxScanConfig(), projectName);
+        config = initOsaConfig(config, projectName);
         
         ScanResults results = runScan(config);
         
@@ -34,13 +34,10 @@ public class SastAndOsaScanTests extends CommonClientTest {
 
         Assert.assertNotNull("Expected valid osa scan id", results.getOsaResults().getOsaScanId());
     }
-    
 
     protected ScanResults runScan(CxScanConfig config) throws MalformedURLException, CxClientException {
         ScanResults results = super.runScan(config);
         Assert.assertNotEquals("Expected valid SAST scan id", 0, results.getSastResults().getScanId());
         return results;
     }
-
- 
 }
