@@ -10,10 +10,6 @@ public class ClientType {
             "sast_rest_api offline_access",
             "B9D84EA8-E476-4E83-A628-8A342D74D3BD");
 
-    public static final ClientType SCA_CLI = new ClientType("sca_resource_owner",
-            "sca_api offline_access",
-            "");
-
     private String clientId;
     private String scopes;
     private String clientSecret;
