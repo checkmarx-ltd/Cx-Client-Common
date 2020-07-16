@@ -4,6 +4,7 @@
 def workspace
 def cxCommonVersion = "${BUILD_TAG}"
 def vmName = "${BUILD_TAG}-CxSAST"
+def installationLogs = "Installation-Logs-CxSAST"
 def vmTemplate89 = "CxSDLC-Template-CxSAST-8-9"
 def ipAddress89
 def vmTemplate90 = "CxSDLC-Template-CxSAST-9-0"
@@ -101,7 +102,10 @@ pipeline {
                                 script {
                                     kit.Create_Vm_Terraform(vmName + "-8.9", vmTemplate89, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
                                     ipAddress89 = kit.getIpAddress(vmName + "-8.9", provider)
-                                    echo "ipAddress89 = ${ipAddress89}"
+                                    node('install01') {
+                                        kit.Create_Jenkins_Slave_On_Master(vmName + "-8.9")
+                                        kit.Start_Jenkins_Slave_On_Windows_Pstools(ipAddress89, vmName + "-8.9")
+                                    }
                                 }
                             }
                         }
@@ -151,6 +155,10 @@ pipeline {
                                     junit '**/PluginsCommonClient/target/surefire-reports/**/*.xml'
                                 }
                                 if (ipAddress89 != null) {
+                                    node(vmName + "-8.9") {
+                                        kit.zipStashInstallationLogs(installationLogs + "-8.9")
+                                    }
+                                    unstash installationLogs + "-8.9"
                                     deleteVm(provider, ipAddress89, vmName + "-8.9")
                                 }
                             }
@@ -165,7 +173,10 @@ pipeline {
                                 script {
                                     kit.Create_Vm_Terraform(vmName + "-9.0", vmTemplate90, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
                                     ipAddress90 = kit.getIpAddress(vmName + "-9.0", provider)
-                                    echo "ipAddress90 = ${ipAddress90}"
+                                    node('install01') {
+                                        kit.Create_Jenkins_Slave_On_Master(vmName + "-9.0")
+                                        kit.Start_Jenkins_Slave_On_Windows_Pstools(ipAddress90, vmName + "-9.0")
+                                    }
                                 }
                             }
                         }
@@ -215,6 +226,10 @@ pipeline {
                                     junit '**/PluginsCommonClient/target/surefire-reports/**/*.xml'
                                 }
                                 if (ipAddress90 != null) {
+                                    node(vmName + "-9.0") {
+                                        kit.zipStashInstallationLogs(installationLogs + "-9.0")
+                                    }
+                                    unstash installationLogs + "-9.0"
                                     deleteVm(provider, ipAddress90, vmName + "-9.0")
                                 }
                             }
@@ -229,7 +244,10 @@ pipeline {
                                 script {
                                     kit.Create_Vm_Terraform(vmName + "-9.2", vmTemplate92, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
                                     ipAddress92 = kit.getIpAddress(vmName + "-9.2", provider)
-                                    echo "ipAddress92 = ${ipAddress92}"
+                                    node('install01') {
+                                        kit.Create_Jenkins_Slave_On_Master(vmName + "-9.2")
+                                        kit.Start_Jenkins_Slave_On_Windows_Pstools(ipAddress92, vmName + "-9.2")
+                                    }
                                 }
                             }
                         }
@@ -279,6 +297,10 @@ pipeline {
                                     junit '**/PluginsCommonClient/target/surefire-reports/**/*.xml'
                                 }
                                 if (ipAddress92 != null) {
+                                    node(vmName + "-9.2") {
+                                        kit.zipStashInstallationLogs(installationLogs + "-9.2")
+                                    }
+                                    unstash installationLogs + "-9.2"
                                     deleteVm(provider, ipAddress92, vmName + "-9.2")
                                 }
                             }
@@ -320,10 +342,11 @@ pipeline {
     }
 
     post {
+        always {
+            archiveArtifacts "*.zip, ./target/cx-client-common-${cxCommonVersion}.jar"
+        }
         cleanup {
-            script{
-                cleanWs()
-            }
+            cleanWs()
         }
     }
 }
