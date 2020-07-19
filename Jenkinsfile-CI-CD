@@ -82,32 +82,21 @@ pipeline {
                         script {
                             sh "docker run --rm --name sonar-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn sonar:sonar -Dcxcommon.version=${cxCommonVersion}"
                             def sonarTaskUrl = sh (returnStdout: true, script: "awk '/./{line=\$0} END{print line}' ./target/sonar/report-task.txt | cut -d '=' -f '2,3'").trim()
-                            echo "sonarTaskUrl = ${sonarTaskUrl}"
-                            //def res = kit.Command_Execution_Sh("curl -u ${SONAR_CLOUD_TOKEN}: -X GET \"${sonarTaskUrl}\" | jq .")
-                            //echo "res = ${res}"
-                            //def sonarTaskJson = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl}"
-                            //echo "sonarTaskJson = ${sonarTaskJson}"
-                            def sonarTaskStatus = sh (returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
-                            echo "sonarTaskStatus = ${sonarTaskStatus}"
+                            def sonarTaskStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
                             while (sonarTaskStatus == 'PENDING' || sonarTaskStatus == 'IN_PROGRESS') {
+                                echo "Sonar task status is: ${sonarTaskStatus}. Waiting for 5 seconds..."
                                 sleep(5)
-                                sonarTaskStatus = sh (returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
-                                echo "sonarTaskStatus = ${sonarTaskStatus}"
+                                sonarTaskStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
                             }
                             if (sonarTaskStatus == "FAILED" || sonarTaskStatus == "CANCELED") {
-                                Error_Msg("Sonar scan ${sonarTaskStatus}.")
-                                error "Sonar scan ${sonarTaskStatus}. Please review the results in SonarCloud."
+                                Error_Msg("Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
+                                error "Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common"
                             }
-                            def sonarAnalysisId = sh (returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.analysisId'").trim()
-                            echo "sonarAnalysisId = ${sonarAnalysisId}"
-                            //def sonarResults = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId}"
-                            //sonarResults = sonarResults.trim()
-                            //echo "sonarResults = ${sonarResults}"
-                            def sonarResultsStatus = sh (returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId} | jq -r '.projectStatus.status'").trim()
-                            echo "sonarResultsStatus = ${sonarResultsStatus}"
+                            def sonarAnalysisId = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.analysisId'").trim()
+                            def sonarResultsStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId} | jq -r '.projectStatus.status'").trim()
                             if (sonarResultsStatus == "ERROR") {
-                                kit.Error_Msg("Sonar scan FAILED.")
-                                error "Sonar scan FAILED. Please review the results in SonarCloud."
+                                kit.Error_Msg("Sonar scan FAILED. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
+                                error "Sonar scan FAILED. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common"
                             }
                         }
                     }
