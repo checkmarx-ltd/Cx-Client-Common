@@ -85,6 +85,15 @@ pipeline {
                             echo "sonarTaskUrl = ${sonarTaskUrl}"
                             def sonarTaskJson = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl}"
                             echo "sonarTaskJson = ${sonarTaskJson}"
+                            def sonarTaskStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'"
+                            while (sonarTaskStatus == 'PENDING' || sonarTaskStatus == 'IN_PROGRESS') {
+                                sleep(15)
+                                sonarTaskStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'"
+                            }
+                            if (sonarTaskStatus == "FAILED" || sonarTaskStatus == "CANCELED") {
+                                Error_Msg("Sonar scan ${sonarTaskStatus}.")
+                                error "Sonar scan ${sonarTaskStatus}. Please review the results in SonarCloud."
+                            }
                             def sonarAnalysisId = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.analysisId'"
                             echo "sonarAnalysisId = ${sonarAnalysisId}"
                             def sonarResults = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId}"
