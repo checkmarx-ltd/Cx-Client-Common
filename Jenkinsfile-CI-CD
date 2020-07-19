@@ -92,7 +92,7 @@ pipeline {
                             sonarTaskStatus = sonarTaskStatus.trim()
                             echo "sonarTaskStatus = ${sonarTaskStatus}"
                             while (sonarTaskStatus == 'PENDING' || sonarTaskStatus == 'IN_PROGRESS') {
-                                sleep(15)
+                                sleep(5)
                                 sonarTaskStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'"
                                 sonarTaskStatus = sonarTaskStatus.trim()
                                 echo "sonarTaskStatus = ${sonarTaskStatus}"
@@ -105,9 +105,9 @@ pipeline {
                             sonarAnalysisId = sonarAnalysisId.trim()
                             echo "sonarAnalysisId = ${sonarAnalysisId}"
                             def sonarResults = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId}"
-                            sonarResults = sonarResults.trim()
+                            //sonarResults = sonarResults.trim()
                             echo "sonarResults = ${sonarResults}"
-                            def sonarResultsStatus = sh returnStdout: true, script: "${sonarResults} | jq -r '.projectStatus.status'"
+                            def sonarResultsStatus = sh returnStdout: true, script: "echo ${sonarResults} | jq -r '.projectStatus.status'"
                             sonarResultsStatus = sonarResultsStatus.trim()
                             echo "sonarResultsStatus = ${sonarResultsStatus}"
                             if (sonarResultsStatus == "ERROR") {
