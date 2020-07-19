@@ -84,9 +84,9 @@ pipeline {
                             def sonarTaskUrl = sh returnStdout: true, script: "awk '/./{line=\$0} END{print line}' ./target/sonar/report-task.txt | cut -d '=' -f '2,3'"
                             sonarTaskUrl = sonarTaskUrl.trim()
                             echo "sonarTaskUrl = ${sonarTaskUrl}"
-                            def res = kit.Command_Execution_Sh("curl -u ${SONAR_CLOUD_TOKEN}: -X GET \"${sonarTaskUrl}\" | jq .")
-                            echo "res = ${res}"
-                            /*def sonarTaskJson = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: -i ${sonarTaskUrl}"
+                            //def res = kit.Command_Execution_Sh("curl -u ${SONAR_CLOUD_TOKEN}: -X GET \"${sonarTaskUrl}\" | jq .")
+                            //echo "res = ${res}"
+                            def sonarTaskJson = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: -i ${sonarTaskUrl}"
                             echo "sonarTaskJson = ${sonarTaskJson}"
                             def sonarTaskStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: -i ${sonarTaskUrl} | jq -r .task.status"
                             echo "sonarTaskStatus = ${sonarTaskStatus}"
@@ -108,7 +108,7 @@ pipeline {
                             if (sonarResultsStatus == "ERROR") {
                                 Error_Msg("Sonar scan FAILED: results" + sonarResults)
                                 error "Sonar scan FAILED. Please review the results in log output and\\or SonarCloud."
-                            }*/
+                            }
                         }
                     }
                 }
