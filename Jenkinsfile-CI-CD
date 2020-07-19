@@ -104,15 +104,15 @@ pipeline {
                             def sonarAnalysisId = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.analysisId'"
                             sonarAnalysisId = sonarAnalysisId.trim()
                             echo "sonarAnalysisId = ${sonarAnalysisId}"
-                            def sonarResults = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId}"
+                            //def sonarResults = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId}"
                             //sonarResults = sonarResults.trim()
-                            echo "sonarResults = ${sonarResults}"
-                            def sonarResultsStatus = sh returnStdout: true, script: "echo ${sonarResults} | jq -r '.projectStatus.status'"
+                            //echo "sonarResults = ${sonarResults}"
+                            def sonarResultsStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId} | jq -r '.projectStatus.status'"
                             sonarResultsStatus = sonarResultsStatus.trim()
                             echo "sonarResultsStatus = ${sonarResultsStatus}"
                             if (sonarResultsStatus == "ERROR") {
-                                Error_Msg("Sonar scan FAILED: results" + sonarResults)
-                                error "Sonar scan FAILED. Please review the results in log output and\\or SonarCloud."
+                                Error_Msg("Sonar scan FAILED.")
+                                error "Sonar scan FAILED. Please review the results in SonarCloud."
                             }
                         }
                     }
