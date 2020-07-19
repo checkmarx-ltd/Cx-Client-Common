@@ -22,9 +22,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @RequiredArgsConstructor
 @Slf4j
-public class SCAWaiter {
+public class AstWaiter {
     private final CxHttpClient httpClient;
     private final CxScanConfig config;
+    private final String scannerDisplayName;
     private long startTimestampSec;
 
     public void waitForScanToFinish(String scanId) {
@@ -47,8 +48,10 @@ public class SCAWaiter {
 
         } catch (ConditionTimeoutException e) {
             String message = String.format(
-                    "Failed to perform CxSCA scan. The scan has been automatically aborted: " +
-                            "reached the user-specified timeout (%d minutes).", timeout.toMinutes());
+                    "Failed to perform %s scan. The scan has been automatically aborted: " +
+                            "reached the user-specified timeout (%d minutes).",
+                    scannerDisplayName,
+                    timeout.toMinutes());
             throw new CxClientException(message);
         } catch (UnsupportedEncodingException e) {
             log.error("Unexpected error.", e);
@@ -75,8 +78,9 @@ public class SCAWaiter {
         ScanInfoResponse response = null;
         String errorMessage = null;
         try {
+            String failedMessage = scannerDisplayName + " scan";
             response = httpClient.getRequest(path, ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                    ScanInfoResponse.class, HttpStatus.SC_OK, "CxSCA scan", false);
+                    ScanInfoResponse.class, HttpStatus.SC_OK, failedMessage, false);
         } catch (Exception e) {
             errorMessage = e.getMessage();
         }
@@ -100,8 +104,7 @@ public class SCAWaiter {
         } else if (status == ScanStatus.FAILED) {
             // Scan has failed on the back end, no need to retry.
             throw new CxClientException(String.format("Scan status is %s, aborting.", status));
-        }
-        else if (status == null) {
+        } else if (status == null) {
             log.warn("Unknown status.");
         }
         return completedSuccessfully;
@@ -115,14 +118,20 @@ public class SCAWaiter {
             throw new CxClientException(fullMessage);
         } else {
             String note = (triesLeft == 0 ? "last attempt" : String.format("tries left: %d", triesLeft));
-            log.info(String.format("Failed to get status from CxSCA with the message: %s. Retrying (%s)", message, note));
+            log.info(String.format("Failed to get status from %s with the message: %s. Retrying (%s)",
+                    scannerDisplayName,
+                    message,
+                    note));
         }
     }
 
     private ScanStatus extractScanStatusFrom(ScanInfoResponse response) {
         String rawStatus = response.getStatus();
         String elapsedTimestamp = ShragaUtils.getTimestampSince(startTimestampSec);
-        log.info(String.format("Waiting for CxSCA scan results. Elapsed time: %s. Status: %s.", elapsedTimestamp, rawStatus));
+        log.info(String.format("Waiting for %s scan results. Elapsed time: %s. Status: %s.",
+                scannerDisplayName,
+                elapsedTimestamp,
+                rawStatus));
         ScanStatus status = EnumUtils.getEnumIgnoreCase(ScanStatus.class, rawStatus);
         if (status == null) {
             log.warn(String.format("Unknown status: '%s'", rawStatus));

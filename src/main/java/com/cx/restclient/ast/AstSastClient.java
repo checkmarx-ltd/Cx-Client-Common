@@ -23,6 +23,7 @@ import java.util.Optional;
 public class AstSastClient extends AstClient implements Scanner {
     private static final String ENGINE_TYPE_FOR_API = "sast";
     private static final String REF_TYPE_BRANCH = "branch";
+    private String scanId;
 
     public AstSastClient(CxScanConfig config, Logger log) {
         super(config, log);
@@ -54,6 +55,8 @@ public class AstSastClient extends AstClient implements Scanner {
                 getScannerDisplayName()));
 
         ASTResults astResults = new ASTResults();
+        scanId = null;
+
         AstSastConfig astConfig = config.getAstSastConfig();
         try {
             SourceLocationType locationType = astConfig.getSourceLocationType();
@@ -63,7 +66,7 @@ public class AstSastClient extends AstClient implements Scanner {
             } else {
                 throw new NotImplementedException("The upload flow is not yet supported.");
             }
-            String scanId = extractScanIdFrom(response);
+            scanId = extractScanIdFrom(response);
             astResults.setScanId(scanId);
             return astResults;
         } catch (IOException e) {
@@ -74,11 +77,14 @@ public class AstSastClient extends AstClient implements Scanner {
     @Override
     protected ScanConfig getScanConfig() {
         boolean isIncremental = Boolean.TRUE.equals(config.getAstSastConfig().isIncremental());
-        String presetName = StringUtils.defaultIfEmpty(config.getAstSastConfig().getPresetName(), "");
+
+        if (StringUtils.isEmpty(config.getPresetName())) {
+            throw new CxClientException("Scan preset must be specified.");
+        }
 
         ScanConfigValue configValue = SastScanConfigValue.builder()
                 .incremental(Boolean.toString(isIncremental))
-                .presetName(presetName)
+                .presetName(config.getPresetName())
                 .build();
 
         return ScanConfig.builder()
@@ -89,7 +95,11 @@ public class AstSastClient extends AstClient implements Scanner {
 
     @Override
     protected HandlerRef getBranchToScan(RemoteRepositoryInfo repoInfo) {
-        // The HandlerRef object is mandatory for AST-SAST even if no branch is specified in repoInfo.
+        if (StringUtils.isEmpty(repoInfo.getBranch())) {
+            String message = String.format("Branch must be specified for the %s scan.", getScannerDisplayName());
+            throw new CxClientException(message);
+        }
+
         return HandlerRef.builder()
                 .type(REF_TYPE_BRANCH)
                 .value(repoInfo.getBranch())
@@ -98,6 +108,7 @@ public class AstSastClient extends AstClient implements Scanner {
 
     @Override
     public ScanResults waitForScanResults() {
+        waitForScanToFinish(scanId);
         return null;
     }
 

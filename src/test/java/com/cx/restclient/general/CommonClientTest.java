@@ -79,7 +79,7 @@ public abstract class CommonClientTest {
         config.addScannerType(ScannerType.AST_SCA);
         config.setSastEnabled(false);
         config.setProjectName(props.getProperty("astSca.projectName"));
-
+        config.setOsaProgressInterval(5);
         AstScaConfig sca = TestingUtils.getScaConfig(props, useOnPremAuthentication);
         config.setAstScaConfig(sca);
 

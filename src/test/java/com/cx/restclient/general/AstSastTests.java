@@ -28,13 +28,15 @@ public class AstSastTests extends CommonClientTest {
         RemoteRepositoryInfo repoInfo = new RemoteRepositoryInfo();
         URL repoUrl = new URL(prop("astSast.remoteRepoUrl.public"));
         repoInfo.setUrl(repoUrl);
+        repoInfo.setBranch("master");
         astConfig.setRemoteRepositoryInfo(repoInfo);
-
 
         CxScanConfig config = new CxScanConfig();
         config.setAstSastConfig(astConfig);
         config.setProjectName(prop("astSast.projectName"));
         config.addScannerType(ScannerType.AST_SAST);
+        config.setPresetName("Default");
+        config.setOsaProgressInterval(5);
 
         CxClientDelegator client = new CxClientDelegator(config, log);
         try {
@@ -43,6 +45,8 @@ public class AstSastTests extends CommonClientTest {
             Assert.assertNotNull("Scan results are null.", scanResults);
             Assert.assertNotNull("AST-SAST results are null.", scanResults.getAstResults());
             Assert.assertTrue("Scan ID is missing", StringUtils.isNotEmpty(scanResults.getAstResults().getScanId()));
+
+            client.waitForScanResults();
         } catch (Exception e) {
             failOnException(e);
         }

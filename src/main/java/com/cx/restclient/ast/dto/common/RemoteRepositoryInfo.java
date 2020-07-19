@@ -8,7 +8,6 @@ import java.net.URL;
 
 /**
  * Instructs AST scanners which repository should be scanned.
- * In the future this class may be expanded to include repo credentials and commit/branch/tag reference.
  */
 @Getter
 @Setter

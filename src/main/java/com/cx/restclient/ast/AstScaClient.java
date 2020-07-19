@@ -155,13 +155,7 @@ public class AstScaClient extends AstClient implements Scanner {
      */
     @Override
     public Results waitForScanResults() {
-        log.info("------------------------------------Get CxSCA Results:-----------------------------------");
-
-        log.info("Waiting for CxSCA scan to finish");
-        SCAWaiter waiter = new SCAWaiter(httpClient, config);
-        waiter.waitForScanToFinish(scanId);
-        log.info("CxSCA scan finished successfully. Retrieving CxSCA scan results.");
-
+        waitForScanToFinish(scanId);
         AstScaResults scaResult = retrieveScanResults();
         scaResult.setScaResultReady(true);
         return scaResult;
