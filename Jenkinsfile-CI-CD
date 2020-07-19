@@ -75,9 +75,16 @@ pipeline {
                 }
 
                 stage('Run Code Quality') {
+                    environment {
+                        SONAR_CLOUD_TOKEN = credentials('sonarcloud')
+                    }
                     steps {
                         script {
                             sh "docker run --rm --name sonar-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn sonar:sonar -Dcxcommon.version=${cxCommonVersion}"
+                            def sonarTaskUrl = sh returnStdout: true, script: "awk '/./{line=\$0} END{print line}' ./target/sonar/report-task.txt | cut -d '=' -f '2,3'"
+                            echo "sonarTaskUrl = ${sonarTaskUrl}"
+                            def sonarTaskJson = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl}"
+                            echo "sonarTaskJson = ${sonarTaskJson}"
                         }
                     }
                 }
@@ -87,7 +94,7 @@ pipeline {
         stage('System Tests') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") && CHANGE_TARGET == 'master' || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
+                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") && CHANGE_TARGET == 'master'// || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
                 }
             }
             parallel {
