@@ -85,11 +85,11 @@ pipeline {
                             echo "sonarTaskUrl = ${sonarTaskUrl}"
                             //def sonarTaskJson = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl}"
                             //echo "sonarTaskJson = ${sonarTaskJson}"
-                            def sonarTaskStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'"
+                            def sonarTaskStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r \'.task.status\'"
                             echo "sonarTaskStatus = ${sonarTaskStatus}"
                             while (sonarTaskStatus == 'PENDING' || sonarTaskStatus == 'IN_PROGRESS') {
                                 sleep(15)
-                                sonarTaskStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'"
+                                sonarTaskStatus = sh returnStdout: true, script: "curl -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r \'.task.status\'"
                                 echo "sonarTaskStatus = ${sonarTaskStatus}"
                             }
                             if (sonarTaskStatus == "FAILED" || sonarTaskStatus == "CANCELED") {
