@@ -108,7 +108,7 @@ public class CxScanConfig implements Serializable {
     private AstSastConfig astSastConfig;
 
     private final Set<ScannerType> scannerTypes = new HashSet<>();
-    private final List<Cookie> sessionCookies = new ArrayList<>();
+    private final ArrayList <Cookie> sessionCookies = new ArrayList<>();
     private ProxyConfig proxyConfig;
 
 

@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ScanResults implements Serializable, Results {
-    
-    Map<ScannerType, Results> resultsMap = new HashMap<>();
+
+    HashMap<ScannerType, Results> resultsMap = new HashMap<>();
     
     private Exception sastCreateException = null;
     private Exception sastWaitException = null;
@@ -21,7 +21,7 @@ public class ScanResults implements Serializable, Results {
     private Exception osaWaitException = null;
     private Exception generalException = null;
 
-    public Map<ScannerType, Results> getResults(){
+    public HashMap<ScannerType, Results> getResults(){
         return resultsMap;
     }
     
