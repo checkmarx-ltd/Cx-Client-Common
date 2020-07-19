@@ -1,4 +1,4 @@
-package com.cx.restclient.ast.dto.sca;
+package com.cx.restclient.ast.dto.common;
 
 public enum ScanStatus {
     FAILED,

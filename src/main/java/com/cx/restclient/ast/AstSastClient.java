@@ -11,18 +11,26 @@ import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.SourceLocationType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
+import com.cx.restclient.httpClient.utils.ContentType;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.auth.AUTH;
+import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Optional;
 
 public class AstSastClient extends AstClient implements Scanner {
     private static final String ENGINE_TYPE_FOR_API = "sast";
     private static final String REF_TYPE_BRANCH = "branch";
+    private static final String SUMMARY_PATH = "/api/scan-summary";
+    private static final String SCAN_ID_PARAM = "scan-ids";
+
     private String scanId;
 
     public AstSastClient(CxScanConfig config, Logger log) {
@@ -107,8 +115,39 @@ public class AstSastClient extends AstClient implements Scanner {
     }
 
     @Override
-    public ScanResults waitForScanResults() {
+    public Results waitForScanResults() {
         waitForScanToFinish(scanId);
+        ASTResults result;
+        try {
+            result = retrieveScanResults();
+        } catch (IOException e) {
+            String message = String.format("Error getting %s scan results.", getScannerDisplayName());
+            throw new CxClientException(message);
+        }
+        return result;
+    }
+
+    private ASTResults retrieveScanResults() throws IOException {
+        ASTResults result = new ASTResults();
+        result.setScanId(scanId);
+        ASTSummaryResults scanSummary = getSummaryReport();
+        result.setSummary(scanSummary);
+        return result;
+    }
+
+    private ASTSummaryResults getSummaryReport() throws IOException {
+        String urlEnding;
+        try {
+            urlEnding = new URIBuilder()
+                    .setPath(SUMMARY_PATH)
+                    .setParameter(SCAN_ID_PARAM, scanId)
+                    .build()
+                    .toString();
+        } catch (URISyntaxException e) {
+            throw new CxClientException("Unexpected URL parsing exception.");
+        }
+        String error = String.format("Error retrieving %s scan summary.", getScannerDisplayName());
+        JsonNode summary = httpClient.getRequest(urlEnding, ContentType.CONTENT_TYPE_APPLICATION_JSON, JsonNode.class, HttpStatus.SC_OK, error, false);
         return null;
     }
 
