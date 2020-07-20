@@ -2,11 +2,13 @@ package com.cx.restclient.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.io.Serializable;
+
 /**
  * Created by Galn on 4/1/2019.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CxVersion {
+public class CxVersion implements Serializable {
     private String version;
     private String hotFix;
 

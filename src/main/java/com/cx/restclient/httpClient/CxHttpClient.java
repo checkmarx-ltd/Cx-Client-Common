@@ -75,19 +75,19 @@ import static com.cx.restclient.httpClient.utils.HttpClientHelper.*;
  */
 public class CxHttpClient {
 
-    private static String HTTP_HOST = System.getProperty("http.proxyHost");
-    private static String HTTP_PORT = System.getProperty("http.proxyPort");
-    private static String HTTP_USERNAME = System.getProperty("http.proxyUser");
-    private static String HTTP_PASSWORD = System.getProperty("http.proxyPassword");
+    private static final String HTTP_HOST = System.getProperty("http.proxyHost");
+    private static final String HTTP_PORT = System.getProperty("http.proxyPort");
+    private static final String HTTP_USERNAME = System.getProperty("http.proxyUser");
+    private static final String HTTP_PASSWORD = System.getProperty("http.proxyPassword");
 
-    private static String HTTPS_HOST = System.getProperty("https.proxyHost");
-    private static String HTTPS_PORT = System.getProperty("https.proxyPort");
-    private static String HTTPS_USERNAME = System.getProperty("https.proxyUser");
-    private static String HTTPS_PASSWORD = System.getProperty("https.proxyPassword");
+    private static final String HTTPS_HOST = System.getProperty("https.proxyHost");
+    private static final String HTTPS_PORT = System.getProperty("https.proxyPort");
+    private static final String HTTPS_USERNAME = System.getProperty("https.proxyUser");
+    private static final String HTTPS_PASSWORD = System.getProperty("https.proxyPassword");
 
     private static final String LOGIN_FAILED_MSG = "Fail to login with windows authentication: ";
 
-    private static HttpClient apacheClient;
+    private HttpClient apacheClient;
 
     private Logger log;
     private TokenLoginResponse token;

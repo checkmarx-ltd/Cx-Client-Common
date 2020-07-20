@@ -194,12 +194,12 @@ public class CxOSAClient extends LegacyClient implements Scanner {
         ensureProjectIdSpecified();
 
         log.info("----------------------------------Get CxOSA Last Results:--------------------------------");
-        OSAResults osaResults = null;
+        OSAResults results = null;
         try {
             List<OSAScanStatus> scanList = getOSALastOSAStatus(projectId);
             for (OSAScanStatus s : scanList) {
                 if (Status.SUCCEEDED.value().equals(s.getState().getName())) {
-                    osaResults = retrieveOSAResults(s.getId(), s, projectId);
+                    results = retrieveOSAResults(s.getId(), s, projectId);
                     break;
                 }
             }
@@ -207,7 +207,7 @@ public class CxOSAClient extends LegacyClient implements Scanner {
             throw new CxClientException("Error getting last scan results.");
         }
         
-        return osaResults;
+        return results;
     }
 
     //Private Methods

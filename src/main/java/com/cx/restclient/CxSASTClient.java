@@ -72,7 +72,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         }
 
         //Report Waiter - overload methods
-        private ReportStatus getReportStatus(String reportId) throws CxClientException, IOException {
+        private ReportStatus getReportStatus(String reportId) throws IOException {
             ReportStatus reportStatus = httpClient.getRequest(SAST_GET_REPORT_STATUS.replace("{reportId}", reportId), CONTENT_TYPE_APPLICATION_JSON_V1, ReportStatus.class, 200, " report status", false);
             reportStatus.setBaseId(reportId);
             String currentStatus = reportStatus.getStatus().getValue();
@@ -87,7 +87,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             return reportStatus;
         }
 
-        private ReportStatus resolveReportStatus(ReportStatus reportStatus) throws CxClientException {
+        private ReportStatus resolveReportStatus(ReportStatus reportStatus)  {
             if(reportStatus != null ) {
                 if (Status.SUCCEEDED == reportStatus.getBaseStatus()) {
                     return reportStatus;
@@ -124,7 +124,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         
 
         //CxARM Waiter - overload methods
-        private CxARMStatus getCxARMStatus(String projectId) throws CxClientException, IOException {
+        private CxARMStatus getCxARMStatus(String projectId) throws IOException {
             CxARMStatus cxARMStatus = httpClient.getRequest(SAST_GET_CXARM_STATUS.replace(PROJECT_ID_PATH_PARAM, projectId), CONTENT_TYPE_APPLICATION_JSON_V1, CxARMStatus.class, 200, " cxARM status", false);
             cxARMStatus.setBaseId(projectId);
 
@@ -146,7 +146,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             log.info("Waiting for server to retrieve policy violations. " + (startTime + cxARMTimeoutSec - (System.currentTimeMillis() / 1000)) + " seconds left to timeout");
         }
 
-        private CxARMStatus resolveCxARMStatus(CxARMStatus cxARMStatus) throws CxClientException {
+        private CxARMStatus resolveCxARMStatus(CxARMStatus cxARMStatus)  {
             if (cxARMStatus != null) {
                 if (Status.SUCCEEDED == cxARMStatus.getBaseStatus()) {
                     return cxARMStatus;

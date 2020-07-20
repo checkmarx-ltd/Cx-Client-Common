@@ -16,7 +16,7 @@ public class Package implements Serializable {
     public String id;
     public String name;
     public String version;
-    public List<String> licenses = new ArrayList<>();
+    public ArrayList<String> licenses = new ArrayList<>();
 
     /**
      * The current values are [Filename, Sha1]. Not considered an enum in SCA API.
@@ -35,8 +35,8 @@ public class Package implements Serializable {
     public String confidenceLevel;
     public double riskScore;
     public PackageSeverity severity;
-    public List<String> locations = new ArrayList<>();
-    public List<DependencyPath> dependencyPaths = new ArrayList<>();
+    public ArrayList<String> locations = new ArrayList<>();
+    public ArrayList<DependencyPath> dependencyPaths = new ArrayList<>();
     public String packageRepository;
     public boolean isDirectDependency;
     public boolean isDevelopment;

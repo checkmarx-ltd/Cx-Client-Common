@@ -20,7 +20,7 @@ public class Finding implements Serializable {
     public double score;
     public Severity severity;
     public String publishDate;
-    public List<String> references = new ArrayList<>();
+    public ArrayList<String> references = new ArrayList<>();
     public String description;
     public String recommendations;
     public String packageId;
