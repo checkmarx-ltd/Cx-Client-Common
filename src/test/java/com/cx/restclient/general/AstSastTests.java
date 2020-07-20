@@ -1,6 +1,7 @@
 package com.cx.restclient.general;
 
 import com.cx.restclient.CxClientDelegator;
+import com.cx.restclient.ast.dto.common.ASTResults;
 import com.cx.restclient.ast.dto.common.ASTSummaryResults;
 import com.cx.restclient.ast.dto.sast.AstSastConfig;
 import com.cx.restclient.configuration.CxScanConfig;
@@ -26,22 +27,38 @@ public class AstSastTests extends CommonClientTest {
         try {
             client.init();
             ScanResults initialResults = client.initiateScan();
-            Assert.assertNotNull("Initial scan results are null.", initialResults);
-            Assert.assertNotNull("AST-SAST results are null.", initialResults.getAstResults());
-            Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(initialResults.getAstResults().getScanId()));
+            validateInitialResults(initialResults);
 
             ScanResults finalResults = client.waitForScanResults();
-            Assert.assertNotNull("Final scan results are null.", finalResults);
-            Assert.assertNotNull("AST-SAST results are null.", finalResults.getAstResults());
-
-            ASTSummaryResults summary = finalResults.getAstResults().getSummary();
-            Assert.assertNotNull("Summary is null.", summary);
-
-            Assert.assertTrue("No medium-severity vulnerabilities.",
-                    summary.getMediumVulnerabilityCount() > 0);
+            validateFinalResults(finalResults);
         } catch (Exception e) {
             failOnException(e);
         }
+    }
+
+    private void validateFinalResults(ScanResults finalResults) {
+        Assert.assertNotNull("Final scan results are null.", finalResults);
+
+        ASTResults astSastResults = finalResults.getAstResults();
+        Assert.assertNotNull("AST-SAST results are null.", astSastResults);
+        Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(astSastResults.getScanId()));
+
+        ASTSummaryResults summary = astSastResults.getSummary();
+        Assert.assertNotNull("Summary is null.", summary);
+
+        Assert.assertTrue("No medium-severity vulnerabilities.",
+                summary.getMediumVulnerabilityCount() > 0);
+
+        Assert.assertNotNull("Status counter list is null.", summary.getStatusCounters());
+        Assert.assertFalse("No status counters.", summary.getStatusCounters().isEmpty());
+
+        Assert.assertTrue("Expected total counter to be a positive value.", summary.getTotalCounter() > 0);
+    }
+
+    private void validateInitialResults(ScanResults initialResults) {
+        Assert.assertNotNull("Initial scan results are null.", initialResults);
+        Assert.assertNotNull("AST-SAST results are null.", initialResults.getAstResults());
+        Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(initialResults.getAstResults().getScanId()));
     }
 
     private static CxScanConfig getScanConfig() throws MalformedURLException {

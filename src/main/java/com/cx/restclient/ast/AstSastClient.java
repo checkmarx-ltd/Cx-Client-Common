@@ -133,7 +133,7 @@ public class AstSastClient extends AstClient implements Scanner {
             result = retrieveScanResults();
         } catch (IOException e) {
             String message = String.format("Error getting %s scan results.", getScannerDisplayName());
-            throw new CxClientException(message);
+            throw new CxClientException(message, e);
         }
         return result;
     }
@@ -147,18 +147,32 @@ public class AstSastClient extends AstClient implements Scanner {
     }
 
     private ASTSummaryResults getSummaryReport() throws IOException {
-        String relativeUrl = getRelativeUrl();
-        Summary summaryResponse = httpClient.getRequest(relativeUrl,
-                ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                Summary.class,
-                HttpStatus.SC_OK,
-                "retrieving scan summary",
-                false);
-        List<SeverityCounter> counters = getSeverityCounters(summaryResponse);
-        return mapToOutputSummary(counters);
+        ASTSummaryResults result = new ASTSummaryResults();
+
+        String summaryUrl = getRelativeSummaryUrl();
+        Summary summaryResponse = getSummaryResponse(summaryUrl);
+
+        ScansSummary nativeSummary = getNativeSummary(summaryResponse);
+        setFindingCountsPerSeverity(nativeSummary.getSeverityCounters(), result);
+
+        result.setStatusCounters(nativeSummary.getStatusCounters());
+
+        int total = Optional.ofNullable(nativeSummary.getTotalCounter()).orElse(0);
+        result.setTotalCounter(total);
+
+        return result;
     }
 
-    private String getRelativeUrl() {
+    private Summary getSummaryResponse(String relativeUrl) throws IOException {
+        return httpClient.getRequest(relativeUrl,
+                    ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                    Summary.class,
+                    HttpStatus.SC_OK,
+                    "retrieving scan summary",
+                    false);
+    }
+
+    private String getRelativeSummaryUrl() {
         String relativeUrl;
         try {
             relativeUrl = new URIBuilder()
@@ -172,31 +186,31 @@ public class AstSastClient extends AstClient implements Scanner {
         return relativeUrl;
     }
 
-    private ASTSummaryResults mapToOutputSummary(List<SeverityCounter> nativeCounters) {
-        ASTSummaryResults result = new ASTSummaryResults();
+    private static void setFindingCountsPerSeverity(List<SeverityCounter> nativeCounters, ASTSummaryResults target) {
+        if (nativeCounters == null) {
+            return;
+        }
+
         for (SeverityCounter counter : nativeCounters) {
             Severity parsedSeverity = EnumUtils.getEnum(Severity.class, counter.getSeverity());
             Integer value = counter.getCounter();
             if (parsedSeverity != null && value != null) {
                 if (parsedSeverity == Severity.HIGH) {
-                    result.setHighVulnerabilityCount(value);
+                    target.setHighVulnerabilityCount(value);
                 } else if (parsedSeverity == Severity.MEDIUM) {
-                    result.setMediumVulnerabilityCount(value);
+                    target.setMediumVulnerabilityCount(value);
                 } else if (parsedSeverity == Severity.LOW) {
-                    result.setLowVulnerabilityCount(value);
+                    target.setLowVulnerabilityCount(value);
                 }
             }
         }
-
-        return result;
     }
 
-    private static List<SeverityCounter> getSeverityCounters(Summary summaryResponse) {
+    private static ScansSummary getNativeSummary(Summary summaryResponse) {
         return Optional.ofNullable(summaryResponse).map(Summary::getScansSummaries)
                 // We are sending a single scan ID in the request and therefore expect exactly 1 scan summary.
                 .filter(scanSummaries -> scanSummaries.size() == 1)
                 .map(scanSummaries -> scanSummaries.get(0))
-                .map(ScansSummary::getSeverityCounters)
                 .orElseThrow(() -> new CxClientException("Invalid summary response."));
     }
 
