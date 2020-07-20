@@ -1,19 +1,29 @@
 package com.cx.restclient.ast;
 
-import com.cx.restclient.ast.dto.common.*;
+import com.cx.restclient.ast.dto.common.ASTConfig;
+import com.cx.restclient.ast.dto.common.ASTResults;
+import com.cx.restclient.ast.dto.common.ASTSummaryResults;
+import com.cx.restclient.ast.dto.common.HandlerRef;
+import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
+import com.cx.restclient.ast.dto.common.ScanConfig;
+import com.cx.restclient.ast.dto.common.ScanConfigValue;
 import com.cx.restclient.ast.dto.sast.AstSastConfig;
 import com.cx.restclient.ast.dto.sast.SastScanConfigValue;
+import com.cx.restclient.ast.dto.sast.report.ScansSummary;
+import com.cx.restclient.ast.dto.sast.report.SeverityCounter;
+import com.cx.restclient.ast.dto.sast.report.Summary;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.Results;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.SourceLocationType;
+import com.cx.restclient.dto.scansummary.Severity;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -23,6 +33,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 
 public class AstSastClient extends AstClient implements Scanner {
@@ -136,19 +147,57 @@ public class AstSastClient extends AstClient implements Scanner {
     }
 
     private ASTSummaryResults getSummaryReport() throws IOException {
-        String urlEnding;
+        String relativeUrl = getRelativeUrl();
+        Summary summaryResponse = httpClient.getRequest(relativeUrl,
+                ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                Summary.class,
+                HttpStatus.SC_OK,
+                "retrieving scan summary",
+                false);
+        List<SeverityCounter> counters = getSeverityCounters(summaryResponse);
+        return mapToOutputSummary(counters);
+    }
+
+    private String getRelativeUrl() {
+        String relativeUrl;
         try {
-            urlEnding = new URIBuilder()
+            relativeUrl = new URIBuilder()
                     .setPath(SUMMARY_PATH)
                     .setParameter(SCAN_ID_PARAM, scanId)
                     .build()
                     .toString();
         } catch (URISyntaxException e) {
-            throw new CxClientException("Unexpected URL parsing exception.");
+            throw new CxClientException("URL parsing exception.", e);
         }
-        String error = String.format("Error retrieving %s scan summary.", getScannerDisplayName());
-        JsonNode summary = httpClient.getRequest(urlEnding, ContentType.CONTENT_TYPE_APPLICATION_JSON, JsonNode.class, HttpStatus.SC_OK, error, false);
-        return null;
+        return relativeUrl;
+    }
+
+    private ASTSummaryResults mapToOutputSummary(List<SeverityCounter> nativeCounters) {
+        ASTSummaryResults result = new ASTSummaryResults();
+        for (SeverityCounter counter : nativeCounters) {
+            Severity parsedSeverity = EnumUtils.getEnum(Severity.class, counter.getSeverity());
+            Integer value = counter.getCounter();
+            if (parsedSeverity != null && value != null) {
+                if (parsedSeverity == Severity.HIGH) {
+                    result.setHighVulnerabilityCount(value);
+                } else if (parsedSeverity == Severity.MEDIUM) {
+                    result.setMediumVulnerabilityCount(value);
+                } else if (parsedSeverity == Severity.LOW) {
+                    result.setLowVulnerabilityCount(value);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static List<SeverityCounter> getSeverityCounters(Summary summaryResponse) {
+        return Optional.ofNullable(summaryResponse).map(Summary::getScansSummaries)
+                // We are sending a single scan ID in the request and therefore expect exactly 1 scan summary.
+                .filter(scanSummaries -> scanSummaries.size() == 1)
+                .map(scanSummaries -> scanSummaries.get(0))
+                .map(ScansSummary::getSeverityCounters)
+                .orElseThrow(() -> new CxClientException("Invalid summary response."));
     }
 
     @Override

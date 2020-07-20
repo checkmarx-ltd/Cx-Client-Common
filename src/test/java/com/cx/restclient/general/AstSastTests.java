@@ -1,6 +1,7 @@
 package com.cx.restclient.general;
 
 import com.cx.restclient.CxClientDelegator;
+import com.cx.restclient.ast.dto.common.ASTSummaryResults;
 import com.cx.restclient.ast.dto.sast.AstSastConfig;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ScanResults;
@@ -18,7 +19,32 @@ import java.net.URL;
 @Slf4j
 public class AstSastTests extends CommonClientTest {
     @Test
-    public void initiateScan_remotePublicRepo() throws MalformedURLException {
+    public void scan_remotePublicRepo() throws MalformedURLException {
+        CxScanConfig config = getScanConfig();
+
+        CxClientDelegator client = new CxClientDelegator(config, log);
+        try {
+            client.init();
+            ScanResults initialResults = client.initiateScan();
+            Assert.assertNotNull("Initial scan results are null.", initialResults);
+            Assert.assertNotNull("AST-SAST results are null.", initialResults.getAstResults());
+            Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(initialResults.getAstResults().getScanId()));
+
+            ScanResults finalResults = client.waitForScanResults();
+            Assert.assertNotNull("Final scan results are null.", finalResults);
+            Assert.assertNotNull("AST-SAST results are null.", finalResults.getAstResults());
+
+            ASTSummaryResults summary = finalResults.getAstResults().getSummary();
+            Assert.assertNotNull("Summary is null.", summary);
+
+            Assert.assertTrue("No medium-severity vulnerabilities.",
+                    summary.getMediumVulnerabilityCount() > 0);
+        } catch (Exception e) {
+            failOnException(e);
+        }
+    }
+
+    private static CxScanConfig getScanConfig() throws MalformedURLException {
         AstSastConfig astConfig = AstSastConfig.builder()
                 .apiUrl(prop("astSast.apiUrl"))
                 .sourceLocationType(SourceLocationType.REMOTE_REPOSITORY)
@@ -37,18 +63,6 @@ public class AstSastTests extends CommonClientTest {
         config.addScannerType(ScannerType.AST_SAST);
         config.setPresetName("Default");
         config.setOsaProgressInterval(5);
-
-        CxClientDelegator client = new CxClientDelegator(config, log);
-        try {
-            client.init();
-            ScanResults scanResults = client.initiateScan();
-            Assert.assertNotNull("Scan results are null.", scanResults);
-            Assert.assertNotNull("AST-SAST results are null.", scanResults.getAstResults());
-            Assert.assertTrue("Scan ID is missing", StringUtils.isNotEmpty(scanResults.getAstResults().getScanId()));
-
-            client.waitForScanResults();
-        } catch (Exception e) {
-            failOnException(e);
-        }
+        return config;
     }
 }
