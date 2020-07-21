@@ -1,7 +1,7 @@
 package com.cx.restclient.dto;
 
 
-import com.cx.restclient.ast.dto.common.AstSastResults;
+import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.ast.dto.sca.AstScaResults;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;

@@ -1,14 +1,16 @@
 package com.cx.restclient.ast;
 
 import com.cx.restclient.ast.dto.common.ASTConfig;
-import com.cx.restclient.ast.dto.common.AstSastResults;
-import com.cx.restclient.ast.dto.common.AstSastSummaryResults;
 import com.cx.restclient.ast.dto.common.HandlerRef;
 import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
 import com.cx.restclient.ast.dto.common.ScanConfig;
 import com.cx.restclient.ast.dto.common.ScanConfigValue;
 import com.cx.restclient.ast.dto.sast.AstSastConfig;
+import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.ast.dto.sast.SastScanConfigValue;
+import com.cx.restclient.ast.dto.sast.report.AstSastSummaryResults;
+import com.cx.restclient.ast.dto.sast.report.Finding;
+import com.cx.restclient.ast.dto.sast.report.ScanResultsResponse;
 import com.cx.restclient.ast.dto.sast.report.ScansSummary;
 import com.cx.restclient.ast.dto.sast.report.SeverityCounter;
 import com.cx.restclient.ast.dto.sast.report.Summary;
@@ -33,6 +35,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +43,8 @@ public class AstSastClient extends AstClient implements Scanner {
     private static final String ENGINE_TYPE_FOR_API = "sast";
     private static final String REF_TYPE_BRANCH = "branch";
     private static final String SUMMARY_PATH = "/api/scan-summary";
-    private static final String SCAN_ID_PARAM = "scan-ids";
+    private static final String SCAN_RESULTS_PATH = "/api/results";
+    private static final String SCAN_IDS_PARAM = "scan-ids";
 
     private String scanId;
 
@@ -143,6 +147,7 @@ public class AstSastClient extends AstClient implements Scanner {
         result.setScanId(scanId);
         AstSastSummaryResults scanSummary = getSummaryReport();
         result.setSummary(scanSummary);
+        result.setFindings(getFindings());
         return result;
     }
 
@@ -163,6 +168,31 @@ public class AstSastClient extends AstClient implements Scanner {
         return result;
     }
 
+    private List<Finding> getFindings() throws IOException {
+        String relativeUrl;
+        try {
+            relativeUrl =  new URIBuilder()
+                    .setPath(SCAN_RESULTS_PATH)
+                    .setParameter("scan-id", scanId)
+                    .setParameter("offset", "0")
+                    .setParameter("limit", "5000")
+                    .build()
+                    .toString();
+        } catch (URISyntaxException e) {
+            throw new CxClientException("URL parsing exception.", e);
+        }
+
+        ScanResultsResponse response = httpClient.getRequest(relativeUrl, ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                ScanResultsResponse.class,
+                HttpStatus.SC_OK,
+                "retrieving scan results",
+                false);
+
+        return Optional.ofNullable(response)
+                .map(ScanResultsResponse::getResults)
+                .orElseGet(Collections::emptyList);
+    }
+
     private Summary getSummaryResponse(String relativeUrl) throws IOException {
         return httpClient.getRequest(relativeUrl,
                     ContentType.CONTENT_TYPE_APPLICATION_JSON,
@@ -173,17 +203,15 @@ public class AstSastClient extends AstClient implements Scanner {
     }
 
     private String getRelativeSummaryUrl() {
-        String relativeUrl;
         try {
-            relativeUrl = new URIBuilder()
+            return new URIBuilder()
                     .setPath(SUMMARY_PATH)
-                    .setParameter(SCAN_ID_PARAM, scanId)
+                    .setParameter(SCAN_IDS_PARAM, scanId)
                     .build()
                     .toString();
         } catch (URISyntaxException e) {
             throw new CxClientException("URL parsing exception.", e);
         }
-        return relativeUrl;
     }
 
     private static void setFindingCountsPerSeverity(List<SeverityCounter> nativeCounters, AstSastSummaryResults target) {

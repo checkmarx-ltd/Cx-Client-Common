@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class Summary implements Serializable {
-    private List<ScansSummary> scansSummaries = new ArrayList<>();
-    private Integer totalCount;
+public class ScanResultsResponse implements Serializable {
+    private List<Finding> results = new ArrayList<>();
+    private int totalCount;
 }

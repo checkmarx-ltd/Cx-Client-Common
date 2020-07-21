@@ -1,6 +1,6 @@
-package com.cx.restclient.ast.dto.common;
+package com.cx.restclient.ast.dto.sast.report;
 
-import com.cx.restclient.ast.dto.sast.report.StatusCounter;
+import com.cx.restclient.ast.dto.common.SummaryResults;
 import lombok.Getter;
 import lombok.Setter;
 

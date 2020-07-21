@@ -1,9 +1,10 @@
 package com.cx.restclient.general;
 
 import com.cx.restclient.CxClientDelegator;
-import com.cx.restclient.ast.dto.common.AstSastResults;
-import com.cx.restclient.ast.dto.common.AstSastSummaryResults;
+import com.cx.restclient.ast.dto.sast.AstSastResults;
+import com.cx.restclient.ast.dto.sast.report.AstSastSummaryResults;
 import com.cx.restclient.ast.dto.sast.AstSastConfig;
+import com.cx.restclient.ast.dto.sast.report.Finding;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
@@ -16,6 +17,7 @@ import org.junit.Test;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 @Slf4j
 public class AstSastTests extends CommonClientTest {
@@ -43,9 +45,13 @@ public class AstSastTests extends CommonClientTest {
         Assert.assertNotNull("AST-SAST results are null.", astSastResults);
         Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(astSastResults.getScanId()));
 
+        validateSummary(astSastResults);
+        validateFindings(astSastResults);
+    }
+
+    private void validateSummary(AstSastResults astSastResults) {
         AstSastSummaryResults summary = astSastResults.getSummary();
         Assert.assertNotNull("Summary is null.", summary);
-
         Assert.assertTrue("No medium-severity vulnerabilities.",
                 summary.getMediumVulnerabilityCount() > 0);
 
@@ -53,6 +59,15 @@ public class AstSastTests extends CommonClientTest {
         Assert.assertFalse("No status counters.", summary.getStatusCounters().isEmpty());
 
         Assert.assertTrue("Expected total counter to be a positive value.", summary.getTotalCounter() > 0);
+    }
+
+    private void validateFindings(AstSastResults astSastResults) {
+        List<Finding> findings = astSastResults.getFindings();
+        Assert.assertNotNull("Finding list is null.", findings);
+        Assert.assertFalse("Finding list is empty.", findings.isEmpty());
+
+        boolean someNodeListsAreEmpty = findings.stream().anyMatch(finding -> finding.getNodes().isEmpty());
+        Assert.assertFalse("Some of the finding node lists are empty.", someNodeListsAreEmpty);
     }
 
     private void validateInitialResults(ScanResults initialResults) {
