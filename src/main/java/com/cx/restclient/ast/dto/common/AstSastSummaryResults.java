@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class ASTSummaryResults extends SummaryResults implements Serializable {
+public class AstSastSummaryResults extends SummaryResults implements Serializable {
     private List<StatusCounter> statusCounters;
     private int totalCounter;
 }

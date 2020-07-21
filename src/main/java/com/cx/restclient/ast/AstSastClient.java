@@ -1,8 +1,8 @@
 package com.cx.restclient.ast;
 
 import com.cx.restclient.ast.dto.common.ASTConfig;
-import com.cx.restclient.ast.dto.common.ASTResults;
-import com.cx.restclient.ast.dto.common.ASTSummaryResults;
+import com.cx.restclient.ast.dto.common.AstSastResults;
+import com.cx.restclient.ast.dto.common.AstSastSummaryResults;
 import com.cx.restclient.ast.dto.common.HandlerRef;
 import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
 import com.cx.restclient.ast.dto.common.ScanConfig;
@@ -73,7 +73,7 @@ public class AstSastClient extends AstClient implements Scanner {
         log.info(String.format("----------------------------------- Initiating %s Scan:------------------------------------",
                 getScannerDisplayName()));
 
-        ASTResults astResults = new ASTResults();
+        AstSastResults astResults = new AstSastResults();
         scanId = null;
 
         AstSastConfig astConfig = config.getAstSastConfig();
@@ -128,7 +128,7 @@ public class AstSastClient extends AstClient implements Scanner {
     @Override
     public Results waitForScanResults() {
         waitForScanToFinish(scanId);
-        ASTResults result;
+        AstSastResults result;
         try {
             result = retrieveScanResults();
         } catch (IOException e) {
@@ -138,16 +138,16 @@ public class AstSastClient extends AstClient implements Scanner {
         return result;
     }
 
-    private ASTResults retrieveScanResults() throws IOException {
-        ASTResults result = new ASTResults();
+    private AstSastResults retrieveScanResults() throws IOException {
+        AstSastResults result = new AstSastResults();
         result.setScanId(scanId);
-        ASTSummaryResults scanSummary = getSummaryReport();
+        AstSastSummaryResults scanSummary = getSummaryReport();
         result.setSummary(scanSummary);
         return result;
     }
 
-    private ASTSummaryResults getSummaryReport() throws IOException {
-        ASTSummaryResults result = new ASTSummaryResults();
+    private AstSastSummaryResults getSummaryReport() throws IOException {
+        AstSastSummaryResults result = new AstSastSummaryResults();
 
         String summaryUrl = getRelativeSummaryUrl();
         Summary summaryResponse = getSummaryResponse(summaryUrl);
@@ -186,7 +186,7 @@ public class AstSastClient extends AstClient implements Scanner {
         return relativeUrl;
     }
 
-    private static void setFindingCountsPerSeverity(List<SeverityCounter> nativeCounters, ASTSummaryResults target) {
+    private static void setFindingCountsPerSeverity(List<SeverityCounter> nativeCounters, AstSastSummaryResults target) {
         if (nativeCounters == null) {
             return;
         }

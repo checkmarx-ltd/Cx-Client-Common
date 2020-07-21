@@ -1,8 +1,8 @@
 package com.cx.restclient.general;
 
 import com.cx.restclient.CxClientDelegator;
-import com.cx.restclient.ast.dto.common.ASTResults;
-import com.cx.restclient.ast.dto.common.ASTSummaryResults;
+import com.cx.restclient.ast.dto.common.AstSastResults;
+import com.cx.restclient.ast.dto.common.AstSastSummaryResults;
 import com.cx.restclient.ast.dto.sast.AstSastConfig;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ScanResults;
@@ -39,11 +39,11 @@ public class AstSastTests extends CommonClientTest {
     private void validateFinalResults(ScanResults finalResults) {
         Assert.assertNotNull("Final scan results are null.", finalResults);
 
-        ASTResults astSastResults = finalResults.getAstResults();
+        AstSastResults astSastResults = finalResults.getAstResults();
         Assert.assertNotNull("AST-SAST results are null.", astSastResults);
         Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(astSastResults.getScanId()));
 
-        ASTSummaryResults summary = astSastResults.getSummary();
+        AstSastSummaryResults summary = astSastResults.getSummary();
         Assert.assertNotNull("Summary is null.", summary);
 
         Assert.assertTrue("No medium-severity vulnerabilities.",

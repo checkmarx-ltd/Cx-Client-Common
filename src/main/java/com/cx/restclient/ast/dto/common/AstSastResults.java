@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Getter
 @Setter
-public class ASTResults implements Serializable, Results {
+public class AstSastResults implements Serializable, Results {
     private String scanId;
-    private ASTSummaryResults summary;
+    private AstSastSummaryResults summary;
 }

@@ -1,7 +1,7 @@
 package com.cx.restclient.dto;
 
 
-import com.cx.restclient.ast.dto.common.ASTResults;
+import com.cx.restclient.ast.dto.common.AstSastResults;
 import com.cx.restclient.ast.dto.sca.AstScaResults;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;
@@ -44,8 +44,8 @@ public class ScanResults implements Serializable, Results {
         return (OSAResults)resultsMap.get(ScannerType.OSA);
     }
 
-    public ASTResults getAstResults() {
-        return (ASTResults)resultsMap.get(ScannerType.AST_SAST);
+    public AstSastResults getAstResults() {
+        return (AstSastResults)resultsMap.get(ScannerType.AST_SAST);
     }
 
     public AstScaResults getScaResults() {
