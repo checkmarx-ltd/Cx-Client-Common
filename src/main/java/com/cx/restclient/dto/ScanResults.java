@@ -1,19 +1,18 @@
 package com.cx.restclient.dto;
 
 
+import com.cx.restclient.ast.dto.common.ASTResults;
+import com.cx.restclient.ast.dto.sca.AstScaResults;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
-import com.cx.restclient.ast.dto.common.ASTResults;
-import com.cx.restclient.ast.dto.sca.AstScaResults;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 public class ScanResults implements Serializable, Results {
-    
-    Map<ScannerType, Results> resultsMap = new HashMap<>();
+    private final Map<ScannerType, Results> resultsMap = new EnumMap<>(ScannerType.class);
     
     private Exception sastCreateException = null;
     private Exception sastWaitException = null;
