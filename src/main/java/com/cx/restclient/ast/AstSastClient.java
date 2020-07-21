@@ -45,6 +45,7 @@ public class AstSastClient extends AstClient implements Scanner {
     private static final String SUMMARY_PATH = "/api/scan-summary";
     private static final String SCAN_RESULTS_PATH = "/api/results";
     private static final String SCAN_IDS_PARAM = "scan-ids";
+    private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
 
     private String scanId;
 
@@ -145,13 +146,17 @@ public class AstSastClient extends AstClient implements Scanner {
     private AstSastResults retrieveScanResults() throws IOException {
         AstSastResults result = new AstSastResults();
         result.setScanId(scanId);
-        AstSastSummaryResults scanSummary = getSummaryReport();
+
+        AstSastSummaryResults scanSummary = getSummary();
         result.setSummary(scanSummary);
-        result.setFindings(getFindings());
+
+        List<Finding> findings = getFindings();
+        result.setFindings(findings);
+
         return result;
     }
 
-    private AstSastSummaryResults getSummaryReport() throws IOException {
+    private AstSastSummaryResults getSummary() throws IOException {
         AstSastSummaryResults result = new AstSastSummaryResults();
 
         String summaryUrl = getRelativeSummaryUrl();
@@ -161,17 +166,40 @@ public class AstSastClient extends AstClient implements Scanner {
         setFindingCountsPerSeverity(nativeSummary.getSeverityCounters(), result);
 
         result.setStatusCounters(nativeSummary.getStatusCounters());
-
-        int total = Optional.ofNullable(nativeSummary.getTotalCounter()).orElse(0);
-        result.setTotalCounter(total);
+        result.setTotalCounter(nativeSummary.getTotalCounter());
 
         return result;
     }
 
     private List<Finding> getFindings() throws IOException {
-        String relativeUrl;
+        String relativeUrl = getRelativeResultsUrl();
+        ScanResultsResponse response = getScanResultsResponse(relativeUrl);
+
+        return Optional.ofNullable(response)
+                .map(ScanResultsResponse::getResults)
+                .orElseGet(Collections::emptyList);
+    }
+
+    private ScanResultsResponse getScanResultsResponse(String relativeUrl) throws IOException {
+        return httpClient.getRequest(relativeUrl, ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                    ScanResultsResponse.class,
+                    HttpStatus.SC_OK,
+                    "retrieving scan results",
+                    false);
+    }
+
+    private Summary getSummaryResponse(String relativeUrl) throws IOException {
+        return httpClient.getRequest(relativeUrl,
+                ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                Summary.class,
+                HttpStatus.SC_OK,
+                "retrieving scan summary",
+                false);
+    }
+
+    private String getRelativeResultsUrl() {
         try {
-            relativeUrl =  new URIBuilder()
+            return new URIBuilder()
                     .setPath(SCAN_RESULTS_PATH)
                     .setParameter("scan-id", scanId)
                     .setParameter("offset", "0")
@@ -179,27 +207,8 @@ public class AstSastClient extends AstClient implements Scanner {
                     .build()
                     .toString();
         } catch (URISyntaxException e) {
-            throw new CxClientException("URL parsing exception.", e);
+            throw new CxClientException(URL_PARSING_EXCEPTION, e);
         }
-
-        ScanResultsResponse response = httpClient.getRequest(relativeUrl, ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                ScanResultsResponse.class,
-                HttpStatus.SC_OK,
-                "retrieving scan results",
-                false);
-
-        return Optional.ofNullable(response)
-                .map(ScanResultsResponse::getResults)
-                .orElseGet(Collections::emptyList);
-    }
-
-    private Summary getSummaryResponse(String relativeUrl) throws IOException {
-        return httpClient.getRequest(relativeUrl,
-                    ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                    Summary.class,
-                    HttpStatus.SC_OK,
-                    "retrieving scan summary",
-                    false);
     }
 
     private String getRelativeSummaryUrl() {
@@ -210,7 +219,7 @@ public class AstSastClient extends AstClient implements Scanner {
                     .build()
                     .toString();
         } catch (URISyntaxException e) {
-            throw new CxClientException("URL parsing exception.", e);
+            throw new CxClientException(URL_PARSING_EXCEPTION, e);
         }
     }
 
@@ -221,8 +230,8 @@ public class AstSastClient extends AstClient implements Scanner {
 
         for (SeverityCounter counter : nativeCounters) {
             Severity parsedSeverity = EnumUtils.getEnum(Severity.class, counter.getSeverity());
-            Integer value = counter.getCounter();
-            if (parsedSeverity != null && value != null) {
+            int value = counter.getCounter();
+            if (parsedSeverity != null) {
                 if (parsedSeverity == Severity.HIGH) {
                     target.setHighVulnerabilityCount(value);
                 } else if (parsedSeverity == Severity.MEDIUM) {

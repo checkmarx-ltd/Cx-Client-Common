@@ -11,5 +11,5 @@ import java.util.List;
 @Setter
 public class Summary implements Serializable {
     private List<ScansSummary> scansSummaries = new ArrayList<>();
-    private Integer totalCount;
+    private int totalCount;
 }

@@ -9,5 +9,5 @@ import java.io.Serializable;
 @Setter
 public class StatusCounter implements Serializable {
     private String status;
-    private Integer counter;
+    private int counter;
 }

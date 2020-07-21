@@ -9,5 +9,5 @@ import java.io.Serializable;
 @Setter
 public class SeverityCounter implements Serializable {
     private String severity;
-    private Integer counter;
+    private int counter;
 }

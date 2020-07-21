@@ -14,5 +14,5 @@ class ScansSummary implements Serializable {
     private String scanId;
     private List<SeverityCounter> severityCounters = new ArrayList<>();
     private List<StatusCounter> statusCounters = new ArrayList<>();
-    private Integer totalCounter;
+    private int totalCounter;
 }
