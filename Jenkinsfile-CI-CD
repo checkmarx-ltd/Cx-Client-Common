@@ -107,7 +107,7 @@ pipeline {
         stage('System Tests') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") && CHANGE_TARGET == 'master'// || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
+                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") && CHANGE_TARGET == 'master' || BRANCH_NAME == 'eitanas1-new-jenkinsfile'
                 }
             }
             parallel {
