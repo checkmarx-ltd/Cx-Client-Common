@@ -44,7 +44,6 @@ public class AstSastClient extends AstClient implements Scanner {
     private static final String REF_TYPE_BRANCH = "branch";
     private static final String SUMMARY_PATH = "/api/scan-summary";
     private static final String SCAN_RESULTS_PATH = "/api/results";
-    private static final String SCAN_IDS_PARAM = "scan-ids";
     private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
 
     private String scanId;
@@ -119,11 +118,7 @@ public class AstSastClient extends AstClient implements Scanner {
 
     @Override
     protected HandlerRef getBranchToScan(RemoteRepositoryInfo repoInfo) {
-        if (StringUtils.isEmpty(repoInfo.getBranch())) {
-            String message = String.format("Branch must be specified for the %s scan.", getScannerDisplayName());
-            throw new CxClientException(message);
-        }
-
+        // We need to return this object even if no branch is specified in repoInfo.
         return HandlerRef.builder()
                 .type(REF_TYPE_BRANCH)
                 .value(repoInfo.getBranch())
@@ -133,27 +128,25 @@ public class AstSastClient extends AstClient implements Scanner {
     @Override
     public Results waitForScanResults() {
         waitForScanToFinish(scanId);
-        AstSastResults result;
+        return retrieveScanResults();
+    }
+
+    private AstSastResults retrieveScanResults() {
         try {
-            result = retrieveScanResults();
+            AstSastResults result = new AstSastResults();
+            result.setScanId(scanId);
+
+            AstSastSummaryResults scanSummary = getSummary();
+            result.setSummary(scanSummary);
+
+            List<Finding> findings = getFindings();
+            result.setFindings(findings);
+
+            return result;
         } catch (IOException e) {
             String message = String.format("Error getting %s scan results.", getScannerDisplayName());
             throw new CxClientException(message, e);
         }
-        return result;
-    }
-
-    private AstSastResults retrieveScanResults() throws IOException {
-        AstSastResults result = new AstSastResults();
-        result.setScanId(scanId);
-
-        AstSastSummaryResults scanSummary = getSummary();
-        result.setSummary(scanSummary);
-
-        List<Finding> findings = getFindings();
-        result.setFindings(findings);
-
-        return result;
     }
 
     private AstSastSummaryResults getSummary() throws IOException {
@@ -181,11 +174,12 @@ public class AstSastClient extends AstClient implements Scanner {
     }
 
     private ScanResultsResponse getScanResultsResponse(String relativeUrl) throws IOException {
-        return httpClient.getRequest(relativeUrl, ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                    ScanResultsResponse.class,
-                    HttpStatus.SC_OK,
-                    "retrieving scan results",
-                    false);
+        return httpClient.getRequest(relativeUrl,
+                ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                ScanResultsResponse.class,
+                HttpStatus.SC_OK,
+                "retrieving scan results",
+                false);
     }
 
     private Summary getSummaryResponse(String relativeUrl) throws IOException {
@@ -215,7 +209,7 @@ public class AstSastClient extends AstClient implements Scanner {
         try {
             return new URIBuilder()
                     .setPath(SUMMARY_PATH)
-                    .setParameter(SCAN_IDS_PARAM, scanId)
+                    .setParameter("scan-ids", scanId)
                     .build()
                     .toString();
         } catch (URISyntaxException e) {

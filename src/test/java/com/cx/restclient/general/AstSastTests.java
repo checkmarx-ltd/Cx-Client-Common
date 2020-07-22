@@ -86,7 +86,6 @@ public class AstSastTests extends CommonClientTest {
         RemoteRepositoryInfo repoInfo = new RemoteRepositoryInfo();
         URL repoUrl = new URL(prop("astSast.remoteRepoUrl.public"));
         repoInfo.setUrl(repoUrl);
-        repoInfo.setBranch("master");
         astConfig.setRemoteRepositoryInfo(repoInfo);
 
         CxScanConfig config = new CxScanConfig();
