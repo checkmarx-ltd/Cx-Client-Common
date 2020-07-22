@@ -27,7 +27,7 @@ import java.util.UUID;
 import static org.junit.Assert.fail;
 
 @Slf4j
-public class AstScaTests extends AbstractScaScanTests {
+public class AstScaTests extends ScaTestsBase {
     @Test
     public void scan_localDirUpload() throws IOException, CxClientException {
         CxScanConfig config = initScaConfig(false);
@@ -46,6 +46,15 @@ public class AstScaTests extends AbstractScaScanTests {
         }
     }
 
+    @Test
+    public void scan_remotePublicRepo() throws MalformedURLException {
+        scanRemoteRepo(PUBLIC_REPO_PROP, false);
+    }
+
+    @Test
+    public void scan_remotePrivateRepo() throws MalformedURLException {
+        scanRemoteRepo(PRIVATE_REPO_PROP, false);
+    }
 
     @Test
     @Ignore("There is no stable on-prem environment.")
@@ -62,7 +71,7 @@ public class AstScaTests extends AbstractScaScanTests {
         verifyScanResults(scanResults);
     }
 
-    protected void scanRemoteRepo(String repoUrlProp, boolean useOnPremAuthentication) throws MalformedURLException {
+    private void scanRemoteRepo(String repoUrlProp, boolean useOnPremAuthentication) throws MalformedURLException {
         CxScanConfig config = initScaConfig(repoUrlProp, useOnPremAuthentication);
 
         ScanResults scanResults = runScan(config);

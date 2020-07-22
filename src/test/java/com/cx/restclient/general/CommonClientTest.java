@@ -55,16 +55,7 @@ public abstract class CommonClientTest {
         Assert.fail(e.getMessage());
     }
 
-    protected CxScanConfig initSastConfig(){
-        return initSastConfig(new  CxScanConfig(), "sastOnlyScan");
-    }
-
-    protected CxScanConfig initSastConfig(String projectName){
-        return initSastConfig(new  CxScanConfig(), projectName);
-    }
-    
-    protected CxScanConfig initSastConfig( CxScanConfig config, String projectName) {
-
+    protected CxScanConfig initSastConfig(CxScanConfig config, String projectName) {
         config.setReportsDir(new File("C:\\report"));
         config.setSourceDir(props.getProperty("sastSource"));
         config.setUsername(props.getProperty("username"));
@@ -84,10 +75,7 @@ public abstract class CommonClientTest {
     }
 
     protected static CxScanConfig initScaConfig(boolean useOnPremAuthentication){
-        return initScaConfig(useOnPremAuthentication, new CxScanConfig());
-    }
-    
-    protected static CxScanConfig initScaConfig(boolean useOnPremAuthentication,  CxScanConfig config) {
+        CxScanConfig config = new CxScanConfig();
         config.addScannerType(ScannerType.AST_SCA);
         config.setSastEnabled(false);
         config.setProjectName(props.getProperty("astSca.projectName"));
@@ -102,12 +90,12 @@ public abstract class CommonClientTest {
         CxClientDelegator client = new CxClientDelegator(config, log);
         try {
             client.init();
-            System.out.println("Initiate scan for the following scanners: " + config.getScannerTypes());
+            log.info("Initiate scan for the following scanners: " + config.getScannerTypes());
             client.initiateScan();
-            System.out.println("Waiting for results of " + config.getScannerTypes());
+            log.info("Waiting for results of " + config.getScannerTypes());
             ScanResults results =  client.waitForScanResults();
             Assert.assertNotNull(results);
-            System.out.println("Results retrieved" );
+            log.info("Results retrieved" );
             return results;
         } catch (Exception e) {
             failOnException(e);
@@ -115,13 +103,8 @@ public abstract class CommonClientTest {
         }
     }
 
-    protected CxScanConfig initOsaConfig(){
-        return initOsaConfig(new CxScanConfig(), "osaOnlyScan");
-    }
-    
     protected CxScanConfig initOsaConfig(CxScanConfig config, String projectName) {
-
-        System.out.println("Scan ProjectName " + projectName);
+        log.info("Scan ProjectName " + projectName);
         config.addScannerType(ScannerType.OSA);
         config.setSourceDir(props.getProperty("dependencyScanSourceDir"));
         config.setReportsDir(new File("C:\\report"));
@@ -142,6 +125,4 @@ public abstract class CommonClientTest {
 
         return config;
     }
-
-
 }
