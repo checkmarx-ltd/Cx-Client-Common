@@ -80,7 +80,7 @@ public abstract class AstClient {
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
 
-        log.info("Sending a request to start scan.");
+        log.info("Sending the 'start scan' request.");
         return httpClient.postRequest(UrlPaths.CREATE_SCAN, ContentType.CONTENT_TYPE_APPLICATION_JSON, entity,
                 HttpResponse.class, HttpStatus.SC_CREATED, "start the scan");
     }

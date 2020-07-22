@@ -1,7 +1,11 @@
 package com.cx.restclient.ast.dto.common;
 
 public enum ScanStatus {
-    FAILED,
+    // Some of the statuses are not used in code, but they help to prevent the "unknown status" warnings.
+    CANCELED,
     COMPLETED,
+    CREATED,
+    FAILED,
+    PENDING,
     RUNNING
 }

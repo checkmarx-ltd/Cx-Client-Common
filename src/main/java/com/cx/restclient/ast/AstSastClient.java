@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +45,7 @@ public class AstSastClient extends AstClient implements Scanner {
     private static final String SUMMARY_PATH = "/api/scan-summary";
     private static final String SCAN_RESULTS_PATH = "/api/results";
     private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
+    private static final int DEFAULT_PAGE_SIZE = 1000;
 
     private String scanId;
 
@@ -165,12 +166,26 @@ public class AstSastClient extends AstClient implements Scanner {
     }
 
     private List<Finding> getFindings() throws IOException {
-        String relativeUrl = getRelativeResultsUrl();
-        ScanResultsResponse response = getScanResultsResponse(relativeUrl);
+        int offset = 0;
+        int limit = config.getAstSastConfig().getResultsPageSize();
+        if (limit <= 0) {
+            limit = DEFAULT_PAGE_SIZE;
+        }
 
-        return Optional.ofNullable(response)
-                .map(ScanResultsResponse::getResults)
-                .orElseGet(Collections::emptyList);
+        List<Finding> allFindings = new ArrayList<>();
+        while (true) {
+            String relativeUrl = getRelativeResultsUrl(offset, limit);
+            ScanResultsResponse response = getScanResultsResponse(relativeUrl);
+            List<Finding> findingsFromResponse = response.getResults();
+            allFindings.addAll(findingsFromResponse);
+            offset += findingsFromResponse.size();
+            if (offset >= response.getTotalCount()) {
+                break;
+            }
+        }
+
+        log.info(String.format("Total findings: %d", allFindings.size()));
+        return allFindings;
     }
 
     private ScanResultsResponse getScanResultsResponse(String relativeUrl) throws IOException {
@@ -191,15 +206,18 @@ public class AstSastClient extends AstClient implements Scanner {
                 false);
     }
 
-    private String getRelativeResultsUrl() {
+    private String getRelativeResultsUrl(int offset, int limit) {
         try {
-            return new URIBuilder()
+            String result = new URIBuilder()
                     .setPath(SCAN_RESULTS_PATH)
                     .setParameter("scan-id", scanId)
-                    .setParameter("offset", "0")
-                    .setParameter("limit", "5000")
+                    .setParameter("offset", Integer.toString(offset))
+                    .setParameter("limit", Integer.toString(limit))
                     .build()
                     .toString();
+
+            log.debug(String.format("Getting findings from %s", result));
+            return result;
         } catch (URISyntaxException e) {
             throw new CxClientException(URL_PARSING_EXCEPTION, e);
         }
@@ -207,11 +225,14 @@ public class AstSastClient extends AstClient implements Scanner {
 
     private String getRelativeSummaryUrl() {
         try {
-            return new URIBuilder()
+            String result = new URIBuilder()
                     .setPath(SUMMARY_PATH)
                     .setParameter("scan-ids", scanId)
                     .build()
                     .toString();
+
+            log.debug(String.format("Getting summary from %s", result));
+            return result;
         } catch (URISyntaxException e) {
             throw new CxClientException(URL_PARSING_EXCEPTION, e);
         }

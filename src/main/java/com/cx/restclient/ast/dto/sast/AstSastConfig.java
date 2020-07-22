@@ -16,4 +16,9 @@ public class AstSastConfig extends ASTConfig implements Serializable  {
     private String accessToken;
     private String presetName;
     private boolean incremental;
+
+    /**
+     * Used as a paging parameter in scan result requests.
+     */
+    private int resultsPageSize;
 }

@@ -132,10 +132,6 @@ public class AstWaiter {
                 scannerDisplayName,
                 elapsedTimestamp,
                 rawStatus));
-        ScanStatus status = EnumUtils.getEnumIgnoreCase(ScanStatus.class, rawStatus);
-        if (status == null) {
-            log.warn(String.format("Unknown status: '%s'", rawStatus));
-        }
-        return status;
+        return EnumUtils.getEnumIgnoreCase(ScanStatus.class, rawStatus);
     }
 }
