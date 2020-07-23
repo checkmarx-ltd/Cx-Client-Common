@@ -355,6 +355,8 @@ pipeline {
     post {
         always {
             archiveArtifacts "*.zip, target/cx-client-common-${cxCommonVersion}.jar"
+        }
+        cleanup {
             script {
                 try {
                     wrap([$class: 'BuildUser']) {
@@ -365,8 +367,6 @@ pipeline {
                     kit.Warning_Msg("The message couldn't be pushed to elastic, error:\n" + e.toString())
                 }
             }
-        }
-        cleanup {
             cleanWs()
         }
     }
