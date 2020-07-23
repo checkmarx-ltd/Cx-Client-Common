@@ -324,7 +324,7 @@ pipeline {
         stage('Publish') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' && cxCommonVersion != '2020.2.23'
+                    BRANCH_NAME == 'master' && cxCommonVersion != '2020.2.24'
                 }
             }
             parallel {
@@ -355,6 +355,14 @@ pipeline {
     post {
         always {
             archiveArtifacts "*.zip, target/cx-client-common-${cxCommonVersion}.jar"
+            try {
+                wrap([$class: 'BuildUser']) {
+                    kit.Command_Execution_Sh("jq -n env > env.json")
+                }
+                kit.Command_Execution_Sh("curl -sb -k -v -H \"Content-type: application/json\" -XPOST http://cx-elastic01:9200/cx-client-common/_doc -d @env.json")
+            }catch (Exception e) {
+                kit.Warning_Msg("The message couldn't be pushed to elastic, error:\n" + e.toString())
+            }
         }
         cleanup {
             cleanWs()
