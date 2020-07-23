@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public
-class ScansSummary implements Serializable {
+class SingleScanSummary implements Serializable {
     private String scanId;
     private List<SeverityCounter> severityCounters = new ArrayList<>();
     private List<StatusCounter> statusCounters = new ArrayList<>();

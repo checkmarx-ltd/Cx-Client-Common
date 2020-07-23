@@ -7,6 +7,9 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * Summary for external use as a part of general scan results.
+ */
 @Getter
 @Setter
 public class AstSastSummaryResults extends SummaryResults implements Serializable {

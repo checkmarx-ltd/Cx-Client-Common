@@ -11,9 +11,9 @@ import com.cx.restclient.ast.dto.sast.SastScanConfigValue;
 import com.cx.restclient.ast.dto.sast.report.AstSastSummaryResults;
 import com.cx.restclient.ast.dto.sast.report.Finding;
 import com.cx.restclient.ast.dto.sast.report.ScanResultsResponse;
-import com.cx.restclient.ast.dto.sast.report.ScansSummary;
+import com.cx.restclient.ast.dto.sast.report.SingleScanSummary;
 import com.cx.restclient.ast.dto.sast.report.SeverityCounter;
-import com.cx.restclient.ast.dto.sast.report.Summary;
+import com.cx.restclient.ast.dto.sast.report.SummaryResponse;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.Results;
@@ -48,6 +48,8 @@ public class AstSastClient extends AstClient implements Scanner {
     private static final String SUMMARY_PATH = "/api/scan-summary";
     private static final String SCAN_RESULTS_PATH = "/api/results";
     private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
+    private static final String ALL_SEVERITIES_EXCEPT_INFO = StringUtils.join(Severity.values(), ",");
+
     private static final int DEFAULT_PAGE_SIZE = 1000;
     private static final int NO_FINDINGS_CODE = 4004;
 
@@ -160,9 +162,9 @@ public class AstSastClient extends AstClient implements Scanner {
         AstSastSummaryResults result = new AstSastSummaryResults();
 
         String summaryUrl = getRelativeSummaryUrl();
-        Summary summaryResponse = getSummaryResponse(summaryUrl);
+        SummaryResponse summaryResponse = getSummaryResponse(summaryUrl);
 
-        ScansSummary nativeSummary = getNativeSummary(summaryResponse);
+        SingleScanSummary nativeSummary = getNativeSummary(summaryResponse);
         setFindingCountsPerSeverity(nativeSummary.getSeverityCounters(), result);
 
         result.setStatusCounters(nativeSummary.getStatusCounters());
@@ -203,12 +205,12 @@ public class AstSastClient extends AstClient implements Scanner {
                 false);
     }
 
-    private Summary getSummaryResponse(String relativeUrl) {
-        Summary result;
+    private SummaryResponse getSummaryResponse(String relativeUrl) {
+        SummaryResponse result;
         try {
             result = httpClient.getRequest(relativeUrl,
                     ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                    Summary.class,
+                    SummaryResponse.class,
                     HttpStatus.SC_OK,
                     "retrieving scan summary",
                     false);
@@ -218,11 +220,11 @@ public class AstSastClient extends AstClient implements Scanner {
         return result;
     }
 
-    private Summary getEmptySummaryIfApplicable(Exception e) {
-        Summary result;
+    private SummaryResponse getEmptySummaryIfApplicable(Exception e) {
+        SummaryResponse result;
         if (noFindingsWereDetected(e)) {
-            result = new Summary();
-            result.getScansSummaries().add(new ScansSummary());
+            result = new SummaryResponse();
+            result.getScansSummaries().add(new SingleScanSummary());
         }
         else {
             throw new CxClientException("Error getting scan summary.", e);
@@ -260,6 +262,8 @@ public class AstSastClient extends AstClient implements Scanner {
                     .setParameter("scan-id", scanId)
                     .setParameter("offset", Integer.toString(offset))
                     .setParameter("limit", Integer.toString(limit))
+                    // We don't handle 'info' severities in Common Client.
+                    .setParameter("severity", ALL_SEVERITIES_EXCEPT_INFO)
                     .build()
                     .toString();
 
@@ -305,8 +309,8 @@ public class AstSastClient extends AstClient implements Scanner {
         }
     }
 
-    private static ScansSummary getNativeSummary(Summary summaryResponse) {
-        return Optional.ofNullable(summaryResponse).map(Summary::getScansSummaries)
+    private static SingleScanSummary getNativeSummary(SummaryResponse summaryResponse) {
+        return Optional.ofNullable(summaryResponse).map(SummaryResponse::getScansSummaries)
                 // We are sending a single scan ID in the request and therefore expect exactly 1 scan summary.
                 .filter(scanSummaries -> scanSummaries.size() == 1)
                 .map(scanSummaries -> scanSummaries.get(0))
