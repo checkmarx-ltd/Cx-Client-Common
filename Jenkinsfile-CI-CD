@@ -2,7 +2,6 @@
 @Library('cx-jenkins-pipeline-kit') _
 
 def workspace
-def cxCommonVersion = "${BUILD_TAG}"
 def vmName = "${BUILD_TAG}-CxSAST"
 def installationLogs = "Installation-Logs-CxSAST"
 def vmTemplate89 = "CxSDLC-Template-CxSAST-8-9"
@@ -41,13 +40,18 @@ pipeline {
         stage('Pipeline Info') {
             steps {
                 script {
+                    environment {
+                        cxCommonVersion = "${BUILD_TAG}"
+                        PIPELINE_STATUS = "Success"
+                        STAGE_NAME_FAILED = "None"
+                    }
                     if (BRANCH_NAME == 'master') {
                         // remove -SNAPSHOT if exist (temporary)
                         sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
                         // get version from POM
                         sh "mvn resources:resources"
                         def commonPropertiesContent = readFile "./target/classes/common.properties"
-                        cxCommonVersion = commonPropertiesContent.substring(10)
+                        env.cxCommonVersion = commonPropertiesContent.substring(10)
                     }
                     workspace = pwd()
                     sh 'printenv'
@@ -58,7 +62,15 @@ pipeline {
         stage('Build CxCommon') {
             steps {
                 script {
-                    sh "docker run --rm --name build-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn clean install -DskipTests -Dcxcommon.version=${cxCommonVersion}"
+                    sh "docker run --rm --name build-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn clean install -DskipTests -Dcxcommon.version=${env.cxCommonVersion}"
+                }
+            }
+            post {
+                failure {
+                    script {
+                        env.PIPELINE_STATUS = "Failure"
+                        env.STAGE_NAME_FAILED="${STAGE_NAME}"
+                    }
                 }
             }
         }
@@ -69,7 +81,15 @@ pipeline {
                 stage('Run Unit & Integration Tests') {
                     steps {
                         script {
-                            sh "docker run --rm --name test-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn test -Dcxcommon.version=${cxCommonVersion}"
+                            sh "docker run --rm --name test-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn test -Dcxcommon.version=${env.cxCommonVersion}"
+                        }
+                    }
+                    post {
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
+                            }
                         }
                     }
                 }
@@ -80,7 +100,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            sh "docker run --rm --name sonar-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn sonar:sonar -Dcxcommon.version=${cxCommonVersion}"
+                            sh "docker run --rm --name sonar-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn sonar:sonar -Dcxcommon.version=${env.cxCommonVersion}"
                             def sonarTaskUrl = sh (returnStdout: true, script: "awk '/./{line=\$0} END{print line}' ./target/sonar/report-task.txt | cut -d '=' -f '2,3'").trim()
                             def sonarTaskStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
                             while (sonarTaskStatus == 'PENDING' || sonarTaskStatus == 'IN_PROGRESS') {
@@ -97,6 +117,14 @@ pipeline {
                             if (sonarResultsStatus == "ERROR") {
                                 kit.Error_Msg("Sonar scan FAILED. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
                                 error "Sonar scan FAILED. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common"
+                            }
+                        }
+                    }
+                    post {
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
                             }
                         }
                     }
@@ -142,7 +170,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/8.9/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-api-sanity-test-8.9-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/8.9/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress89} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q clean test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=8.9 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                        mvn -q clean test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=8.9 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
                         }
@@ -150,7 +178,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/8.9/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-api-smoke-tests-8.9-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/8.9/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress89} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=8.9 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=8.9 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
@@ -159,7 +187,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/8.9/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-cxcommonclient-all-tests-8.9-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/8.9/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
-                                        mvn -q test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=8.9 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=8.9 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
@@ -178,6 +206,12 @@ pipeline {
                                     unstash installationLogs + "-8.9"
                                     deleteVm(provider, ipAddress89, vmName + "-8.9")
                                 }
+                            }
+                        }
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
                             }
                         }
                     }
@@ -210,7 +244,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/9.0/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-api-sanity-test-9.0-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.0/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress90} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q clean test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=9.0 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                        mvn -q clean test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.0 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
                         }
@@ -218,7 +252,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/9.0/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-api-smoke-tests-9.0-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.0/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress90} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=9.0 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.0 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
@@ -227,7 +261,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/9.0/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.0-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.0/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
-                                        mvn -q test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=9.0 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.0 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
@@ -246,6 +280,12 @@ pipeline {
                                     unstash installationLogs + "-9.0"
                                     deleteVm(provider, ipAddress90, vmName + "-9.0")
                                 }
+                            }
+                        }
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
                             }
                         }
                     }
@@ -278,7 +318,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/9.2/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-api-sanity-test-9.2-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.2/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress92} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q clean test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=9.2 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                        mvn -q clean test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.2 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
                         }
@@ -286,7 +326,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/9.2/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-api-smoke-tests-9.2-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.2/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress92} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=9.2 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.2 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
@@ -295,7 +335,7 @@ pipeline {
                             steps {
                                 dir("${workspace}/9.2/Checkmarx-System-Test") {
                                     sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.2-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.2/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
-                                        mvn -q test -Dcxcommon.version=${cxCommonVersion} -Dsast.version=9.2 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.2 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
                             }
@@ -316,6 +356,12 @@ pipeline {
                                 }
                             }
                         }
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
+                            }
+                        }
                     }
                 }
             }
@@ -324,7 +370,7 @@ pipeline {
         stage('Publish') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' && cxCommonVersion != '2020.2.24'
+                    BRANCH_NAME == 'master' && env.cxCommonVersion != '2020.2.24'
                 }
             }
             parallel {
@@ -335,7 +381,15 @@ pipeline {
                     }
                     steps {
                         script {
-                            sh "ghr -t ${GITHUB_TOKEN} -u checkmarx-ltd -n ${cxCommonVersion} -r Cx-Client-Common -c ${GIT_COMMIT} -delete ${cxCommonVersion} ./target/cx-client-common-${cxCommonVersion}.jar"
+                            sh "ghr -t ${GITHUB_TOKEN} -u checkmarx-ltd -n ${env.cxCommonVersion} -r Cx-Client-Common -c ${GIT_COMMIT} -delete ${env.cxCommonVersion} ./target/cx-client-common-${env.cxCommonVersion}.jar"
+                        }
+                    }
+                    post {
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
+                            }
                         }
                     }
                 }
@@ -344,7 +398,15 @@ pipeline {
                     steps {
                         script {
                             //sh "docker run --rm --name publish-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}:/usr/src/cx-common -v /root/.gnupg:/root/.gnupg -w /usr/src/cx-common maven:3.6.1-jdk-8 mvn deploy -P release"
-                            sh "mvn deploy -P release -DskipTests -Dcxcommon.version=${cxCommonVersion}"
+                            sh "mvn deploy -P release -DskipTests -Dcxcommon.version=${env.cxCommonVersion}"
+                        }
+                    }
+                    post {
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
+                            }
                         }
                     }
                 }
@@ -354,9 +416,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts "*.zip, target/cx-client-common-${cxCommonVersion}.jar"
-        }
-        cleanup {
+            archiveArtifacts "*.zip, target/cx-client-common-${env.cxCommonVersion}.jar"
             script {
                 try {
                     wrap([$class: 'BuildUser']) {
@@ -367,6 +427,8 @@ pipeline {
                     kit.Warning_Msg("The message couldn't be pushed to elastic, error:\n" + e.toString())
                 }
             }
+        }
+        cleanup {
             cleanWs()
         }
     }
