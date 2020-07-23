@@ -20,6 +20,8 @@ import java.util.List;
  * Created by Galn on 06/02/2018.
  */
 public abstract class HttpClientHelper {
+    private HttpClientHelper() {
+    }
 
     public static <T> T convertToObject(HttpResponse response, Class<T> responseType, boolean isCollection) throws IOException, CxClientException {
       
@@ -99,15 +101,15 @@ public abstract class HttpClientHelper {
         int actualStatusCode = response.getStatusLine().getStatusCode();
         if (actualStatusCode != expectedStatus) {
             String responseBody = extractResponseBody(response);
-            responseBody = responseBody.replace("{", "")
+            String readableBody = responseBody.replace("{", "")
                     .replace("}", "")
                     .replace(System.getProperty("line.separator"), " ")
                     .replace("  ", "");
 
             String exceptionMessage = String.format("Status code: %d, message: '%s', response body: %s",
-                    actualStatusCode, message, responseBody);
+                    actualStatusCode, message, readableBody);
 
-            throw new CxHTTPClientException(actualStatusCode, exceptionMessage);
+            throw new CxHTTPClientException(actualStatusCode, exceptionMessage, responseBody);
         }
     }
 

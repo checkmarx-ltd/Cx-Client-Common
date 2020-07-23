@@ -22,8 +22,11 @@ import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.SourceLocationType;
 import com.cx.restclient.dto.scansummary.Severity;
 import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +49,9 @@ public class AstSastClient extends AstClient implements Scanner {
     private static final String SCAN_RESULTS_PATH = "/api/results";
     private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
     private static final int DEFAULT_PAGE_SIZE = 1000;
+    private static final int NO_FINDINGS_CODE = 4004;
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private String scanId;
 
@@ -150,7 +156,7 @@ public class AstSastClient extends AstClient implements Scanner {
         }
     }
 
-    private AstSastSummaryResults getSummary() throws IOException {
+    private AstSastSummaryResults getSummary() {
         AstSastSummaryResults result = new AstSastSummaryResults();
 
         String summaryUrl = getRelativeSummaryUrl();
@@ -197,13 +203,54 @@ public class AstSastClient extends AstClient implements Scanner {
                 false);
     }
 
-    private Summary getSummaryResponse(String relativeUrl) throws IOException {
-        return httpClient.getRequest(relativeUrl,
-                ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                Summary.class,
-                HttpStatus.SC_OK,
-                "retrieving scan summary",
-                false);
+    private Summary getSummaryResponse(String relativeUrl) {
+        Summary result;
+        try {
+            result = httpClient.getRequest(relativeUrl,
+                    ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                    Summary.class,
+                    HttpStatus.SC_OK,
+                    "retrieving scan summary",
+                    false);
+        } catch (Exception e) {
+            result = getEmptySummaryIfApplicable(e);
+        }
+        return result;
+    }
+
+    private Summary getEmptySummaryIfApplicable(Exception e) {
+        Summary result;
+        if (noFindingsWereDetected(e)) {
+            result = new Summary();
+            result.getScansSummaries().add(new ScansSummary());
+        }
+        else {
+            throw new CxClientException("Error getting scan summary.", e);
+        }
+        return result;
+    }
+
+    /** When no findings are detected, AST-SAST API returns the 404 status with a specific
+     * error code, which is quite awkward.
+     * Response example: {"code":4004,"message":"can't find all the provided scan ids","data":null}
+     * @return true: scan completed successfully and the result contains no findings (normal flow).
+     * false: some other error has occurred (error flow).
+     */
+    private boolean noFindingsWereDetected(Exception e) {
+        boolean result = false;
+        if (e instanceof CxHTTPClientException) {
+            CxHTTPClientException httpException = (CxHTTPClientException) e;
+            if (httpException.getStatusCode() == HttpStatus.SC_NOT_FOUND &&
+                    StringUtils.isNotEmpty(httpException.getResponseBody())) {
+                try {
+                    JsonNode body = objectMapper.readTree(httpException.getResponseBody());
+                    result = (body.get("code").asInt() == NO_FINDINGS_CODE);
+                } catch (Exception parsingException) {
+                    log.warn("Error parsing the 'Not found' response.", parsingException);
+                }
+            }
+        }
+        return result;
     }
 
     private String getRelativeResultsUrl(int offset, int limit) {

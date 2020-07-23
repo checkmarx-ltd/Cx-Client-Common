@@ -4,12 +4,13 @@ package com.cx.restclient.exception;
  * Created by Galn on 05/02/2018.
  */
 public class CxHTTPClientException extends CxClientException {
-
     private int statusCode = 0;
+    private String responseBody;
 
-    public CxHTTPClientException(int statusCode, String s) {
-        super(s);
+    public CxHTTPClientException(int statusCode, String message, String responseBody) {
+        super(message);
         this.statusCode = statusCode;
+        this.responseBody = responseBody;
     }
 
     public CxHTTPClientException() {
@@ -32,5 +33,7 @@ public class CxHTTPClientException extends CxClientException {
         return this.statusCode;
     }
 
-
+    public String getResponseBody() {
+        return responseBody;
+    }
 }
