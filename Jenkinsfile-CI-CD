@@ -418,6 +418,9 @@ pipeline {
         always {
             archiveArtifacts "*.zip, target/cx-client-common-${env.cxCommonVersion}.jar"
             script {
+                echo "${env.cxCommonVersion}"
+                echo "${env.PIPELINE_STATUS}"
+                echo "${env.STAGE_NAME_FAILED}"
                 try {
                     wrap([$class: 'BuildUser']) {
                         kit.Command_Execution_Sh("jq -n env > env.json")
