@@ -48,7 +48,6 @@ public class AstSastClient extends AstClient implements Scanner {
     private static final String SUMMARY_PATH = "/api/scan-summary";
     private static final String SCAN_RESULTS_PATH = "/api/results";
     private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
-    private static final String ALL_SEVERITIES_EXCEPT_INFO = StringUtils.join(Severity.values(), ",");
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
     private static final int NO_FINDINGS_CODE = 4004;
@@ -262,8 +261,6 @@ public class AstSastClient extends AstClient implements Scanner {
                     .setParameter("scan-id", scanId)
                     .setParameter("offset", Integer.toString(offset))
                     .setParameter("limit", Integer.toString(limit))
-                    // We don't handle 'info' severities in Common Client.
-                    .setParameter("severity", ALL_SEVERITIES_EXCEPT_INFO)
                     .build()
                     .toString();
 
