@@ -115,7 +115,7 @@ public class AstSastClient extends AstClient implements Scanner {
 
         ScanConfigValue configValue = SastScanConfigValue.builder()
                 .incremental(Boolean.toString(isIncremental))
-                .presetName(config.getPresetName())
+                .presetName(config.getAstSastConfig().getPresetName())
                 .build();
 
         return ScanConfig.builder()
