@@ -40,11 +40,9 @@ pipeline {
         stage('Pipeline Info') {
             steps {
                 script {
-                    environment {
-                        cxCommonVersion = "${BUILD_TAG}"
-                        PIPELINE_STATUS = "Success"
-                        STAGE_NAME_FAILED = "None"
-                    }
+                    env.cxCommonVersion = "${BUILD_TAG}"
+                    env.PIPELINE_STATUS = "Success"
+                    env.STAGE_NAME_FAILED = "None"
                     if (BRANCH_NAME == 'master') {
                         // remove -SNAPSHOT if exist (temporary)
                         sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
