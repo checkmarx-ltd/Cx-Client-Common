@@ -107,15 +107,15 @@ public class AstSastClient extends AstClient implements Scanner {
 
     @Override
     protected ScanConfig getScanConfig() {
-        boolean isIncremental = Boolean.TRUE.equals(config.getAstSastConfig().isIncremental());
-
-        if (StringUtils.isEmpty(config.getPresetName())) {
+        String presetName = config.getAstSastConfig().getPresetName();
+        if (StringUtils.isEmpty(presetName)) {
             throw new CxClientException("Scan preset must be specified.");
         }
 
+        String isIncremental = Boolean.toString(config.getAstSastConfig().isIncremental());
         ScanConfigValue configValue = SastScanConfigValue.builder()
-                .incremental(Boolean.toString(isIncremental))
-                .presetName(config.getAstSastConfig().getPresetName())
+                .incremental(isIncremental)
+                .presetName(presetName)
                 .build();
 
         return ScanConfig.builder()

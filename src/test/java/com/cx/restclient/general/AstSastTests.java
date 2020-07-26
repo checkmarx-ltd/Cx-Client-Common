@@ -106,12 +106,12 @@ public class AstSastTests extends CommonClientTest {
         repoInfo.setUrl(repoUrl);
         astConfig.setRemoteRepositoryInfo(repoInfo);
         astConfig.setResultsPageSize(10);
+        astConfig.setPresetName("Default");
 
         CxScanConfig config = new CxScanConfig();
         config.setAstSastConfig(astConfig);
         config.setProjectName(prop("astSast.projectName"));
         config.addScannerType(ScannerType.AST_SAST);
-        config.setPresetName("Default");
         config.setOsaProgressInterval(5);
         return config;
     }
