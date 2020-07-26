@@ -416,14 +416,8 @@ pipeline {
         always {
             archiveArtifacts "*.zip, target/cx-client-common-${env.cxCommonVersion}.jar"
             script {
-                echo "${env.cxCommonVersion}"
-                echo "${env.PIPELINE_STATUS}"
-                echo "${env.STAGE_NAME_FAILED}"
                 try {
-                    //wrap([$class: 'BuildUser']) {
-                        kit.Command_Execution_Sh("jq -n env > env.json")
-                        sh "cat ./env.json"
-                    //}
+                    kit.Command_Execution_Sh("jq -n env > env.json")
                     kit.Command_Execution_Sh("curl -sb -k -v -H \"Content-type: application/json\" -XPOST http://cx-elastic01:9200/cx-client-common/_doc -d @env.json")
                 } catch (Exception e) {
                     kit.Warning_Msg("The message couldn't be pushed to elastic, error:\n" + e.toString())
