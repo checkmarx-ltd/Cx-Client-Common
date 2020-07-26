@@ -45,8 +45,8 @@ public class AstSastTests extends CommonClientTest {
         Assert.assertNotNull("AST-SAST results are null.", astSastResults);
         Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(astSastResults.getScanId()));
 
-        validateSummary(astSastResults);
         validateFindings(astSastResults);
+        validateSummary(astSastResults);
     }
 
     private void validateSummary(AstSastResults astSastResults) {
@@ -59,6 +59,24 @@ public class AstSastTests extends CommonClientTest {
         Assert.assertFalse("No status counters.", summary.getStatusCounters().isEmpty());
 
         Assert.assertTrue("Expected total counter to be a positive value.", summary.getTotalCounter() > 0);
+
+        int actualFindingCount = astSastResults.getFindings().size();
+        Assert.assertEquals("Total finding count from summary doesn't correspond to the actual count.",
+                actualFindingCount,
+                summary.getTotalCounter());
+
+        long actualFindingCountExceptInfo = astSastResults.getFindings()
+                .stream()
+                .filter(finding -> !StringUtils.equalsIgnoreCase(finding.getSeverity(), "info"))
+                .count();
+
+        int countFromSummaryExceptInfo = summary.getHighVulnerabilityCount()
+                + summary.getMediumVulnerabilityCount()
+                + summary.getLowVulnerabilityCount();
+
+        Assert.assertEquals("Finding count from summary (excluding 'info') doesn't correspond to the actual count.",
+                actualFindingCountExceptInfo,
+                countFromSummaryExceptInfo);
     }
 
     private void validateFindings(AstSastResults astSastResults) {
