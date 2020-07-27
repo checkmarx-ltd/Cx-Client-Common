@@ -44,17 +44,10 @@ pipeline {
                     env.PIPELINE_STATUS = "Success"
                     env.STAGE_NAME_FAILED = "None"
                     if (BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-auto-versioning') {
-                        echo "in"
-                        LocalDate currentDate = LocalDate.now();
-                        echo "Current Date = " + currentDate
                         Calendar cal = Calendar.getInstance(Locale.US)
-                        int month = cal.get(Calendar.MONTH)
-                        echo "Month = "+ month
-                        int quarter = (month / 3) + 1
-                        echo "Quarter = "+quarter
+                        int quarter = (cal.get(Calendar.MONTH) / 3) + 1
                         int year = cal.get(Calendar.YEAR)
-                        echo "year = "+ year
-                        echo "BUILD_NUMBER = "+ BUILD_NUMBER
+                        env.cxCommonVersion = "${year}.${quarter}.${BUILD_NUMBER}"
                         // remove -SNAPSHOT if exist (temporary)
                         //sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
                         // get version from POM
