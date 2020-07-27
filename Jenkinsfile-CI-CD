@@ -40,16 +40,26 @@ pipeline {
         stage('Pipeline Info') {
             steps {
                 script {
-                    env.cxCommonVersion = "${BUILD_TAG}"
                     env.PIPELINE_STATUS = "Success"
                     env.STAGE_NAME_FAILED = "None"
                     if (BRANCH_NAME == 'master') {
+                        Calendar cal = Calendar.getInstance(Locale.US)
+                        int month = cal.get(Calendar.MONTH)
+                        System.out.println("Month = "+month)
+                        int quarter = (month / 3) + 1
+                        System.out.println("Quarter = "+quarter)
+                        int year = cal.get(Calendar.YEAR)
+                        System.out.println("year = "+year)
+                        System.out.println("BUILD_NUMBER = "+BUILD_NUMBER)
+                        exit 0
                         // remove -SNAPSHOT if exist (temporary)
-                        sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
+                        //sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
                         // get version from POM
-                        sh "mvn resources:resources"
+                        /*sh "mvn resources:resources"
                         def commonPropertiesContent = readFile "./target/classes/common.properties"
-                        env.cxCommonVersion = commonPropertiesContent.substring(10)
+                        env.cxCommonVersion = commonPropertiesContent.substring(10)*/
+                    } else {
+                        env.cxCommonVersion = "${BUILD_TAG}"
                     }
                     workspace = pwd()
                     sh 'printenv'
