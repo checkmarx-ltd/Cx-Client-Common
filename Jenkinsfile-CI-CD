@@ -42,7 +42,7 @@ pipeline {
                 script {
                     env.PIPELINE_STATUS = "Success"
                     env.STAGE_NAME_FAILED = "None"
-                    if (BRANCH_NAME == 'master') {
+                    if (BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-auto-versioning') {
                         Calendar cal = Calendar.getInstance(Locale.US)
                         int month = cal.get(Calendar.MONTH)
                         System.out.println("Month = "+month)
