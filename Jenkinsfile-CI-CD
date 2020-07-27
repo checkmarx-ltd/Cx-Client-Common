@@ -1,5 +1,6 @@
 #!/groovy
 @Library('cx-jenkins-pipeline-kit') _
+import java.time.*
 
 def workspace
 def vmName = "${BUILD_TAG}-CxSAST"
@@ -43,15 +44,17 @@ pipeline {
                     env.PIPELINE_STATUS = "Success"
                     env.STAGE_NAME_FAILED = "None"
                     if (BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-auto-versioning') {
+                        echo "in"
+                        LocalDate currentDate = LocalDate.now();
+                        echo "Current Date = " + currentDate
                         Calendar cal = Calendar.getInstance(Locale.US)
                         int month = cal.get(Calendar.MONTH)
-                        System.out.println("Month = "+month)
+                        echo "Month = "+ month
                         int quarter = (month / 3) + 1
-                        System.out.println("Quarter = "+quarter)
+                        echo "Quarter = "+quarter
                         int year = cal.get(Calendar.YEAR)
-                        System.out.println("year = "+year)
-                        System.out.println("BUILD_NUMBER = "+BUILD_NUMBER)
-                        exit 0
+                        echo "year = "+ year
+                        echo "BUILD_NUMBER = "+ BUILD_NUMBER
                         // remove -SNAPSHOT if exist (temporary)
                         //sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
                         // get version from POM
