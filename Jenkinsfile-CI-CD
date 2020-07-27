@@ -43,7 +43,7 @@ pipeline {
                 script {
                     env.PIPELINE_STATUS = "Success"
                     env.STAGE_NAME_FAILED = "None"
-                    if (BRANCH_NAME == 'master' || BRANCH_NAME == 'eitanas1-auto-versioning') {
+                    if (BRANCH_NAME == 'master') {
                         Calendar cal = Calendar.getInstance(Locale.US)
                         int quarter = (cal.get(Calendar.MONTH) / 3) + 1
                         int year = cal.get(Calendar.YEAR)
@@ -374,7 +374,7 @@ pipeline {
         stage('Publish') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' && env.cxCommonVersion != '2020.2.24'
+                    BRANCH_NAME == 'master'
                 }
             }
             parallel {
