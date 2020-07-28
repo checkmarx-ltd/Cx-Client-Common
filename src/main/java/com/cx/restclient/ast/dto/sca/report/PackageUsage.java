@@ -8,6 +8,6 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class PackageUsage implements Serializable {
-    public String usageType;
-    public String packageId;
+    private String usageType;
+    private String packageId;
 }

@@ -15,16 +15,16 @@ import java.util.List;
 @Getter
 @Setter
 public class Finding implements Serializable {
-    public String id;
-    public String cveName;
-    public double score;
-    public Severity severity;
-    public String publishDate;
-    public List<String> references = new ArrayList<>();
-    public String description;
-    public String recommendations;
-    public String packageId;
-    public String similarityId;
-    public String fixResolutionText;
-    public boolean isIgnored;
+    private String id;
+    private String cveName;
+    private double score;
+    private Severity severity;
+    private String publishDate;
+    private List<String> references = new ArrayList<>();
+    private String description;
+    private String recommendations;
+    private String packageId;
+    private String similarityId;
+    private String fixResolutionText;
+    private boolean isIgnored;
 }
