@@ -13,32 +13,32 @@ import java.util.List;
 @Getter
 @Setter
 public class Package implements Serializable {
-    public String id;
-    public String name;
-    public String version;
-    public List<String> licenses = new ArrayList<>();
+    private String id;
+    private String name;
+    private String version;
+    private List<String> licenses = new ArrayList<>();
 
     /**
      * The current values are [Filename, Sha1]. Not considered an enum in SCA API.
      */
-    public String matchType;
+    private String matchType;
 
-    public int highVulnerabilityCount;
-    public int mediumVulnerabilityCount;
-    public int lowVulnerabilityCount;
-    public int ignoredVulnerabilityCount;
-    public int numberOfVersionsSinceLastUpdate;
-    public String newestVersionReleaseDate;
-    public String newestVersion;
-    public boolean outdated;
-    public String releaseDate;
-    public String confidenceLevel;
-    public double riskScore;
-    public PackageSeverity severity;
-    public List<String> locations = new ArrayList<>();
-    public List<DependencyPath> dependencyPaths = new ArrayList<>();
-    public String packageRepository;
-    public boolean isDirectDependency;
-    public boolean isDevelopment;
-    public PackageUsage packageUsage;
+    private int highVulnerabilityCount;
+    private int mediumVulnerabilityCount;
+    private int lowVulnerabilityCount;
+    private int ignoredVulnerabilityCount;
+    private int numberOfVersionsSinceLastUpdate;
+    private String newestVersionReleaseDate;
+    private String newestVersion;
+    private boolean outdated;
+    private String releaseDate;
+    private String confidenceLevel;
+    private double riskScore;
+    private PackageSeverity severity;
+    private List<String> locations = new ArrayList<>();
+    private List<DependencyPath> dependencyPaths = new ArrayList<>();
+    private String packageRepository;
+    private boolean isDirectDependency;
+    private boolean isDevelopment;
+    private PackageUsage packageUsage;
 }

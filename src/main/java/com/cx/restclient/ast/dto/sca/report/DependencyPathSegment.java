@@ -8,9 +8,9 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class DependencyPathSegment implements Serializable {
-    public String id;
-    public String name;
-    public String version;
-    public boolean isResolved;
-    public boolean isDevelopment;
+    private String id;
+    private String name;
+    private String version;
+    private boolean isResolved;
+    private boolean isDevelopment;
 }
