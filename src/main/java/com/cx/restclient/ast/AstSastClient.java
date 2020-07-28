@@ -191,7 +191,10 @@ public class AstSastClient extends AstClient implements Scanner {
             }
         }
 
-        log.info(String.format("Total findings: %d", allFindings.size()));
+        if (log.isInfoEnabled()) {
+            log.info(String.format("Total findings: %d", allFindings.size()));
+        }
+
         return allFindings;
     }
 
@@ -264,7 +267,10 @@ public class AstSastClient extends AstClient implements Scanner {
                     .build()
                     .toString();
 
-            log.debug(String.format("Getting findings from %s", result));
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Getting findings from %s", result));
+            }
+
             return result;
         } catch (URISyntaxException e) {
             throw new CxClientException(URL_PARSING_EXCEPTION, e);
@@ -279,7 +285,10 @@ public class AstSastClient extends AstClient implements Scanner {
                     .build()
                     .toString();
 
-            log.debug(String.format("Getting summary from %s", result));
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Getting summary from %s", result));
+            }
+
             return result;
         } catch (URISyntaxException e) {
             throw new CxClientException(URL_PARSING_EXCEPTION, e);
