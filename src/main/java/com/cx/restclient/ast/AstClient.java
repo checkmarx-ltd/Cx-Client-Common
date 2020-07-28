@@ -43,13 +43,17 @@ public abstract class AstClient {
 
     protected CxHttpClient createHttpClient(String baseUrl) {
         log.debug("Creating HTTP client.");
-        return new CxHttpClient(baseUrl,
+        CxHttpClient client = new CxHttpClient(baseUrl,
                 config.getCxOrigin(),
                 config.isDisableCertificateValidation(),
                 config.isUseSSOLogin(),
                 null,
                 config.getProxyConfig(),
                 log);
+        //initializing Team Path to prevent null pointer in login when called from automation
+        client.setTeamPathHeader("");
+        
+        return client;
     }
 
     private void validate(CxScanConfig config, Logger log) {
