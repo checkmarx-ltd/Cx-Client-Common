@@ -7,5 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ConfigLocation {
+    private SourceProviderType sourceProviderType;
+    private String path;
     private RemoteRepositoryInfo repoInfo;
 }
