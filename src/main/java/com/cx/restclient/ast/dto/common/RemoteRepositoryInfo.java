@@ -1,6 +1,9 @@
 package com.cx.restclient.ast.dto.common;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
@@ -11,6 +14,9 @@ import java.net.URL;
  */
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RemoteRepositoryInfo implements Serializable {
     /**
      * A URL for which 'git clone' is possible.
