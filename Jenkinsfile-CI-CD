@@ -48,6 +48,7 @@ pipeline {
                         int quarter = (cal.get(Calendar.MONTH) / 3) + 1
                         int year = cal.get(Calendar.YEAR)
                         env.cxCommonVersion = "${year}.${quarter}.${BUILD_NUMBER}"
+                        sh "sed -e 's/\${cxcommon.version}/${env.cxCommonVersion}/g' -i ./pom.xml"
                         // remove -SNAPSHOT if exist (temporary)
                         //sh "sed -e 's/-SNAPSHOT//g' -i ./pom.xml"
                         // get version from POM
