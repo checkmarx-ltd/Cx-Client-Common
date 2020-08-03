@@ -2,25 +2,27 @@ package com.cx.configprovider.services;
 
 import com.cx.configprovider.dto.ConfigLocation;
 import com.cx.configprovider.dto.RawConfigAsCode;
-import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
+import com.cx.configprovider.dto.RemoteRepoLocation;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 
 import static org.junit.Assert.assertNotNull;
 
-class RemoteRepoConfigDownloaderTest {
+public class RemoteRepoConfigDownloaderTest {
     @Test
-    public void getConfigAsCode() throws MalformedURLException {
+    public void getConfigAsCode() {
         RemoteRepoConfigDownloader downloader = new RemoteRepoConfigDownloader();
-        RemoteRepositoryInfo repoInfo = RemoteRepositoryInfo.builder()
-                .url(new URL("https://github.com/cxflowtestuser/Cx-FlowRepo.git"))
+        RemoteRepoLocation repoLocation = RemoteRepoLocation.builder()
+                .apiBaseUrl("https://api.github.com")
+                .repoName("Cx-FlowRepo")
+                .namespace("cxflowtestuser")
+                .ref("master")
                 .build();
 
         ConfigLocation configLocation = ConfigLocation.builder()
                 .path(".checkmarx")
-                .repoInfo(repoInfo)
+                .repoLocation(repoLocation)
                 .build();
 
         RawConfigAsCode config = downloader.getConfigAsCode(configLocation);

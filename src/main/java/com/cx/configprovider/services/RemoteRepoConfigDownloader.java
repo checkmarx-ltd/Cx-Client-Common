@@ -8,9 +8,10 @@ import com.cx.restclient.exception.CxClientException;
 import java.util.List;
 import java.util.Objects;
 
-public class RemoteRepoConfigDownloader {
+class RemoteRepoConfigDownloader implements ConfigLoader {
     private static final int SUPPORTED_FILE_COUNT = 1;
 
+    @Override
     public RawConfigAsCode getConfigAsCode(ConfigLocation configLocation) {
         validate(configLocation);
         SourceControlClient client = determineSourceControlClient(configLocation.getSourceProviderType());
@@ -23,7 +24,15 @@ public class RemoteRepoConfigDownloader {
     }
 
     private SourceControlClient determineSourceControlClient(SourceProviderType sourceProviderType) {
-        return new GitHubClient();
+        SourceControlClient result;
+        // TODO: use a reflection-based mechanism.
+        if (sourceProviderType == SourceProviderType.GITHUB) {
+            result = new GitHubClient();
+        } else {
+            String message = String.format("The '%s' SourceProviderType is not supported.", sourceProviderType);
+            throw new CxClientException(message);
+        }
+        return result;
     }
 
     private String getFileContent(SourceControlClient client, ConfigLocation configLocation, List<String> filenames) {
@@ -42,6 +51,6 @@ public class RemoteRepoConfigDownloader {
 
     private static void validate(ConfigLocation configLocation) {
         Objects.requireNonNull(configLocation, "ConfigLocation must be provided.");
-        Objects.requireNonNull(configLocation.getRepoInfo(), "Repository info must be specified.");
+        Objects.requireNonNull(configLocation.getRepoLocation(), "Repository info must be specified.");
     }
 }

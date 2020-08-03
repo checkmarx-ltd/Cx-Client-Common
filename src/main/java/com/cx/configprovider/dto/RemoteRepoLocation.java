@@ -11,8 +11,10 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConfigLocation {
-    private SourceProviderType sourceProviderType;
-    private String path;
-    private RemoteRepoLocation repoLocation;
+public class RemoteRepoLocation {
+    private String apiBaseUrl;
+    private String namespace;
+    private String repoName;
+    private String ref;
 }
+
