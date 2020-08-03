@@ -7,12 +7,24 @@ import com.cx.configprovider.dto.SourceProviderType;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class RemoteRepoConfigDownloaderTest {
     @Test
     public void getConfigAsCode_directoryWithSingleFile() {
+        RawConfigAsCode config = getConfigFromPath(".checkmarx");
+        assertNotNull("Config-as-code object is null.", config);
+        assertTrue("Config-as-code file content is empty.", StringUtils.isNotEmpty(config.getFileContent()));
+    }
+
+    @Test
+    public void getConfigAsCode_nonExistingPath() {
+        RawConfigAsCode config = getConfigFromPath("inexistence");
+        assertNotNull("Config-as-code object is null.", config);
+        assertNull("Config-as-code file content is not null.", config.getFileContent());
+    }
+
+    private RawConfigAsCode getConfigFromPath(String path) {
         RemoteRepoLocation repoLocation = RemoteRepoLocation.builder()
                 .apiBaseUrl("https://api.github.com")
                 .repoName("Cx-FlowRepo")
@@ -20,15 +32,13 @@ public class RemoteRepoConfigDownloaderTest {
                 .ref("master")
                 .build();
 
-        ConfigLocation configLocation = ConfigLocation.builder()
-                .path(".checkmarx")
+        ConfigLocation location = ConfigLocation.builder()
+                .path(path)
                 .sourceProviderType(SourceProviderType.GITHUB)
                 .repoLocation(repoLocation)
                 .build();
-
         RemoteRepoConfigDownloader downloader = new RemoteRepoConfigDownloader();
-        RawConfigAsCode config = downloader.getConfigAsCode(configLocation);
-        assertNotNull("Config-as-code is null.", config);
-        assertTrue("Config-as-code file content is empty.", StringUtils.isNotEmpty(config.getFileContent()));
+
+        return downloader.getConfigAsCode(location);
     }
 }
