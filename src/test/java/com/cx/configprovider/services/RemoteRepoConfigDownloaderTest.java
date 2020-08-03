@@ -13,18 +13,22 @@ public class RemoteRepoConfigDownloaderTest {
     @Test
     public void getConfigAsCode_directoryWithSingleFile() {
         RawConfigAsCode config = getConfigFromPath(".checkmarx");
-        assertNotNull("Config-as-code object is null.", config);
         assertTrue("Config-as-code file content is empty.", StringUtils.isNotEmpty(config.getFileContent()));
     }
 
     @Test
     public void getConfigAsCode_nonExistingPath() {
         RawConfigAsCode config = getConfigFromPath("inexistence");
-        assertNotNull("Config-as-code object is null.", config);
         assertNull("Config-as-code file content is not null.", config.getFileContent());
     }
 
-    private RawConfigAsCode getConfigFromPath(String path) {
+    @Test
+    public void getConfigAsCode_fileInsteadOfDirectory() {
+        RawConfigAsCode config = getConfigFromPath(".checkmarx/config-as-code.yml");
+
+    }
+
+    private static RawConfigAsCode getConfigFromPath(String path) {
         RemoteRepoLocation repoLocation = RemoteRepoLocation.builder()
                 .apiBaseUrl("https://api.github.com")
                 .repoName("Cx-FlowRepo")
@@ -39,6 +43,9 @@ public class RemoteRepoConfigDownloaderTest {
                 .build();
         RemoteRepoConfigDownloader downloader = new RemoteRepoConfigDownloader();
 
-        return downloader.getConfigAsCode(location);
+        RawConfigAsCode result = downloader.getConfigAsCode(location);
+        assertNotNull("Config-as-code object is null.", result);
+
+        return result;
     }
 }

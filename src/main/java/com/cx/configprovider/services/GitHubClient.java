@@ -3,8 +3,8 @@ package com.cx.configprovider.services;
 import com.cx.configprovider.dto.ConfigLocation;
 import com.cx.configprovider.dto.RemoteRepoLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -28,7 +29,11 @@ import java.util.stream.StreamSupport;
 class GitHubClient implements SourceControlClient {
     private static final String GET_CONTENTS_TEMPLATE = "/repos/%s/%s/contents/%s";
     private static final String REF_SPECIFIER = "ref";
-    private static final String API_V3_HEADER = "application/vnd.github.v3+json";
+
+    // Allows to get directory content response as an object with the 'entries' field (instead of just an array
+    // of entries). This simplifies response handling.
+    private static final String API_V3_HEADER = "application/vnd.github.v3.object";
+
     private static final String API_V3_RAW_CONTENTS_HEADER = "application/vnd.github.v3.raw";
     private static final String ACCEPT_HEADER = "Accept";
 
@@ -90,12 +95,24 @@ class GitHubClient implements SourceControlClient {
     }
 
     private static List<String> extractFilenamesFromJson(String responseText) throws JsonProcessingException {
-        ArrayNode contents = (ArrayNode) objectMapper.readTree(responseText);
+        List<String> result;
+        JsonNode content = objectMapper.readTree(responseText);
+        String contentType = content.get("type").asText();
+        boolean contentIsDirectory = contentType.equals("dir");
+        if (contentIsDirectory) {
+            // Expecting the following response structure:
+            // { "type": "dir", "entries": [<one entry per file>], ... } //NOSONAR
+            Spliterator<JsonNode> directoryEntries = content.get("entries").spliterator();
 
-        return StreamSupport.stream(contents.spliterator(), false)
-                .filter(node -> node.get("type").asText().equals("file"))
-                .map(node -> node.get("name").asText())
-                .collect(Collectors.toList());
+            result = StreamSupport.stream(directoryEntries, false)
+                    .filter(node -> node.get("type").asText().equals("file"))
+                    .map(node -> node.get("name").asText())
+                    .collect(Collectors.toList());
+        } else {
+            log.warn("The specified path doesn't refer to a directory. Please provide a valid directory path.");
+            result = Collections.emptyList();
+        }
+        return result;
     }
 
     private static URI createContentsUri(ConfigLocation configLocation, String directoryPath) throws
