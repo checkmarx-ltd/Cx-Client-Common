@@ -42,16 +42,21 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
         if (filenames.size() == SUPPORTED_FILE_COUNT) {
             content = client.downloadFileContent(configLocation, filenames.get(0));
         } else if (filenames.size() > SUPPORTED_FILE_COUNT) {
-            String message = String.format("Found %d files in the '%s' directory. Only %d file is currently supported.",
-                    filenames.size(),
-                    configLocation.getPath(),
-                    SUPPORTED_FILE_COUNT);
-            throw new CxClientException(message);
+            throwInvalidCountException(configLocation, filenames);
         }
         else {
             log.info("No config-as-code was found.");
         }
         return content;
+    }
+
+    private static void throwInvalidCountException(ConfigLocation configLocation, List<String> filenames) {
+        String message = String.format(
+                "Found %d files in the '%s' directory. Only %d config-as-code file is currently supported.",
+                filenames.size(),
+                configLocation.getPath(),
+                SUPPORTED_FILE_COUNT);
+        throw new CxClientException(message);
     }
 
     private static void validate(ConfigLocation configLocation) {
