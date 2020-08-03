@@ -15,10 +15,17 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
 
     @Override
     public RawConfigAsCode getConfigAsCode(ConfigLocation configLocation) {
+        log.info("Searching for a config-as-code file in a remote git repo");
         validate(configLocation);
         SourceControlClient client = determineSourceControlClient(configLocation.getSourceProviderType());
         List<String> filenames = client.getDirectoryFilenames(configLocation);
         String content = getFileContent(client, configLocation, filenames);
+
+        if (content == null) {
+            log.info("No config-as-code was found.");
+        } else {
+            log.info("Config-as-code was found with content length: {}", content.length());
+        }
 
         return RawConfigAsCode.builder()
                 .fileContent(content)
@@ -27,13 +34,15 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
 
     private SourceControlClient determineSourceControlClient(SourceProviderType sourceProviderType) {
         SourceControlClient result;
+        log.debug("Determining the client for the {} source control provider", sourceProviderType);
         // TODO: use a reflection-based mechanism.
         if (sourceProviderType == SourceProviderType.GITHUB) {
             result = new GitHubClient();
         } else {
-            String message = String.format("The '%s' SourceProviderType is not supported.", sourceProviderType);
+            String message = String.format("The '%s' SourceProviderType is not supported", sourceProviderType);
             throw new CxClientException(message);
         }
+        log.debug("Using {} to access the repo", result.getClass());
         return result;
     }
 

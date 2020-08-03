@@ -8,8 +8,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.auth.AUTH;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -29,29 +31,31 @@ import java.util.stream.StreamSupport;
 class GitHubClient implements SourceControlClient {
     private static final String GET_CONTENTS_TEMPLATE = "/repos/%s/%s/contents/%s";
     private static final String REF_SPECIFIER = "ref";
+    private static final String ACCEPT_HEADER = "Accept";
 
     // Allows to get directory content response as an object with the 'entries' field (instead of just an array
     // of entries). This simplifies response handling.
-    private static final String API_V3_HEADER = "application/vnd.github.v3.object";
+    private static final String API_V3_OBJECT_HEADER = "application/vnd.github.v3.object";
 
+    // Allows to get file contents as is (without any JSON wrapper).
     private static final String API_V3_RAW_CONTENTS_HEADER = "application/vnd.github.v3.raw";
-    private static final String ACCEPT_HEADER = "Accept";
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public String downloadFileContent(ConfigLocation configLocation, String filename) {
         String result = null;
+        log.info("Downloading file content for '{}'", filename);
         try {
             String combinedPath = Paths.get(configLocation.getPath(), filename).toString();
             combinedPath = FilenameUtils.normalize(combinedPath, true);
 
             URI uri = createContentsUri(configLocation, combinedPath);
 
-            HttpResponse response = getContentResponse(uri, API_V3_RAW_CONTENTS_HEADER);
+            HttpResponse response = getContentResponse(uri, API_V3_RAW_CONTENTS_HEADER, configLocation);
             result = getTextFrom(response);
         } catch (Exception e) {
-            log.warn("Error downloading file contents.", e);
+            log.warn("Error downloading file contents", e);
         }
         return result;
     }
@@ -59,27 +63,43 @@ class GitHubClient implements SourceControlClient {
     @Override
     public List<String> getDirectoryFilenames(ConfigLocation configLocation) {
         List<String> result = Collections.emptyList();
+        log.info("Getting filenames from the '{}' directory", configLocation.getPath());
         try {
             URI uri = createContentsUri(configLocation, configLocation.getPath());
-            HttpResponse response = getContentResponse(uri, API_V3_HEADER);
+            HttpResponse response = getContentResponse(uri, API_V3_OBJECT_HEADER, configLocation);
             result = getFilenamesFrom(response);
         } catch (Exception e) {
-            log.warn("Error downloading directory contents.", e);
+            log.warn("Error downloading directory contents", e);
         }
 
-        log.info("Files found: {}.", result);
+        log.info("Files found: {}", result);
         return result;
     }
 
-    private static HttpResponse getContentResponse(URI uri, String acceptHeaderValue) throws IOException {
-        log.info("Getting the contents from {}", uri);
-        return Request.Get(uri)
-                .addHeader(ACCEPT_HEADER, acceptHeaderValue)
+    private static HttpResponse getContentResponse(URI uri, String acceptHeaderValue, ConfigLocation configLocation)
+            throws IOException {
+        log.debug("Getting the contents from {}", uri);
+
+        Request request = getRequestWithAuth(configLocation, Request.Get(uri));
+
+        return request.addHeader(ACCEPT_HEADER, acceptHeaderValue)
                 .execute()
                 .returnResponse();
     }
 
-    private List<String> getFilenamesFrom(HttpResponse response) throws IOException {
+    private static Request getRequestWithAuth(ConfigLocation configLocation, Request request) {
+        String accessToken = configLocation.getRepoLocation().getAccessToken();
+        if (StringUtils.isNotEmpty(accessToken)) {
+            log.debug("Using an access token");
+            String authHeaderValue = String.format("token %s", accessToken);
+            request.addHeader(AUTH.WWW_AUTH_RESP, authHeaderValue);
+        } else {
+            log.debug("Access token is not specified");
+        }
+        return request;
+    }
+
+    private static List<String> getFilenamesFrom(HttpResponse response) throws IOException {
         List<String> result = Collections.emptyList();
 
         int statusCode = response.getStatusLine().getStatusCode();
@@ -101,7 +121,7 @@ class GitHubClient implements SourceControlClient {
         boolean contentIsDirectory = contentType.equals("dir");
         if (contentIsDirectory) {
             // Expecting the following response structure:
-            // { "type": "dir", "entries": [<one entry per file>], ... } //NOSONAR
+            // { "type": "dir", "entries": [<one entry per file>], ... }        //NOSONAR
             Spliterator<JsonNode> directoryEntries = content.get("entries").spliterator();
 
             result = StreamSupport.stream(directoryEntries, false)
@@ -109,7 +129,7 @@ class GitHubClient implements SourceControlClient {
                     .map(node -> node.get("name").asText())
                     .collect(Collectors.toList());
         } else {
-            log.warn("The specified path doesn't refer to a directory. Please provide a valid directory path.");
+            log.warn("The specified path doesn't refer to a directory. Please provide a valid directory path");
             result = Collections.emptyList();
         }
         return result;

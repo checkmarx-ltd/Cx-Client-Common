@@ -7,40 +7,28 @@ import com.cx.restclient.dto.ProxyConfig;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
+import com.cx.utility.TestPropertyLoader;
 import com.cx.utility.TestingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Properties;
 
 @Slf4j
 public abstract class CommonClientTest {
-    private static final String MAIN_PROPERTIES_FILE = "config.properties";
-    public static final String OVERRIDE_FILE = "config-secrets.properties";
-
     static Properties props;
 
     @BeforeClass
-    public static void initTest() throws IOException {
-        props = TestingUtils.getProps(MAIN_PROPERTIES_FILE, CommonClientTest.class);
-        loadOverrides(props);
+    public static void initTest() {
+        TestPropertyLoader propertyLoader = new TestPropertyLoader();
+        props = propertyLoader.getProperties();
     }
 
     protected static String prop(String key) {
         return props.getProperty(key);
-    }
-
-    private static void loadOverrides(Properties targetProps) {
-        try {
-            Properties overridingProps = TestingUtils.getProps(OVERRIDE_FILE, CommonClientTest.class);
-            targetProps.putAll(overridingProps);
-        } catch (IOException e) {
-            log.warn("Failed to load property overrides.");
-        }
     }
 
     protected static void setProxy(CxScanConfig config) {
