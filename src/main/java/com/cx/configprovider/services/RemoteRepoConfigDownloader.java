@@ -4,10 +4,12 @@ import com.cx.configprovider.dto.ConfigLocation;
 import com.cx.configprovider.dto.RawConfigAsCode;
 import com.cx.configprovider.dto.SourceProviderType;
 import com.cx.restclient.exception.CxClientException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 class RemoteRepoConfigDownloader implements ConfigLoader {
     private static final int SUPPORTED_FILE_COUNT = 1;
 
@@ -45,6 +47,9 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
                     configLocation.getPath(),
                     SUPPORTED_FILE_COUNT);
             throw new CxClientException(message);
+        }
+        else {
+            log.info("No config-as-code was found.");
         }
         return content;
     }
