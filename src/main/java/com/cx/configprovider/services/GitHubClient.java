@@ -63,9 +63,9 @@ class GitHubClient implements SourceControlClient {
     @Override
     public List<String> getDirectoryFilenames(ConfigLocation configLocation) {
         List<String> result = Collections.emptyList();
-        log.info("Getting filenames from the '{}' directory", configLocation.getPath());
+        String effectivePath = normalize(configLocation.getPath());
         try {
-            URI uri = createContentsUri(configLocation, configLocation.getPath());
+            URI uri = createContentsUri(configLocation, effectivePath);
             HttpResponse response = getContentResponse(uri, API_V3_OBJECT_HEADER, configLocation);
             result = getFilenamesFrom(response);
         } catch (Exception e) {
@@ -73,6 +73,16 @@ class GitHubClient implements SourceControlClient {
         }
 
         log.info("Files found: {}", result);
+        return result;
+    }
+
+    private static String normalize(String path) {
+        String result = StringUtils.defaultString(path);
+        if (result.isEmpty()) {
+            log.info("Getting filenames from the root directory");
+        } else {
+            log.info("Getting filenames from the '{}' directory", result);
+        }
         return result;
     }
 

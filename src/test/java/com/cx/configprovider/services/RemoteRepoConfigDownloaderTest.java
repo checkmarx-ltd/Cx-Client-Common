@@ -74,11 +74,11 @@ public class RemoteRepoConfigDownloaderTest {
     }
 
     private static void assertEmptyContent(RawConfigAsCode config) {
-        Assert.assertTrue("Expected Config-as-code file content to be empty.", config.getFileContent().isEmpty());
+        Assert.assertTrue("Expected Config-as-code file content to be empty.", config.getContent().isEmpty());
     }
 
     private static void assertNonEmptyContent(RawConfigAsCode config) {
-        assertTrue("Config-as-code file content is empty.", StringUtils.isNotEmpty(config.getFileContent()));
+        assertTrue("Config-as-code file content is empty.", StringUtils.isNotEmpty(config.getContent()));
     }
 
     private static RawConfigAsCode getConfigFromPath(String path) {
@@ -100,7 +100,7 @@ public class RemoteRepoConfigDownloaderTest {
 
         RawConfigAsCode result = downloader.getConfigAsCode(location);
         assertNotNull("Config-as-code object must always be non-null.", result);
-        assertNotNull("File content must always be non-null.", result.getFileContent());
+        assertNotNull("File content must always be non-null.", result.getContent());
 
         return result;
     }

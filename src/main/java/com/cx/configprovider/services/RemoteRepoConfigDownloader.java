@@ -24,9 +24,22 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
 
     private ConfigLocation configLocation;
 
+    /**
+     * Downloads config-as-code contents from a remote source control repo. Scans a remote directory
+     * (specified by {@link ConfigLocation#getPath()} non-recursively. Each file in the directory is treated
+     * as config-as-code. If the path is null or empty, the repo root directory is scanned.
+     * <p>
+     * Currently no more than 1 config-as-code file is supported in a given directory.
+     *
+     * @param configLocation specifies a directory to scan and repo access properties.
+     * @return a non-null instance of {@link RawConfigAsCode} with config-as-code content.
+     * If config-as-code was not found, the instance contains an empty string.
+     * @throws ConfigProviderException if more than 1 config-as-code file is found in the specified directory
+     * @throws NullPointerException if configLocation or its repoLocation is null
+     */
     @Override
     public RawConfigAsCode getConfigAsCode(ConfigLocation configLocation) {
-        log.info("Searching for a config-as-code file in a remote git repo");
+        log.info("Searching for a config-as-code file in a remote repo");
         validate(configLocation);
 
         this.configLocation = configLocation;
@@ -36,7 +49,7 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
         String content = getFileContent(client, filenames);
 
         return RawConfigAsCode.builder()
-                .fileContent(content)
+                .content(content)
                 .build();
     }
 
@@ -76,13 +89,13 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
 
     private String getFileContent(SourceControlClient client, List<String> filenames) {
         String result = "";
-        if (filenames.size() == SUPPORTED_FILE_COUNT) {
+        if (filenames.isEmpty()) {
+            log.info("No config-as-code was found.");
+        } else if (filenames.size() == SUPPORTED_FILE_COUNT) {
             result = client.downloadFileContent(configLocation, filenames.get(0));
             log.info("Config-as-code was found with content length: {}", result.length());
-        } else if (filenames.size() > SUPPORTED_FILE_COUNT) {
-            throwInvalidCountException(filenames);
         } else {
-            log.info("No config-as-code was found.");
+            throwInvalidCountException(filenames);
         }
         return result;
     }
@@ -97,7 +110,7 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
     }
 
     private static void validate(ConfigLocation configLocation) {
-        Objects.requireNonNull(configLocation, "ConfigLocation must be provided.");
-        Objects.requireNonNull(configLocation.getRepoLocation(), "Repository info must be specified.");
+        Objects.requireNonNull(configLocation, "ConfigLocation must not be null.");
+        Objects.requireNonNull(configLocation.getRepoLocation(), "RepositoryLocation must not be null.");
     }
 }
