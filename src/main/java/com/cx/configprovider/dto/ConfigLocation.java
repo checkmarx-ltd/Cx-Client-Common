@@ -12,7 +12,13 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConfigLocation {
-    private SourceProviderType sourceProviderType;
-    private String path;
+    private static final String DEFAULT_SEARCH_DIRECTORY = ".checkmarx";
+
+    /**
+     * Path to a directory. The directory will be scanned for config-as-code files.
+     */
+    @Builder.Default
+    private String path = DEFAULT_SEARCH_DIRECTORY;
+
     private RemoteRepoLocation repoLocation;
 }
