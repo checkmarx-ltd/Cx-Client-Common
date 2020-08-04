@@ -493,8 +493,10 @@ public class CxHttpClient {
         } catch (CxTokenExpiredException ex) {
             if (retry) {
                 logTokenError(httpMethod, statusCode, ex);
-                login(lastLoginSettings);
-                return request(httpMethod, contentType, entity, responseType, expectStatus, failedMsg, isCollection, false);
+                if(lastLoginSettings != null) {
+                    login(lastLoginSettings);
+                    return request(httpMethod, contentType, entity, responseType, expectStatus, failedMsg, isCollection, false);
+                }
             }
             throw ex;
         } finally {
