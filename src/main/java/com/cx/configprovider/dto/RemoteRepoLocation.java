@@ -17,5 +17,6 @@ public class RemoteRepoLocation {
     private String repoName;
     private String ref;
     private String accessToken;
+    private SourceProviderType sourceProviderType;
 }
 

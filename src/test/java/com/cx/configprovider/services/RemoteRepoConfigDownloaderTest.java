@@ -29,31 +29,37 @@ public class RemoteRepoConfigDownloaderTest {
     @Test
     public void getConfigAsCode_directoryWithSingleFile_hasContent() {
         RawConfigAsCode config = getConfigFromPath(".checkmarx");
-        assertNonEmpty(config);
+        assertNonEmptyContent(config);
     }
 
     @Test
     public void getConfigAsCode_deepDirectory_hasContent() {
         RawConfigAsCode config = getConfigFromPath("deep/directory/structure");
-        assertNonEmpty(config);
+        assertNonEmptyContent(config);
     }
 
     @Test
-    public void getConfigAsCode_nonExistingPath_noContent() {
+    public void getConfigAsCode_nonExistingPath_emptyContent() {
         RawConfigAsCode config = getConfigFromPath("inexistence");
-        assertNull(config);
+        assertEmptyContent(config);
     }
 
     @Test
-    public void getConfigAsCode_fileInsteadOfDirectory_noContent() {
+    public void getConfigAsCode_fileInsteadOfDirectory_emptyContent() {
         RawConfigAsCode config = getConfigFromPath(".checkmarx/config-as-code.yml");
-        assertNull(config);
+        assertEmptyContent(config);
     }
 
     @Test
-    public void getConfigAsCode_directoryWithoutFiles_noContent() {
+    public void getConfigAsCode_directoryWithoutFiles_emptyContent() {
         RawConfigAsCode config = getConfigFromPath("deep/directory");
-        assertNull(config);
+        assertEmptyContent(config);
+    }
+
+    @Test
+    public void getConfigAsCode_emptyFile_emptyContent() {
+        RawConfigAsCode config = getConfigFromPath("directory-with-empty-file");
+        assertEmptyContent(config);
     }
 
     @Test
@@ -67,11 +73,11 @@ public class RemoteRepoConfigDownloaderTest {
         }
     }
 
-    private static void assertNull(RawConfigAsCode config) {
-        Assert.assertNull("Config-as-code file content is not null.", config.getFileContent());
+    private static void assertEmptyContent(RawConfigAsCode config) {
+        Assert.assertTrue("Expected Config-as-code file content to be empty.", config.getFileContent().isEmpty());
     }
 
-    private static void assertNonEmpty(RawConfigAsCode config) {
+    private static void assertNonEmptyContent(RawConfigAsCode config) {
         assertTrue("Config-as-code file content is empty.", StringUtils.isNotEmpty(config.getFileContent()));
     }
 
@@ -82,17 +88,19 @@ public class RemoteRepoConfigDownloaderTest {
                 .namespace("cxflowtestuser")
                 .ref("master")
                 .accessToken(props.getProperty("github.token"))
+                .sourceProviderType(SourceProviderType.GITHUB)
                 .build();
 
         ConfigLocation location = ConfigLocation.builder()
                 .path(path)
-                .sourceProviderType(SourceProviderType.GITHUB)
                 .repoLocation(repoLocation)
                 .build();
+
         RemoteRepoConfigDownloader downloader = new RemoteRepoConfigDownloader();
 
         RawConfigAsCode result = downloader.getConfigAsCode(location);
-        assertNotNull("Config-as-code object is null.", result);
+        assertNotNull("Config-as-code object must always be non-null.", result);
+        assertNotNull("File content must always be non-null.", result.getFileContent());
 
         return result;
     }
