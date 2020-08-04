@@ -4,7 +4,7 @@ import com.cx.configprovider.dto.ConfigLocation;
 import com.cx.configprovider.dto.RawConfigAsCode;
 import com.cx.configprovider.dto.RemoteRepoLocation;
 import com.cx.configprovider.dto.SourceProviderType;
-import com.cx.restclient.exception.CxClientException;
+import com.cx.configprovider.exceptions.ConfigProviderException;
 import com.cx.utility.TestPropertyLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -69,7 +69,7 @@ public class RemoteRepoConfigDownloaderTest {
             fail("Expected an exception to be thrown.");
         } catch (Exception e) {
             log.info("Caught an exception.", e);
-            assertEquals("Unexpected exception type.", CxClientException.class, e.getClass());
+            assertEquals("Unexpected exception type.", ConfigProviderException.class, e.getClass());
         }
     }
 

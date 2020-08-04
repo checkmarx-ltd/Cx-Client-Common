@@ -3,7 +3,7 @@ package com.cx.configprovider.services;
 import com.cx.configprovider.dto.ConfigLocation;
 import com.cx.configprovider.dto.RawConfigAsCode;
 import com.cx.configprovider.dto.SourceProviderType;
-import com.cx.restclient.exception.CxClientException;
+import com.cx.configprovider.exceptions.ConfigProviderException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationTargetException;
@@ -58,7 +58,7 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             String message = String.format("Unable to create an instance of %s.",
                     SourceProviderType.class.getSimpleName());
-            throw new CxClientException(message, e);
+            throw new ConfigProviderException(message, e);
         }
         return result;
     }
@@ -69,7 +69,7 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
             String message = String.format("The '%s' %s is not supported",
                     sourceProviderType,
                     SourceProviderType.class.getSimpleName());
-            throw new CxClientException(message);
+            throw new ConfigProviderException(message);
         }
         return clientClass;
     }
@@ -93,7 +93,7 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
                 filenames.size(),
                 configLocation.getPath(),
                 SUPPORTED_FILE_COUNT);
-        throw new CxClientException(message);
+        throw new ConfigProviderException(message);
     }
 
     private static void validate(ConfigLocation configLocation) {
