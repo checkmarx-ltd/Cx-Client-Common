@@ -25,7 +25,7 @@ pipeline {
         string(name: "vmTemplate89",defaultValue: "${vmTemplate89}", description: "Template for 8.9 VM")
         string(name: "vmTemplate90",defaultValue: "${vmTemplate90}", description: "Template for 9.0 VM")
         string(name: "vmTemplate92",defaultValue: "${vmTemplate92}", description: "Template for 9.2 VM")
-        string(name: "vmTemplate93",defaultValue: "${vmTemplate92}", description: "Template for 9.2 VM")
+        string(name: "vmTemplate93",defaultValue: "${vmTemplate93}", description: "Template for 9.3 VM")
         string(name: "ram",defaultValue: "${ram}", description: "Server memory")
         string(name: "cpu",defaultValue: "${cpu}", description: "")
         string(name: "provider",defaultValue: "${provider}", description: "IAAS platform to be used")
