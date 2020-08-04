@@ -16,7 +16,7 @@ def ipAddress93
 def ram = "12000"
 def cpu = "4"
 def provider = "VMWARE"
-def decommissionPeriod = "2 hour"
+def decommissionPeriod = "3 hour"
 def vmwareNetwork = "Lab"
 def automationBranch = "9.0.0"
 
