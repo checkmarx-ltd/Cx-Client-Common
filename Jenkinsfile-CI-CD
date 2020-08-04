@@ -16,7 +16,7 @@ def ipAddress93
 def ram = "12000"
 def cpu = "4"
 def provider = "VMWARE"
-def decommissionPeriod = "1 hour"
+def decommissionPeriod = "2 hour"
 def vmwareNetwork = "Lab"
 def automationBranch = "9.0.0"
 
@@ -156,7 +156,7 @@ pipeline {
                         stage('Create VM') {
                             steps {
                                 script {
-                                    kit.Create_Vm_Terraform(vmName + "-8.9", vmTemplate89, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
+                                    kit.Create_Vm_Terraform(vmName + "-8.9", vmTemplate89, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
                                     ipAddress89 = kit.getIpAddress(vmName + "-8.9", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master(vmName + "-8.9")
@@ -230,7 +230,7 @@ pipeline {
                         stage('Create VM') {
                             steps {
                                 script {
-                                    kit.Create_Vm_Terraform(vmName + "-9.0", vmTemplate90, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
+                                    kit.Create_Vm_Terraform(vmName + "-9.0", vmTemplate90, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
                                     ipAddress90 = kit.getIpAddress(vmName + "-9.0", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master(vmName + "-9.0")
@@ -304,7 +304,7 @@ pipeline {
                         stage('Create VM') {
                             steps {
                                 script {
-                                    kit.Create_Vm_Terraform(vmName + "-9.2", vmTemplate92, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
+                                    kit.Create_Vm_Terraform(vmName + "-9.2", vmTemplate92, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
                                     ipAddress92 = kit.getIpAddress(vmName + "-9.2", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master(vmName + "-9.2")
@@ -378,7 +378,7 @@ pipeline {
                         stage('Create VM') {
                             steps {
                                 script {
-                                    kit.Create_Vm_Terraform(vmName + "-9.3", vmTemplate93, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
+                                    kit.Create_Vm_Terraform(vmName + "-9.3", vmTemplate93, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
                                     ipAddress93 = kit.getIpAddress(vmName + "-9.3", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master(vmName + "-9.3")
