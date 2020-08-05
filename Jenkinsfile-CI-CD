@@ -430,7 +430,7 @@ pipeline {
                                 }
                                 if (ipAddress93 != null) {
                                     node(vmName + "-9.3") {
-                                        kit.zipStashInstallationLogs("CxSAST-9.3-logs")
+                                        kit.zipStashInstallationLogs("CxSAST-9.3-Logs")
                                     }
                                     unstash "CxSAST-9.3-Logs"
                                     deleteVm(provider, ipAddress93, vmName + "-9.3")
