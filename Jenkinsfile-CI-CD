@@ -4,7 +4,6 @@ import java.time.*
 
 def workspace
 def vmName = "${BUILD_TAG}-CxSAST"
-def installationLogs = "Installation-Logs-CxSAST"
 def vmTemplate89 = "CxSDLC-Template-CxSAST-8-9"
 def ipAddress89
 def vmTemplate90 = "CxSDLC-Template-CxSAST-9-0"
@@ -209,9 +208,9 @@ pipeline {
                                 }
                                 if (ipAddress89 != null) {
                                     node(vmName + "-8.9") {
-                                        kit.zipStashInstallationLogs(installationLogs + "-8.9")
+                                        kit.zipStashInstallationLogs("CxSAST-8.9-Logs")
                                     }
-                                    unstash installationLogs + "-8.9"
+                                    unstash "CxSAST-8.9-Logs"
                                     deleteVm(provider, ipAddress89, vmName + "-8.9")
                                 }
                             }
@@ -283,9 +282,9 @@ pipeline {
                                 }
                                 if (ipAddress90 != null) {
                                     node(vmName + "-9.0") {
-                                        kit.zipStashInstallationLogs(installationLogs + "-9.0")
+                                        kit.zipStashInstallationLogs("CxSAST-9.0-Logs")
                                     }
-                                    unstash installationLogs + "-9.0"
+                                    unstash "CxSAST-9.0-Logs"
                                     deleteVm(provider, ipAddress90, vmName + "-9.0")
                                 }
                             }
@@ -357,9 +356,9 @@ pipeline {
                                 }
                                 if (ipAddress92 != null) {
                                     node(vmName + "-9.2") {
-                                        kit.zipStashInstallationLogs(installationLogs + "-9.2")
+                                        kit.zipStashInstallationLogs("CxSAST-9.2-Logs")
                                     }
-                                    unstash installationLogs + "-9.2"
+                                    unstash "CxSAST-9.2-Logs"
                                     deleteVm(provider, ipAddress92, vmName + "-9.2")
                                 }
                             }
@@ -431,9 +430,9 @@ pipeline {
                                 }
                                 if (ipAddress93 != null) {
                                     node(vmName + "-9.3") {
-                                        kit.zipStashInstallationLogs(installationLogs + "-9.3")
+                                        kit.zipStashInstallationLogs("CxSAST-9.3-logs")
                                     }
-                                    unstash installationLogs + "-9.3"
+                                    unstash "CxSAST-9.3-Logs"
                                     deleteVm(provider, ipAddress93, vmName + "-9.3")
                                 }
                             }
