@@ -194,7 +194,7 @@ pipeline {
                         stage('Plugins CxCommonClient All Tests') {
                             steps {
                                 dir("${workspace}/8.9/Checkmarx-System-Test") {
-                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-8.9-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/8.9/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
+                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-8.9-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/8.9/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress89} maven:3.6.1-jdk-8-alpine \
                                         mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=8.9 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
@@ -268,7 +268,7 @@ pipeline {
                         stage('Plugins CxCommonClient All Tests') {
                             steps {
                                 dir("${workspace}/9.0/Checkmarx-System-Test") {
-                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.0-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.0/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
+                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.0-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.0/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress90} maven:3.6.1-jdk-8-alpine \
                                         mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.0 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
@@ -342,7 +342,7 @@ pipeline {
                         stage('Plugins CxCommonClient All Tests') {
                             steps {
                                 dir("${workspace}/9.2/Checkmarx-System-Test") {
-                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.2-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.2/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
+                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.2-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.2/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress92} maven:3.6.1-jdk-8-alpine \
                                         mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.2 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
@@ -416,7 +416,7 @@ pipeline {
                         stage('Plugins CxCommonClient All Tests') {
                             steps {
                                 dir("${workspace}/9.3/Checkmarx-System-Test") {
-                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.3-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.3/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
+                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.3-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.3/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress93} maven:3.6.1-jdk-8-alpine \
                                         mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.3 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
