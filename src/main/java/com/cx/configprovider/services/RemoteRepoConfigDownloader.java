@@ -25,13 +25,13 @@ class RemoteRepoConfigDownloader implements ConfigLoader {
     private ConfigLocation configLocation;
 
     /**
-     * Downloads config-as-code contents from a remote source control repo. Scans a remote directory
+     * Downloads config-as-code contents from a remote source control repo. Gets files from a remote directory
      * (specified by {@link ConfigLocation#getPath()} non-recursively. Each file in the directory is treated
-     * as config-as-code. If the path is null or empty, the repo root directory is scanned.
+     * as config-as-code. If the path is null or empty, the repo root directory is assumed.
      * <p>
      * Currently no more than 1 config-as-code file is supported in a given directory.
      *
-     * @param configLocation specifies a directory to scan and repo access properties.
+     * @param configLocation specifies a directory to get files from and repo access properties.
      * @return a non-null instance of {@link RawConfigAsCode} with config-as-code content.
      * If config-as-code was not found, the instance contains an empty string.
      * @throws ConfigProviderException if more than 1 config-as-code file is found in the specified directory
