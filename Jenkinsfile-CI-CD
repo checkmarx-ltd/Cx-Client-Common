@@ -4,7 +4,6 @@ import java.time.*
 
 def workspace
 def vmName = "${BUILD_TAG}-CxSAST"
-def installationLogs = "Installation-Logs-CxSAST"
 def vmTemplate89 = "CxSDLC-Template-CxSAST-8-9"
 def ipAddress89
 def vmTemplate90 = "CxSDLC-Template-CxSAST-9-0"
@@ -16,7 +15,7 @@ def ipAddress93
 def ram = "12000"
 def cpu = "4"
 def provider = "VMWARE"
-def decommissionPeriod = "1 hour"
+def decommissionPeriod = "3 hour"
 def vmwareNetwork = "Lab"
 def automationBranch = "9.0.0"
 
@@ -25,7 +24,7 @@ pipeline {
         string(name: "vmTemplate89",defaultValue: "${vmTemplate89}", description: "Template for 8.9 VM")
         string(name: "vmTemplate90",defaultValue: "${vmTemplate90}", description: "Template for 9.0 VM")
         string(name: "vmTemplate92",defaultValue: "${vmTemplate92}", description: "Template for 9.2 VM")
-        string(name: "vmTemplate93",defaultValue: "${vmTemplate92}", description: "Template for 9.2 VM")
+        string(name: "vmTemplate93",defaultValue: "${vmTemplate93}", description: "Template for 9.3 VM")
         string(name: "ram",defaultValue: "${ram}", description: "Server memory")
         string(name: "cpu",defaultValue: "${cpu}", description: "")
         string(name: "provider",defaultValue: "${provider}", description: "IAAS platform to be used")
@@ -156,7 +155,7 @@ pipeline {
                         stage('Create VM') {
                             steps {
                                 script {
-                                    kit.Create_Vm_Terraform(vmName + "-8.9", vmTemplate89, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
+                                    kit.Create_Vm_Terraform(vmName + "-8.9", vmTemplate89, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
                                     ipAddress89 = kit.getIpAddress(vmName + "-8.9", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master(vmName + "-8.9")
@@ -194,7 +193,7 @@ pipeline {
                         stage('Plugins CxCommonClient All Tests') {
                             steps {
                                 dir("${workspace}/8.9/Checkmarx-System-Test") {
-                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-8.9-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/8.9/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
+                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-8.9-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/8.9/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress89} maven:3.6.1-jdk-8-alpine \
                                         mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=8.9 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
@@ -209,9 +208,9 @@ pipeline {
                                 }
                                 if (ipAddress89 != null) {
                                     node(vmName + "-8.9") {
-                                        kit.zipStashInstallationLogs(installationLogs + "-8.9")
+                                        kit.zipStashInstallationLogs("CxSAST-8.9-Logs")
                                     }
-                                    unstash installationLogs + "-8.9"
+                                    unstash "CxSAST-8.9-Logs"
                                     deleteVm(provider, ipAddress89, vmName + "-8.9")
                                 }
                             }
@@ -230,7 +229,7 @@ pipeline {
                         stage('Create VM') {
                             steps {
                                 script {
-                                    kit.Create_Vm_Terraform(vmName + "-9.0", vmTemplate90, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
+                                    kit.Create_Vm_Terraform(vmName + "-9.0", vmTemplate90, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
                                     ipAddress90 = kit.getIpAddress(vmName + "-9.0", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master(vmName + "-9.0")
@@ -268,7 +267,7 @@ pipeline {
                         stage('Plugins CxCommonClient All Tests') {
                             steps {
                                 dir("${workspace}/9.0/Checkmarx-System-Test") {
-                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.0-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.0/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
+                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.0-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.0/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress90} maven:3.6.1-jdk-8-alpine \
                                         mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.0 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
@@ -283,9 +282,9 @@ pipeline {
                                 }
                                 if (ipAddress90 != null) {
                                     node(vmName + "-9.0") {
-                                        kit.zipStashInstallationLogs(installationLogs + "-9.0")
+                                        kit.zipStashInstallationLogs("CxSAST-9.0-Logs")
                                     }
-                                    unstash installationLogs + "-9.0"
+                                    unstash "CxSAST-9.0-Logs"
                                     deleteVm(provider, ipAddress90, vmName + "-9.0")
                                 }
                             }
@@ -304,7 +303,7 @@ pipeline {
                         stage('Create VM') {
                             steps {
                                 script {
-                                    kit.Create_Vm_Terraform(vmName + "-9.2", vmTemplate92, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
+                                    kit.Create_Vm_Terraform(vmName + "-9.2", vmTemplate92, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
                                     ipAddress92 = kit.getIpAddress(vmName + "-9.2", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master(vmName + "-9.2")
@@ -342,7 +341,7 @@ pipeline {
                         stage('Plugins CxCommonClient All Tests') {
                             steps {
                                 dir("${workspace}/9.2/Checkmarx-System-Test") {
-                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.2-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.2/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
+                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.2-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.2/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress92} maven:3.6.1-jdk-8-alpine \
                                         mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.2 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
@@ -357,9 +356,9 @@ pipeline {
                                 }
                                 if (ipAddress92 != null) {
                                     node(vmName + "-9.2") {
-                                        kit.zipStashInstallationLogs(installationLogs + "-9.2")
+                                        kit.zipStashInstallationLogs("CxSAST-9.2-Logs")
                                     }
-                                    unstash installationLogs + "-9.2"
+                                    unstash "CxSAST-9.2-Logs"
                                     deleteVm(provider, ipAddress92, vmName + "-9.2")
                                 }
                             }
@@ -378,7 +377,7 @@ pipeline {
                         stage('Create VM') {
                             steps {
                                 script {
-                                    kit.Create_Vm_Terraform(vmName + "-9.3", vmTemplate93, ram, cpu, provider, decommissionPeriod, "Auto", "Dynamic-CI", vmwareNetwork)
+                                    kit.Create_Vm_Terraform(vmName + "-9.3", vmTemplate93, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
                                     ipAddress93 = kit.getIpAddress(vmName + "-9.3", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master(vmName + "-9.3")
@@ -416,7 +415,7 @@ pipeline {
                         stage('Plugins CxCommonClient All Tests') {
                             steps {
                                 dir("${workspace}/9.3/Checkmarx-System-Test") {
-                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.3-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.3/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation maven:3.6.1-jdk-8-alpine \
+                                    sh "docker run --rm --name plugins-cxcommonclient-all-tests-9.3-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.3/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress93} maven:3.6.1-jdk-8-alpine \
                                         mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.3 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
                                             -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
                                 }
@@ -431,9 +430,9 @@ pipeline {
                                 }
                                 if (ipAddress93 != null) {
                                     node(vmName + "-9.3") {
-                                        kit.zipStashInstallationLogs(installationLogs + "-9.3")
+                                        kit.zipStashInstallationLogs("CxSAST-9.3-Logs")
                                     }
-                                    unstash installationLogs + "-9.3"
+                                    unstash "CxSAST-9.3-Logs"
                                     deleteVm(provider, ipAddress93, vmName + "-9.3")
                                 }
                             }
