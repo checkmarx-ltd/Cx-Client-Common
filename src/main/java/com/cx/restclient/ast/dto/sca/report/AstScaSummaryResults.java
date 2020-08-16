@@ -9,7 +9,6 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class AstScaSummaryResults extends SummaryResults implements Serializable {
-    private String riskReportId;
     private int totalPackages;
     private int directPackages;
     private String createdOn;

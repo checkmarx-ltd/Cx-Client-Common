@@ -39,7 +39,6 @@ public class AstScaClient extends AstClient implements Scanner {
         public static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + "riskReports/%s/summary";
         public static final String FINDINGS = RISK_MANAGEMENT_API + "riskReports/%s/vulnerabilities";
         public static final String PACKAGES = RISK_MANAGEMENT_API + "riskReports/%s/packages";
-        public static final String REPORT_ID = RISK_MANAGEMENT_API + "scans/%s/riskReportId";
         public static final String GET_UPLOAD_URL = "/api/uploads";
         public static final String WEB_REPORT = "/#/projects/%s/reports/%s";
     }
@@ -147,9 +146,8 @@ public class AstScaClient extends AstClient implements Scanner {
     @Override
     public Results waitForScanResults() {
         waitForScanToFinish(scanId);
-        String reportId = getReportId(scanId);
-        if (StringUtils.isNotEmpty(reportId)) {
-            return retrieveScanResults(reportId);
+        if (StringUtils.isNotEmpty(scanId)) {
+            return retrieveScanResults(scanId);
         } else {
             throw new CxClientException("Unable to get report ID.");
         }
@@ -191,9 +189,9 @@ public class AstScaClient extends AstClient implements Scanner {
         AstScaResults result = null;
         try {
             projectId = getRiskManagementProjectId(config.getProjectName());
-            String reportId = getLatestReportId(projectId);
-            if (StringUtils.isNotEmpty(reportId)) {
-                result = retrieveScanResults(reportId);
+            scanId = getLatestScanId(projectId);
+            if (StringUtils.isNotEmpty(scanId)) {
+                result = retrieveScanResults(scanId);
             }
         } catch (IOException e) {
             throw new CxClientException("Error getting latest scan results.", e);
@@ -201,7 +199,7 @@ public class AstScaClient extends AstClient implements Scanner {
         return result;
     }
 
-    private String getLatestReportId(String projectId) throws IOException {
+    private String getLatestScanId(String projectId) throws IOException {
         String result = null;
         if (StringUtils.isNotEmpty(projectId)) {
             String path = UrlPaths.RISK_MANAGEMENT_API + "risk-reports?size=1&projectId=" + URLEncoder.encode(projectId, ENCODING);
@@ -359,37 +357,34 @@ public class AstScaClient extends AstClient implements Scanner {
         return newProject.getId();
     }
 
-    private AstScaResults retrieveScanResults(String reportId) {
-        AstScaResults result = null;
-        if (StringUtils.isNotEmpty(reportId)) {
-            try {
-                result = new AstScaResults();
-                result.setScanId(scanId);
+    private AstScaResults retrieveScanResults(String scanId) {
+        AstScaResults result;
+        try {
+            result = new AstScaResults();
+            result.setScanId(this.scanId);
 
-                AstScaSummaryResults scanSummary = getSummaryReport(reportId);
-                result.setSummary(scanSummary);
-                printSummary(scanSummary, scanId);
+            AstScaSummaryResults scanSummary = getSummaryReport(scanId);
+            result.setSummary(scanSummary);
+            printSummary(scanSummary, this.scanId);
 
-                List<Finding> findings = getFindings(reportId);
-                result.setFindings(findings);
+            List<Finding> findings = getFindings(scanId);
+            result.setFindings(findings);
 
-                List<Package> packages = getPackages(reportId);
-                result.setPackages(packages);
+            List<Package> packages = getPackages(scanId);
+            result.setPackages(packages);
 
-                String reportLink = getWebReportLink(reportId);
-                result.setWebReportLink(reportLink);
-                printWebReportLink(result);
-                result.setScaResultReady(true);
-                log.info("Retrieved SCA results successfully.");
-
-            } catch (IOException e) {
-                throw new CxClientException("Error retrieving CxSCA scan results.", e);
-            }
+            String reportLink = getWebReportLink(scanId);
+            result.setWebReportLink(reportLink);
+            printWebReportLink(result);
+            result.setScaResultReady(true);
+            log.info("Retrieved SCA results successfully.");
+        } catch (IOException e) {
+            throw new CxClientException("Error retrieving CxSCA scan results.", e);
         }
         return result;
     }
 
-    private String getWebReportLink(String reportId) {
+    private String getWebReportLink(String scanId) {
         final String MESSAGE = "Unable to generate web report link.";
         String result = null;
         try {
@@ -399,7 +394,7 @@ public class AstScaClient extends AstClient implements Scanner {
             } else {
                 String path = String.format(UrlPaths.WEB_REPORT,
                         URLEncoder.encode(projectId, ENCODING),
-                        URLEncoder.encode(reportId, ENCODING));
+                        URLEncoder.encode(scanId, ENCODING));
 
                 result = UrlUtils.parseURLToString(webAppUrl, path);
             }
@@ -411,29 +406,11 @@ public class AstScaClient extends AstClient implements Scanner {
         return result;
     }
 
-    private String getReportId(String scanId) {
-        try {
-            log.debug(String.format("Getting report ID by scan ID: %s", scanId));
-            String path = String.format(UrlPaths.REPORT_ID, URLEncoder.encode(scanId, ENCODING));
-
-            String reportId = httpClient.getRequest(path,
-                    ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                    String.class,
-                    HttpStatus.SC_OK,
-                    "Risk report ID",
-                    false);
-            log.debug(String.format("Found report ID: %s", reportId));
-            return reportId;
-        } catch (IOException e) {
-            throw new CxClientException("Error getting scan report ID.", e);
-        }
-    }
-
-    private AstScaSummaryResults getSummaryReport(String reportId) throws IOException {
+    private AstScaSummaryResults getSummaryReport(String scanId) throws IOException {
         log.debug("Getting summary report.");
 
         String path = String.format(UrlPaths.SUMMARY_REPORT,
-                URLEncoder.encode(reportId, ENCODING));
+                URLEncoder.encode(scanId, ENCODING));
 
         return httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
@@ -443,10 +420,10 @@ public class AstScaClient extends AstClient implements Scanner {
                 false);
     }
 
-    private List<Finding> getFindings(String reportId) throws IOException {
+    private List<Finding> getFindings(String scanId) throws IOException {
         log.debug("Getting findings.");
 
-        String path = String.format(UrlPaths.FINDINGS, URLEncoder.encode(reportId, ENCODING));
+        String path = String.format(UrlPaths.FINDINGS, URLEncoder.encode(scanId, ENCODING));
 
         ArrayNode responseJson = httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
@@ -460,10 +437,10 @@ public class AstScaClient extends AstClient implements Scanner {
         return Arrays.asList(findings);
     }
 
-    private List<Package> getPackages(String reportId) throws IOException {
+    private List<Package> getPackages(String scanId) throws IOException {
         log.debug("Getting packages.");
 
-        String path = String.format(UrlPaths.PACKAGES, URLEncoder.encode(reportId, ENCODING));
+        String path = String.format(UrlPaths.PACKAGES, URLEncoder.encode(scanId, ENCODING));
 
         return (List<Package>) httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
@@ -481,7 +458,6 @@ public class AstScaClient extends AstClient implements Scanner {
             log.info(String.format("High vulnerabilities: %d", summary.getHighVulnerabilityCount()));
             log.info(String.format("Medium vulnerabilities: %d", summary.getMediumVulnerabilityCount()));
             log.info(String.format("Low vulnerabilities: %d", summary.getLowVulnerabilityCount()));
-            log.info(String.format("Risk report ID: %s", summary.getRiskReportId()));
             log.info(String.format("Scan ID: %s", scanId));
             log.info(String.format("Risk score: %.2f", summary.getRiskScore()));
             log.info(String.format("Total packages: %d", summary.getTotalPackages()));
