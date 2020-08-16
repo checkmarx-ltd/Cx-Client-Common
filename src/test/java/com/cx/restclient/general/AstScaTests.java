@@ -49,26 +49,46 @@ public class AstScaTests extends ScaTestsBase {
     }
 
     @Test
-    public void getLatestScanResults_existingResults() throws MalformedURLException {
+    public void getLatestScanResults_existingResults() {
         CxScanConfig config = initScaConfig(false);
         ScanResults latestResults = getLatestResults(config);
         verifyScanResults(latestResults);
     }
 
+    /**
+     * Getting latest results for a project that doesn't exist.
+     */
     @Test
-    public void getLatestScanResults_nonexistentProject() throws MalformedURLException {
-        CxScanConfig config = initScaConfig(false);
-        config.setProjectName("nonexistent-project-name");
-        ScanResults latestResults = getLatestResults(config);
-        verifyNoScaResults(latestResults);
+    public void getLatestScanResults_nonexistentProject() {
+        testMissingResultsCase("nonexistent-project-name");
     }
 
+    /**
+     * Existing project without any scans.
+     */
     @Test
-    public void getLatestScanResults_projectWithoutScans() throws MalformedURLException {
+    public void getLatestScanResults_projectWithoutScans() {
+        testMissingResultsCase("common-client-test-02-no-scans");
+    }
+
+    /**
+     * Project with all scans failed (e.g. invalid git repo).
+     */
+    @Test
+    public void getLatestScanResults_projectWithAllScansFailed() {
+        testMissingResultsCase("common-client-test-03-all-scans-failed");
+    }
+
+    /**
+     * Make sure that SCA results are null in different expected cases.
+     */
+    private void testMissingResultsCase(String projectName) {
+        log.info("Checking that scaResults are null for the {} project", projectName);
         CxScanConfig config = initScaConfig(false);
-        config.setProjectName("common-client-test-02-no-scans");
+        config.setProjectName(projectName);
         ScanResults latestResults = getLatestResults(config);
-        verifyNoScaResults(latestResults);
+        Assert.assertNotNull("scanResults must not be null.", latestResults);
+        Assert.assertNull("scaResults must be null.", latestResults.getScaResults());
     }
 
     @Test
@@ -86,15 +106,17 @@ public class AstScaTests extends ScaTestsBase {
         verifyScanResults(scanResults);
     }
 
-    private ScanResults getLatestResults(CxScanConfig config) throws MalformedURLException {
-        CxClientDelegator client = new CxClientDelegator(config, log);
+    private ScanResults getLatestResults(CxScanConfig config) {
+        CxClientDelegator client = null;
+        try {
+            client = new CxClientDelegator(config, log);
+        } catch (MalformedURLException e) {
+            failOnException(e);
+        }
+        Assert.assertNotNull(client);
         client.init();
-        return client.getLatestScanResults();
-    }
 
-    private void verifyNoScaResults(ScanResults latestResults) {
-        Assert.assertNotNull("scanResults must not be null even for a nonexistent project.", latestResults);
-        Assert.assertNull("scaResults must be null for a nonexistent project.", latestResults.getScaResults());
+        return client.getLatestScanResults();
     }
 
     private void scanRemoteRepo(String repoUrlProp, boolean useOnPremAuthentication) throws MalformedURLException {
