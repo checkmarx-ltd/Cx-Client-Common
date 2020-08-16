@@ -9,6 +9,7 @@ import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
@@ -34,11 +35,12 @@ import java.util.*;
  */
 public class AstScaClient extends AstClient implements Scanner {
     private static class UrlPaths {
-        public static final String RISK_MANAGEMENT_API = "/risk-management/";
+        private static final String RISK_MANAGEMENT_API = "/risk-management/";
         public static final String PROJECTS = RISK_MANAGEMENT_API + "projects";
         public static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + "riskReports/%s/summary";
         public static final String FINDINGS = RISK_MANAGEMENT_API + "riskReports/%s/vulnerabilities";
         public static final String PACKAGES = RISK_MANAGEMENT_API + "riskReports/%s/packages";
+        public static final String LATEST_SCAN = RISK_MANAGEMENT_API + "riskReports?size=1&projectId=%s";
         public static final String GET_UPLOAD_URL = "/api/uploads";
         public static final String WEB_REPORT = "/#/projects/%s/reports/%s";
     }
@@ -202,7 +204,7 @@ public class AstScaClient extends AstClient implements Scanner {
     private String getLatestScanId(String projectId) throws IOException {
         String result = null;
         if (StringUtils.isNotEmpty(projectId)) {
-            String path = UrlPaths.RISK_MANAGEMENT_API + "risk-reports?size=1&projectId=" + URLEncoder.encode(projectId, ENCODING);
+            String path = String.format(UrlPaths.LATEST_SCAN, URLEncoder.encode(projectId, ENCODING));
             JsonNode response = httpClient.getRequest(path,
                     ContentType.CONTENT_TYPE_APPLICATION_JSON,
                     ArrayNode.class,
@@ -322,23 +324,45 @@ public class AstScaClient extends AstClient implements Scanner {
         }
     }
 
-    private String getRiskManagementProjectId(String name) throws IOException {
-        if (StringUtils.isEmpty(name)) {
+    private String getRiskManagementProjectId(String projectName) throws IOException {
+        if (StringUtils.isEmpty(projectName)) {
             throw new CxClientException("Non-empty project name must be provided.");
         }
 
-        List<Project> allProjects = getRiskManagementProjects();
+        Project project = sendGetProjectRequest(projectName);
 
-        return allProjects.stream()
-                .filter((Project project) -> name.equals(project.getName()))
+        return Optional.ofNullable(project)
                 .map(Project::getId)
-                .findFirst()
                 .orElse(null);
     }
 
-    private List<Project> getRiskManagementProjects() throws IOException {
-        return (List<Project>) httpClient.getRequest(UrlPaths.PROJECTS, ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                Project.class, HttpStatus.SC_OK, "CxSCA projects", true);
+    private Project sendGetProjectRequest(String projectName) throws IOException {
+        Project project;
+        try {
+            String getProjectByName = String.format("%s?name=%s", UrlPaths.PROJECTS, URLEncoder.encode(projectName, ENCODING));
+            project = httpClient.getRequest(getProjectByName,
+                    ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                    Project.class,
+                    HttpStatus.SC_OK,
+                    "CxSCA project ID by name",
+                    false);
+        } catch (CxHTTPClientException e) {
+            if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+                project = null;
+            } else {
+                throw e;
+            }
+        }
+        return project;
+    }
+
+    private void getRiskManagementProjects() throws IOException {
+        httpClient.getRequest(UrlPaths.PROJECTS,
+                ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                Project.class,
+                HttpStatus.SC_OK,
+                "CxSCA projects",
+                true);
     }
 
     private String createRiskManagementProject(String name) throws IOException {
@@ -409,8 +433,7 @@ public class AstScaClient extends AstClient implements Scanner {
     private AstScaSummaryResults getSummaryReport(String scanId) throws IOException {
         log.debug("Getting summary report.");
 
-        String path = String.format(UrlPaths.SUMMARY_REPORT,
-                URLEncoder.encode(scanId, ENCODING));
+        String path = String.format(UrlPaths.SUMMARY_REPORT, URLEncoder.encode(scanId, ENCODING));
 
         return httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
