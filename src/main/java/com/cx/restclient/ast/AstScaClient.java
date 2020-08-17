@@ -148,11 +148,9 @@ public class AstScaClient extends AstClient implements Scanner {
     @Override
     public Results waitForScanResults() {
         waitForScanToFinish(scanId);
-        if (StringUtils.isNotEmpty(scanId)) {
-            return retrieveScanResults(scanId);
-        } else {
-            throw new CxClientException("Unable to get report ID.");
-        }
+
+        return tryGetScanResults(scanId)
+                .orElseThrow(() -> new CxClientException("Unable to get scan results: scan not found."));
     }
 
     @Override
@@ -167,7 +165,7 @@ public class AstScaClient extends AstClient implements Scanner {
             SourceLocationType locationType = scaConfig.getSourceLocationType();
             HttpResponse response;
 
-            resolveRiskManagementProject();
+            projectId = resolveRiskManagementProject();
             if (locationType == SourceLocationType.REMOTE_REPOSITORY) {
                 response = submitSourcesFromRemoteRepo(scaConfig, projectId);
             } else {
@@ -188,34 +186,47 @@ public class AstScaClient extends AstClient implements Scanner {
      */
     @Override
     public Results getLatestScanResults() {
-        AstScaResults result = null;
+        AstScaResults result;
         try {
+            log.info("Getting latest scan results.");
             projectId = getRiskManagementProjectId(config.getProjectName());
             scanId = getLatestScanId(projectId);
-            if (StringUtils.isNotEmpty(scanId)) {
-                result = retrieveScanResults(scanId);
-            }
+            result = tryGetScanResults(scanId).orElse(null);
         } catch (IOException e) {
             throw new CxClientException("Error getting latest scan results.", e);
         }
         return result;
     }
 
+    private Optional<AstScaResults> tryGetScanResults(String scanId) {
+        AstScaResults result = null;
+        if (StringUtils.isNotEmpty(scanId)) {
+            result = getScanResults(scanId);
+        } else {
+            log.info("Unable to get scan results");
+        }
+        return Optional.ofNullable(result);
+    }
+
     private String getLatestScanId(String projectId) throws IOException {
         String result = null;
         if (StringUtils.isNotEmpty(projectId)) {
+            log.debug(String.format("Getting latest scan ID for project ID: %s", projectId));
             String path = String.format(UrlPaths.LATEST_SCAN, URLEncoder.encode(projectId, ENCODING));
             JsonNode response = httpClient.getRequest(path,
                     ContentType.CONTENT_TYPE_APPLICATION_JSON,
                     ArrayNode.class,
                     HttpStatus.SC_OK,
-                    "Risk report by project ID",
+                    "scan ID by project ID",
                     false);
 
             result = Optional.ofNullable(response)
+                    // 'riskReportId' is in fact scanId, but the name is kept for backward compatibility.
                     .map(resp -> resp.at("/0/riskReportId").textValue())
                     .orElse(null);
         }
+        String message = (result == null ? "Scan not found" : String.format("Scan ID: %s", result));
+        log.info(message);
         return result;
     }
 
@@ -311,36 +322,44 @@ public class AstScaClient extends AstClient implements Scanner {
         }
     }
 
-    private void resolveRiskManagementProject() throws IOException {
+    private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
         log.info(String.format("Getting project by name: '%s'", projectName));
-        projectId = getRiskManagementProjectId(projectName);
-        if (projectId == null) {
+        String resolvedProjectId = getRiskManagementProjectId(projectName);
+        if (resolvedProjectId == null) {
             log.info("Project not found, creating a new one.");
-            projectId = createRiskManagementProject(projectName);
-            log.info(String.format("Created a project with ID %s", projectId));
+            resolvedProjectId = createRiskManagementProject(projectName);
+            log.info(String.format("Created a project with ID %s", resolvedProjectId));
         } else {
-            log.info(String.format("Project already exists with ID %s", projectId));
+            log.info(String.format("Project already exists with ID %s", resolvedProjectId));
         }
+        return resolvedProjectId;
     }
 
     private String getRiskManagementProjectId(String projectName) throws IOException {
+        log.info(String.format("Getting project ID by name: '%s'", projectName));
+
         if (StringUtils.isEmpty(projectName)) {
             throw new CxClientException("Non-empty project name must be provided.");
         }
 
         Project project = sendGetProjectRequest(projectName);
 
-        return Optional.ofNullable(project)
+        String result = Optional.ofNullable(project)
                 .map(Project::getId)
                 .orElse(null);
+
+        String message = (result == null ? "Project not found" : String.format("Project ID: %s", result));
+        log.info(message);
+
+        return result;
     }
 
     private Project sendGetProjectRequest(String projectName) throws IOException {
-        Project project;
+        Project result;
         try {
             String getProjectByName = String.format("%s?name=%s", UrlPaths.PROJECTS, URLEncoder.encode(projectName, ENCODING));
-            project = httpClient.getRequest(getProjectByName,
+            result = httpClient.getRequest(getProjectByName,
                     ContentType.CONTENT_TYPE_APPLICATION_JSON,
                     Project.class,
                     HttpStatus.SC_OK,
@@ -348,12 +367,12 @@ public class AstScaClient extends AstClient implements Scanner {
                     false);
         } catch (CxHTTPClientException e) {
             if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-                project = null;
+                result = null;
             } else {
                 throw e;
             }
         }
-        return project;
+        return result;
     }
 
     private void getRiskManagementProjects() throws IOException {
@@ -381,8 +400,9 @@ public class AstScaClient extends AstClient implements Scanner {
         return newProject.getId();
     }
 
-    private AstScaResults retrieveScanResults(String scanId) {
+    private AstScaResults getScanResults(String scanId) {
         AstScaResults result;
+        log.debug(String.format("Getting results for scan ID %s", scanId));
         try {
             result = new AstScaResults();
             result.setScanId(this.scanId);
