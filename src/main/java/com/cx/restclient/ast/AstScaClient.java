@@ -114,9 +114,8 @@ public class AstScaClient extends AstClient implements Scanner {
 
         try {
             if (StringUtils.isNotEmpty(username) || StringUtils.isNotEmpty(password)) {
-                log.info(String.format(
-                        "Adding credentials as the userinfo part of the URL, because %s only supports this kind of authentication.",
-                        getScannerDisplayName()));
+                log.info("Adding credentials as the userinfo part of the URL, because {} only supports this kind of authentication.",
+                        getScannerDisplayName());
 
                 result = new URIBuilder(initialUrl.toURI())
                         .setUserInfo(username, password)
@@ -155,8 +154,8 @@ public class AstScaClient extends AstClient implements Scanner {
 
     @Override
     public Results initiateScan() {
-        log.info(String.format("----------------------------------- Initiating %s Scan:------------------------------------",
-                getScannerDisplayName()));
+        log.info("----------------------------------- Initiating {} Scan:------------------------------------",
+                getScannerDisplayName());
         AstScaResults scaResults = new AstScaResults();
         scanId = null;
         projectId = null;
@@ -169,7 +168,7 @@ public class AstScaClient extends AstClient implements Scanner {
             if (locationType == SourceLocationType.REMOTE_REPOSITORY) {
                 response = submitSourcesFromRemoteRepo(scaConfig, projectId);
             } else {
-                response = submitSourcesFromLocalDir();
+                response = submitSourcesFromLocalDir(projectId);
             }
             this.scanId = extractScanIdFrom(response);
             scaResults.setScanId(scanId);
@@ -211,7 +210,7 @@ public class AstScaClient extends AstClient implements Scanner {
     private String getLatestScanId(String projectId) throws IOException {
         String result = null;
         if (StringUtils.isNotEmpty(projectId)) {
-            log.debug(String.format("Getting latest scan ID for project ID: %s", projectId));
+            log.debug("Getting latest scan ID for project ID: {}", projectId);
             String path = String.format(UrlPaths.LATEST_SCAN, URLEncoder.encode(projectId, ENCODING));
             JsonNode response = httpClient.getRequest(path,
                     ContentType.CONTENT_TYPE_APPLICATION_JSON,
@@ -230,7 +229,7 @@ public class AstScaClient extends AstClient implements Scanner {
         return result;
     }
 
-    private HttpResponse submitSourcesFromLocalDir() throws IOException {
+    private HttpResponse submitSourcesFromLocalDir(String projectId) throws IOException {
         log.info("Using local directory flow.");
 
         PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
@@ -271,7 +270,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private void printWebReportLink(AstScaResults scaResult) {
         if (!StringUtils.isEmpty(scaResult.getWebReportLink())) {
-            log.info(String.format("%s scan results location: %s", getScannerDisplayName(), scaResult.getWebReportLink()));
+            log.info("{} scan results location: {}", getScannerDisplayName(), scaResult.getWebReportLink());
         }
     }
 
@@ -282,7 +281,7 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     public void login() throws IOException {
-        log.info(String.format("Logging into %s", getScannerDisplayName()));
+        log.info("Logging into {}", getScannerDisplayName());
         AstScaConfig scaConfig = config.getAstScaConfig();
 
         LoginSettings settings = new LoginSettings();
@@ -324,20 +323,20 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
-        log.info(String.format("Getting project by name: '%s'", projectName));
+        log.info("Getting project by name: '{}'", projectName);
         String resolvedProjectId = getRiskManagementProjectId(projectName);
         if (resolvedProjectId == null) {
             log.info("Project not found, creating a new one.");
             resolvedProjectId = createRiskManagementProject(projectName);
-            log.info(String.format("Created a project with ID %s", resolvedProjectId));
+            log.info("Created a project with ID {}", resolvedProjectId);
         } else {
-            log.info(String.format("Project already exists with ID %s", resolvedProjectId));
+            log.info("Project already exists with ID {}", resolvedProjectId);
         }
         return resolvedProjectId;
     }
 
     private String getRiskManagementProjectId(String projectName) throws IOException {
-        log.info(String.format("Getting project ID by name: '%s'", projectName));
+        log.info("Getting project ID by name: '{}'", projectName);
 
         if (StringUtils.isEmpty(projectName)) {
             throw new CxClientException("Non-empty project name must be provided.");
@@ -402,7 +401,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private AstScaResults getScanResults(String scanId) {
         AstScaResults result;
-        log.debug(String.format("Getting results for scan ID %s", scanId));
+        log.debug("Getting results for scan ID {}", scanId);
         try {
             result = new AstScaResults();
             result.setScanId(this.scanId);
@@ -434,7 +433,7 @@ public class AstScaClient extends AstClient implements Scanner {
         try {
             String webAppUrl = config.getAstScaConfig().getWebAppUrl();
             if (StringUtils.isEmpty(webAppUrl)) {
-                log.warn(String.format("%s Web app URL is not specified.", MESSAGE));
+                log.warn("{} Web app URL is not specified.", MESSAGE);
             } else {
                 String path = String.format(UrlPaths.WEB_REPORT,
                         URLEncoder.encode(projectId, ENCODING),
@@ -495,16 +494,16 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private void printSummary(AstScaSummaryResults summary, String scanId) {
         if (log.isInfoEnabled()) {
-            log.info(String.format("%n----CxSCA risk report summary----"));
-            log.info(String.format("Created on: %s", summary.getCreatedOn()));
-            log.info(String.format("Direct packages: %d", summary.getDirectPackages()));
-            log.info(String.format("High vulnerabilities: %d", summary.getHighVulnerabilityCount()));
-            log.info(String.format("Medium vulnerabilities: %d", summary.getMediumVulnerabilityCount()));
-            log.info(String.format("Low vulnerabilities: %d", summary.getLowVulnerabilityCount()));
-            log.info(String.format("Scan ID: %s", scanId));
+            log.info("----CxSCA risk report summary----");
+            log.info("Created on: {}", summary.getCreatedOn());
+            log.info("Direct packages: {}", summary.getDirectPackages());
+            log.info("High vulnerabilities: {}", summary.getHighVulnerabilityCount());
+            log.info("Medium vulnerabilities: {}", summary.getMediumVulnerabilityCount());
+            log.info("Low vulnerabilities: {}", summary.getLowVulnerabilityCount());
+            log.info("Scan ID: {}", scanId);
             log.info(String.format("Risk score: %.2f", summary.getRiskScore()));
-            log.info(String.format("Total packages: %d", summary.getTotalPackages()));
-            log.info(String.format("Total outdated packages: %d%n", summary.getTotalOutdatedPackages()));
+            log.info("Total packages: {}", summary.getTotalPackages());
+            log.info("Total outdated packages: {}", summary.getTotalOutdatedPackages());
         }
     }
 
