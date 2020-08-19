@@ -14,6 +14,7 @@
         <developerConnection>scm:git:ssh://github.com/checkmarx-ltd/Cx-Client-Common.git</developerConnection>
         <url>https://github.com/checkmarx-ltd/Cx-Client-Common/tree/master</url>
     </scm>
+         <!-- Trigger-->
     <licenses>
         <license>
             <name>MIT License</name>
@@ -178,7 +179,7 @@
         <dependency>
             <groupId>com.checkmarx</groupId>
             <artifactId>cx-ws-fs-agent</artifactId>
-            <version>20.0.5</version>
+            <version>20.0.7</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.xml.bind</groupId>

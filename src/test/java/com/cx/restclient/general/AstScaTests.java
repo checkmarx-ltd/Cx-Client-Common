@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 
 @Slf4j
 public class AstScaTests extends ScaTestsBase {
+
     @Test
     public void scan_localDirUpload() throws IOException, CxClientException {
         CxScanConfig config = initScaConfig(false);
@@ -69,6 +70,34 @@ public class AstScaTests extends ScaTestsBase {
         setProxy(config);
         ScanResults scanResults = runScan(config);
         verifyScanResults(scanResults);
+    }
+
+    @Test
+    public void scan_localDirUploadIncludeSources() throws IOException, CxClientException {
+        CxScanConfig config = initScaConfig( false);
+        localDirScan(config);
+    }
+
+    @Test
+    public void scan_localDirZeroCodeScan() throws IOException, CxClientException {
+        CxScanConfig config = initScaConfig( false);
+        localDirScan(config);
+    }
+
+    private void localDirScan(CxScanConfig config) throws MalformedURLException {
+        config.setOsaThresholdsEnabled(true);
+        config.getAstScaConfig().setSourceLocationType(SourceLocationType.LOCAL_DIRECTORY);
+
+        Path sourcesDir = null;
+        try {
+            sourcesDir = extractTestProjectFromResources();
+            config.setSourceDir(sourcesDir.toString());
+
+            ScanResults scanResults = runScan(config);
+            verifyScanResults(scanResults);
+        } finally {
+            deleteDir(sourcesDir);
+        }
     }
 
     private void scanRemoteRepo(String repoUrlProp, boolean useOnPremAuthentication) throws MalformedURLException {
