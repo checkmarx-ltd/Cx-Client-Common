@@ -121,13 +121,13 @@ public class AstScaTests extends ScaTestsBase {
 
     @Test
     public void scan_localDirUploadIncludeSources() throws IOException, CxClientException {
-        CxScanConfig config = initScaConfig( false);
+        CxScanConfig config = initScaConfig(false);
         localDirScan(config);
     }
 
     @Test
     public void scan_localDirZeroCodeScan() throws IOException, CxClientException {
-        CxScanConfig config = initScaConfig( false);
+        CxScanConfig config = initScaConfig(false);
         localDirScan(config);
     }
 

@@ -14,9 +14,7 @@ import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
-import com.cx.restclient.sast.utils.zip.CxZipUtils;
-import com.cx.restclient.sast.utils.zip.NewCxZipFile;
-import com.cx.restclient.sast.utils.zip.Zipper;
+import com.cx.restclient.sast.utils.zip.*;
 import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
 import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
 import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
@@ -36,15 +34,11 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
-import java.util.*;
 
 /**
  * SCA - Software Composition Analysis - is the successor of OSA.
@@ -280,7 +274,7 @@ public class AstScaClient extends AstClient implements Scanner {
                 log.info("No supported fingerprints found to zip");
             }
 
-            log.debug("The sources were zipped to {}" , tempFile.getAbsolutePath());
+            log.debug("The sources were zipped to {}", tempFile.getAbsolutePath());
             return tempFile;
         } catch (Zipper.MaxZipSizeReached e) {
             throw handleFileDeletion(tempFile, new IOException("Reached maximum upload size limit of " + FileUtils.byteCountToDisplaySize(maxZipSizeBytes)));
@@ -294,7 +288,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     }
 
-    private CxClientException handleFileDeletion(File file, IOException ioException){
+    private CxClientException handleFileDeletion(File file, IOException ioException) {
         try {
             Files.delete(file.toPath());
         } catch (IOException e) {
@@ -305,7 +299,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     }
 
-    private CxClientException handleFileDeletion(File file){
+    private CxClientException handleFileDeletion(File file) {
         try {
             Files.delete(file.toPath());
         } catch (IOException e) {
