@@ -59,6 +59,7 @@ public class AstScaClient extends AstClient implements Scanner {
         public static final String LATEST_SCAN = RISK_MANAGEMENT_API + "riskReports?size=1&projectId=%s";
         public static final String GET_UPLOAD_URL = "/api/uploads";
         public static final String WEB_REPORT = "/#/projects/%s/reports/%s";
+        public static final String RESOLVING_CONFIGURATION_API = "/settings/projects/%s/resolving-configuration";
     }
 
     private static final String ENGINE_TYPE_FOR_API = "sca";
@@ -79,7 +80,6 @@ public class AstScaClient extends AstClient implements Scanner {
     private String projectId;
     private String scanId;
     private final FingerprintCollector fingerprintCollector;
-    private final boolean isManifestAndFingerprintsOnly;
     private CxSCAResolvingConfiguration resolvingConfiguration;
     private static final String FINGERPRINT_FILE_NAME = ".cxsca.sig";
 
@@ -91,7 +91,6 @@ public class AstScaClient extends AstClient implements Scanner {
 
         httpClient = createHttpClient(astScaConfig.getApiUrl());
         this.resolvingConfiguration = null;
-        this.isManifestAndFingerprintsOnly = !astScaConfig.isIncludeSources();
         fingerprintCollector = new FingerprintCollector(log);
         // Pass tenant name in a custom header. This will allow to get token from on-premise access control server
         // and then use this token for SCA authentication in cloud.
@@ -157,18 +156,13 @@ public class AstScaClient extends AstClient implements Scanner {
     public void init() {
         try {
             login();
-            if (isManifestAndFingerprintsOnly) {
-                this.resolvingConfiguration = getCxSCAResolvingConfigurationForProject(this.projectId);
-                log.info("Got the following manifest patterns {}", this.resolvingConfiguration.getManifests());
-                log.info("Got the following fingerprint patterns {}", this.resolvingConfiguration.getFingerprints());
-            }
         } catch (IOException e) {
             throw new CxClientException("Failed to init CxSCA Client.", e);
         }
     }
 
     public CxSCAResolvingConfiguration getCxSCAResolvingConfigurationForProject(String projectId) throws IOException {
-        log.info("Getting CxSCA Resolving configuration for project: {}", projectId);
+        log.info("Resolving configuration for project: {}", projectId);
         String path = String.format(UrlPaths.RESOLVING_CONFIGURATION_API, URLEncoder.encode(projectId, ENCODING));
 
         return httpClient.getRequest(path,
@@ -177,7 +171,6 @@ public class AstScaClient extends AstClient implements Scanner {
                 HttpStatus.SC_OK,
                 "get CxSCA resolving configuration",
                 false);
-
     }
 
     /**
@@ -206,6 +199,13 @@ public class AstScaClient extends AstClient implements Scanner {
             HttpResponse response;
 
             projectId = resolveRiskManagementProject();
+            boolean isManifestAndFingerprintsOnly = !config.getAstScaConfig().isIncludeSources();
+            if (isManifestAndFingerprintsOnly) {
+                this.resolvingConfiguration = getCxSCAResolvingConfigurationForProject(this.projectId);
+                log.info("Got the following manifest patterns {}", this.resolvingConfiguration.getManifests());
+                log.info("Got the following fingerprint patterns {}", this.resolvingConfiguration.getFingerprints());
+            }
+
             if (locationType == SourceLocationType.REMOTE_REPOSITORY) {
                 response = submitSourcesFromRemoteRepo(scaConfig, projectId);
             } else {
@@ -223,13 +223,13 @@ public class AstScaClient extends AstClient implements Scanner {
         }
     }
 
-    private HttpResponse submitManifestsAndFingerprintsFromLocalDir() throws IOException {
+    private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
 
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
 
         PathFilter userFilter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
-        Set<String> scannedFileSet = new HashSet<String>(Arrays.asList(CxSCAFileSystemUtils.scanAndGetIncludedFiles(sourceDir, userFilter)));
+        Set<String> scannedFileSet = new HashSet<>(Arrays.asList(CxSCAFileSystemUtils.scanAndGetIncludedFiles(sourceDir, userFilter)));
 
         PathFilter manifestIncludeFilter = new PathFilter(null, getManifestsIncludePattern(), log);
         if (manifestIncludeFilter.getIncludes().length == 0) {
@@ -254,20 +254,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         optionallyWriteFingerprintsToFile(fingerprints);
 
-        String uploadedArchiveUrl = getSourcesUploadUrl();
-        String cleanPath = uploadedArchiveUrl.split("\\?")[0];
-        log.info("Uploading to: {}",cleanPath);
-        uploadArchive(zipFile, uploadedArchiveUrl);
-
-        //delete only if path not specified in the config
-        if (StringUtils.isEmpty(astScaConfig.getZipFilePath())) {
-            CxZipUtils.deleteZippedSources(zipFile, config, log);
-        }
-
-        RemoteRepositoryInfo uploadedFileInfo = new RemoteRepositoryInfo();
-        uploadedFileInfo.setUrl(new URL(uploadedArchiveUrl));
-
-        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
+        return initiateScanForUpload(projectId, zipFile);
     }
 
 
@@ -284,10 +271,10 @@ public class AstScaClient extends AstClient implements Scanner {
         try {
             zipper = new NewCxZipFile(tempFile, maxZipSizeBytes, log);
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
-            if (zipper.getFileCount() == 0 && fingerprints.getFingerprints().size() == 0) {
-                throw handleFileDeletion(tempFile,"No files found to zip and no supported fingerprints found");
+            if (zipper.getFileCount() == 0 && fingerprints.getFingerprints().isEmpty()) {
+                throw handleFileDeletion(tempFile);
             }
-            if (fingerprints.getFingerprints().size() > 0) {
+            if (!fingerprints.getFingerprints().isEmpty()) {
                 zipper.zipContentAsFile(FINGERPRINT_FILE_NAME, FingerprintCollector.getFingerprintsAsJsonString(fingerprints).getBytes());
             } else {
                 log.info("No supported fingerprints found to zip");
@@ -298,7 +285,7 @@ public class AstScaClient extends AstClient implements Scanner {
         } catch (Zipper.MaxZipSizeReached e) {
             throw handleFileDeletion(tempFile, new IOException("Reached maximum upload size limit of " + FileUtils.byteCountToDisplaySize(maxZipSizeBytes)));
         } catch (IOException ioException) {
-            throw handleFileDeletion(tempFile,ioException);
+            throw handleFileDeletion(tempFile, ioException);
         } finally {
             if (zipper != null) {
                 zipper.close();
@@ -318,14 +305,14 @@ public class AstScaClient extends AstClient implements Scanner {
 
     }
 
-    private CxClientException handleFileDeletion(File file, String message){
+    private CxClientException handleFileDeletion(File file){
         try {
             Files.delete(file.toPath());
         } catch (IOException e) {
             return new CxClientException(e);
         }
 
-        return new CxClientException(message);
+        return new CxClientException("No files found to zip and no supported fingerprints found");
     }
 
     private String getFingerprintsIncludePattern() {
@@ -361,25 +348,14 @@ public class AstScaClient extends AstClient implements Scanner {
         }
     }
 
-    private HttpResponse submitAllSourcesFromLocalDir() throws IOException {
+    private HttpResponse submitAllSourcesFromLocalDir(String projectId) throws IOException {
         log.info("Using local directory flow.");
 
         PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
         File zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
 
-        String uploadedArchiveUrl = getSourcesUploadUrl();
-        uploadArchive(zipFile, uploadedArchiveUrl);
-
-        //delete only if path not specified in the config
-        if (StringUtils.isEmpty(astScaConfig.getZipFilePath())) {
-            CxZipUtils.deleteZippedSources(zipFile, config, log);
-        }
-
-        RemoteRepositoryInfo uploadedFileInfo = new RemoteRepositoryInfo();
-        uploadedFileInfo.setUrl(new URL(uploadedArchiveUrl));
-
-        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
+        return initiateScanForUpload(projectId, zipFile);
     }
 
     /**
@@ -411,6 +387,23 @@ public class AstScaClient extends AstClient implements Scanner {
         return Optional.ofNullable(result);
     }
 
+    private HttpResponse initiateScanForUpload(String projectId, File zipFile) throws IOException {
+        String uploadedArchiveUrl = getSourcesUploadUrl();
+        String cleanPath = uploadedArchiveUrl.split("\\?")[0];
+        log.info("Uploading to: {}", cleanPath);
+        uploadArchive(zipFile, uploadedArchiveUrl);
+
+        //delete only if path not specified in the config
+        if (StringUtils.isEmpty(astScaConfig.getZipFilePath())) {
+            CxZipUtils.deleteZippedSources(zipFile, config, log);
+        }
+
+        RemoteRepositoryInfo uploadedFileInfo = new RemoteRepositoryInfo();
+        uploadedFileInfo.setUrl(new URL(uploadedArchiveUrl));
+
+        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
+    }
+
     private String getLatestScanId(String projectId) throws IOException {
         String result = null;
         if (StringUtils.isNotEmpty(projectId)) {
@@ -431,27 +424,6 @@ public class AstScaClient extends AstClient implements Scanner {
         String message = (result == null ? "Scan not found" : String.format("Scan ID: %s", result));
         log.info(message);
         return result;
-    }
-
-    private HttpResponse submitSourcesFromLocalDir(String projectId) throws IOException {
-        log.info("Using local directory flow.");
-
-        PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
-        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
-        File zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
-
-        String uploadedArchiveUrl = getSourcesUploadUrl();
-        uploadArchive(zipFile, uploadedArchiveUrl);
-
-        //delete only if path not specified in the config
-        if (StringUtils.isEmpty(astScaConfig.getZipFilePath())) {
-            CxZipUtils.deleteZippedSources(zipFile, config, log);
-        }
-
-        RemoteRepositoryInfo uploadedFileInfo = new RemoteRepositoryInfo();
-        uploadedFileInfo.setUrl(new URL(uploadedArchiveUrl));
-
-        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
     }
 
     private String getSourcesUploadUrl() throws IOException {
