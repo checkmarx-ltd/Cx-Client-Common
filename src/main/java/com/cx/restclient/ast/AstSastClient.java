@@ -70,7 +70,7 @@ public class AstSastClient extends AstClient implements Scanner {
 
     @Override
     public void init() {
-        log.debug(String.format("Initializing %s client.", getScannerDisplayName()));
+        log.debug("Initializing {} client.", getScannerDisplayName());
         AstSastConfig astConfig = config.getAstSastConfig();
         httpClient.addCustomHeader(AUTH.WWW_AUTH_RESP, String.format("Bearer %s", astConfig.getAccessToken()));
     }
@@ -82,8 +82,8 @@ public class AstSastClient extends AstClient implements Scanner {
 
     @Override
     public Results initiateScan() {
-        log.info(String.format("----------------------------------- Initiating %s Scan:------------------------------------",
-                getScannerDisplayName()));
+        log.info("----------------------------------- Initiating {} Scan:------------------------------------",
+                getScannerDisplayName());
 
         AstSastResults astResults = new AstSastResults();
         scanId = null;

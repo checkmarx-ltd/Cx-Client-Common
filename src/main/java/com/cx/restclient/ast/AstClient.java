@@ -52,7 +52,7 @@ public abstract class AstClient {
                 log);
         //initializing Team Path to prevent null pointer in login when called from automation
         client.setTeamPathHeader("");
-        
+
         return client;
     }
 
@@ -95,17 +95,18 @@ public abstract class AstClient {
         validateRepoInfo(repoInfo);
 
         URL sanitizedUrl = sanitize(repoInfo.getUrl());
-        log.info(String.format("Repository URL: %s", sanitizedUrl));
+        log.info("Repository URL: {}", sanitizedUrl);
         return sendStartScanRequest(repoInfo, SourceLocationType.REMOTE_REPOSITORY, projectId);
     }
 
     protected void waitForScanToFinish(String scanId) {
-        log.info(String.format("------------------------------------Get %s Results:-----------------------------------", getScannerDisplayName()));
 
-        log.info((String.format("Waiting for %s scan to finish", getScannerDisplayName())));
+        log.info("------------------------------------Get {} Results:-----------------------------------", getScannerDisplayName());
+        log.info("Waiting for {} scan to finish", getScannerDisplayName());
+
         AstWaiter waiter = new AstWaiter(httpClient, config, getScannerDisplayName());
         waiter.waitForScanToFinish(scanId);
-        log.info(String.format("%1$s scan finished successfully. Retrieving %1$s scan results.", getScannerDisplayName()));
+        log.info("{} scan finished successfully. Retrieving {} scan results.", getScannerDisplayName(),getScannerDisplayName());
     }
 
     /**
@@ -163,7 +164,8 @@ public abstract class AstClient {
 
     protected String extractScanIdFrom(HttpResponse response) {
         String result = null;
-        log.debug(String.format("Extracting scan ID from the '%s' response header.", LOCATION_HEADER));
+
+        log.debug("Extracting scan ID from the '{}' response header.", LOCATION_HEADER);
         if (response != null && response.getLastHeader(LOCATION_HEADER) != null) {
             // Expecting values like
             //      /api/scans/1ecffa00-0e42-49b2-8755-388b9f6a9293
@@ -173,7 +175,8 @@ public abstract class AstClient {
         }
 
         if (StringUtils.isNotEmpty(result)) {
-            log.info(String.format("Scan started successfully. Scan ID: %s", result));
+
+            log.info("Scan started successfully. Scan ID: {}", result);
         } else {
             throw new CxClientException("Unable to get scan ID.");
         }
