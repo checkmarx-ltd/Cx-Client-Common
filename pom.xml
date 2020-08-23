@@ -179,7 +179,7 @@
         <dependency>
             <groupId>com.checkmarx</groupId>
             <artifactId>cx-ws-fs-agent</artifactId>
-            <version>20.0.5</version>
+            <version>20.0.7</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.xml.bind</groupId>
