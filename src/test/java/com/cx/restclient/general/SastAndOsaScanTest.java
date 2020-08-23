@@ -12,7 +12,7 @@ import java.net.MalformedURLException;
 
 @Ignore
 @Slf4j
-public class SastAndOsaScanTests extends CommonClientTest {
+public class SastAndOsaScanTest extends CommonClientTest {
     @Test
     public void runSastAndOsaScan() throws MalformedURLException, CxClientException {
         String projectName = "SastAndOsa";
