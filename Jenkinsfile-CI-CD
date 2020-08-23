@@ -30,7 +30,7 @@ pipeline {
         string(name: "provider",defaultValue: "${provider}", description: "IAAS platform to be used")
         string(name: "decommissionPeriod",defaultValue: "${decommissionPeriod}", description: "Decommission period")
         string(name: "vmwareNetwork",defaultValue: "${vmwareNetwork}", description: "vmware network for new VMs")
-        choice(name: 'automationBranch', choices: ['9.0.0', 'cd-add-resources'], description: 'automation branch')
+        string(name: "automationBranch", defaultValue: "${automationBranch}", description: "automation branch")
     }
     agent { node { label 'CxSDLC-Slave' } }
     options {
