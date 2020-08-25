@@ -139,6 +139,13 @@ pipeline {
             }
         }
 
+        stage('Install CxCommon in Local Repository') {
+            steps {
+                sh "docker run --rm --memory 2gb --name install-cx-common-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/target/cx-client-common-${env.cxCommonVersion}.jar:/usr/src/artifact maven:3.6.1-jdk-8-alpine \
+                    mvn -q install:install-file -Dfile=/usr/src/artifact/cx-client-common-${env.cxCommonVersion}.jar -DgroupId=com.checkmarx -DartifactId=cx-client-common -Dversion=${env.cxCommonVersion}"
+            }
+        }
+
         stage('System Tests') {
             when {
                 expression {
