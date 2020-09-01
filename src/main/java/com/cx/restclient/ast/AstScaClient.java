@@ -439,7 +439,7 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     private void uploadArchive(File source, String uploadUrl) throws IOException {
-        log.info("Uploading the zipped sources.");
+        log.info("Uploading the zipped data.");
 
         HttpEntity request = new FileEntity(source);
 
