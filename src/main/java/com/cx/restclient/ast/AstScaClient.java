@@ -4,6 +4,7 @@ import com.cx.restclient.ast.dto.common.*;
 import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.ast.dto.sca.report.Package;
 import com.cx.restclient.ast.dto.sca.report.*;
+import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
@@ -470,7 +471,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         String acUrl = scaConfig.getAccessControlUrl();
 
-        settings.setAccessControlBaseUrl(acUrl);
+        settings.setAccessControlBaseUrl(UrlUtils.parseURLToString(acUrl, CxPARAM.AUTHENTICATION));
         settings.setUsername(scaConfig.getUsername());
         settings.setPassword(scaConfig.getPassword());
         settings.setTenant(scaConfig.getTenant());

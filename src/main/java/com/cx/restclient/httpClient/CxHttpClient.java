@@ -117,7 +117,7 @@ public class CxHttpClient {
         setSSLTls("TLSv1.2", log);
         SSLContextBuilder builder = new SSLContextBuilder();
         SSLConnectionSocketFactory sslConnectionSocketFactory=null;
-        Registry<ConnectionSocketFactory> registry=null;
+        Registry<ConnectionSocketFactory> registry;
         PoolingHttpClientConnectionManager cm=null;
         if (disableSSLValidation) {
             try {
@@ -229,7 +229,7 @@ public class CxHttpClient {
             } else {
                 token = ssoLogin();
                 // Don't delete this print, it is being used on VS Code plugin
-                System.out.println(String.format("Access Token: %s", token.getAccess_token()));
+                System.out.printf("Access Token: %s%n", token.getAccess_token());
             }
         } else {
             token = generateToken(settings);
@@ -280,7 +280,7 @@ public class CxHttpClient {
 
         // Don't delete these prints, they are being used on VS Code plugin
         System.out.println(CSRF_TOKEN_HEADER + ": " + csrfToken);
-        System.out.println(String.format("cookie: CXCSRFToken=%s; cxCookie=%s", csrfToken, cxCookie));
+        System.out.printf("cookie: CXCSRFToken=%s; cxCookie=%s%n", csrfToken, cxCookie);
 
         apacheClient = cb.setDefaultHeaders(headers).build();
     }
@@ -360,8 +360,7 @@ public class CxHttpClient {
 
     public TokenLoginResponse generateToken(LoginSettings settings) throws IOException, CxClientException {
         UrlEncodedFormEntity requestEntity = generateUrlEncodedFormEntity(settings);
-        String fullUrl = UrlUtils.parseURLToString(settings.getAccessControlBaseUrl(), AUTHENTICATION);
-        HttpPost post = new HttpPost(fullUrl);
+        HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
         try {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, "authenticate", false, false);
@@ -379,8 +378,7 @@ public class CxHttpClient {
 
     private TokenLoginResponse getAccessTokenFromRefreshToken(LoginSettings settings) throws IOException, CxClientException {
         UrlEncodedFormEntity requestEntity = generateTokenFromRefreshEntity(settings);
-        String fullUrl = UrlUtils.parseURLToString(settings.getAccessControlBaseUrl(), AUTHENTICATION);
-        HttpPost post = new HttpPost(fullUrl);
+        HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
         try {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, "authenticate", false, false);

@@ -36,7 +36,7 @@ import static com.cx.restclient.sast.utils.SASTParam.*;
  */
 public abstract class LegacyClient {
 
-    private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/";
+    private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/" + AUTHENTICATION;
     protected CxHttpClient httpClient;
     protected CxScanConfig config;
     protected Logger log;
@@ -175,7 +175,7 @@ public abstract class LegacyClient {
     
     
     public String getCxVersion() throws IOException, CxClientException {
-        String version = "";
+        String version;
         try {
             config.setCxVersion(httpClient.getRequest(CX_VERSION, CONTENT_TYPE_APPLICATION_JSON_V1, CxVersion.class, 200, "cx Version", false));
             String hotfix = "";
