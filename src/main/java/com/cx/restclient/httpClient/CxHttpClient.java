@@ -1,7 +1,6 @@
 package com.cx.restclient.httpClient;
 
 import com.cx.restclient.common.ErrorMessage;
-import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.ProxyConfig;
 import com.cx.restclient.dto.TokenLoginResponse;
@@ -77,19 +76,24 @@ import static com.cx.restclient.httpClient.utils.HttpClientHelper.*;
  */
 public class CxHttpClient {
 
-    private static String HTTP_HOST = System.getProperty("http.proxyHost");
-    private static String HTTP_PORT = System.getProperty("http.proxyPort");
-    private static String HTTP_USERNAME = System.getProperty("http.proxyUser");
-    private static String HTTP_PASSWORD = System.getProperty("http.proxyPassword");
+    private static final String HTTP_HOST = System.getProperty("http.proxyHost");
+    private static final String HTTP_PORT = System.getProperty("http.proxyPort");
+    private static final String HTTP_USERNAME = System.getProperty("http.proxyUser");
+    private static final String HTTP_PASSWORD = System.getProperty("http.proxyPassword");
 
-    private static String HTTPS_HOST = System.getProperty("https.proxyHost");
-    private static String HTTPS_PORT = System.getProperty("https.proxyPort");
-    private static String HTTPS_USERNAME = System.getProperty("https.proxyUser");
-    private static String HTTPS_PASSWORD = System.getProperty("https.proxyPassword");
+    private static final String HTTPS_HOST = System.getProperty("https.proxyHost");
+    private static final String HTTPS_PORT = System.getProperty("https.proxyPort");
+    private static final String HTTPS_USERNAME = System.getProperty("https.proxyUser");
+    private static final String HTTPS_PASSWORD = System.getProperty("https.proxyPassword");
 
     private static final String HTTPS = "https";
 
     private static final String LOGIN_FAILED_MSG = "Fail to login with windows authentication: ";
+
+    private static final String DEFAULT_GRANT_TYPE = "password";
+    private static final String LOCATION_HEADER = "Location";
+    private static final String AUTH_MESSAGE = "authenticate";
+    private static final String CLIENT_SECRET_PROP = "client_secret";
 
     private static HttpClient apacheClient;
 
@@ -228,8 +232,9 @@ public class CxHttpClient {
                 ssoLegacyLogin();
             } else {
                 token = ssoLogin();
-                // Don't delete this print, it is being used on VS Code plugin
-                System.out.printf("Access Token: %s%n", token.getAccess_token());
+                // Don't delete this print. VS Code plugin relies on CxCLI output to work properly.
+                // Also we don't want the token to appear in regular logs.
+                System.out.printf("Access Token: %s%n", token.getAccess_token());   // NOSONAR: we need standard output here.
             }
         } else {
             token = generateToken(settings);
@@ -250,8 +255,9 @@ public class CxHttpClient {
             loginResponse = apacheClient.execute(request);
 
         } catch (IOException e) {
-            log.error(LOGIN_FAILED_MSG + e.getMessage());
-            throw new CxClientException(LOGIN_FAILED_MSG + e.getMessage());
+            String message = LOGIN_FAILED_MSG + e.getMessage();
+            log.error(message);
+            throw new CxClientException(message);
         } finally {
             HttpClientUtils.closeQuietly(loginResponse);
         }
@@ -308,7 +314,7 @@ public class CxHttpClient {
 
             //Request2
             String cookies = retrieveCookies();
-            String redirectURL = response.getHeaders("Location")[0].getValue();
+            String redirectURL = response.getHeaders(LOCATION_HEADER)[0].getValue();
             request = RequestBuilder.get()
                     .setUri(rootUri + BASE_URL + redirectURL)
                     .setConfig(requestConfig)
@@ -319,7 +325,7 @@ public class CxHttpClient {
 
             //Request3
             cookies = retrieveCookies();
-            redirectURL = response.getHeaders("Location")[0].getValue();
+            redirectURL = response.getHeaders(LOCATION_HEADER)[0].getValue();
             redirectURL = rootUri + redirectURL.replace("/CxRestAPI/", "");
             request = RequestBuilder.get()
                     .setUri(redirectURL)
@@ -336,7 +342,7 @@ public class CxHttpClient {
     }
 
     private TokenLoginResponse extractToken(HttpResponse response) {
-        String redirectURL = response.getHeaders("Location")[0].getValue();
+        String redirectURL = response.getHeaders(LOCATION_HEADER)[0].getValue();
         if (!redirectURL.contains("access_token")) {
             throw new CxClientException("Failed retrieving access token from server");
         }
@@ -344,8 +350,8 @@ public class CxHttpClient {
     }
 
     private String urlToJson(String url) {
-        url = url.replaceAll("=", "\":\"");
-        url = url.replaceAll("&", "\",\"");
+        url = url.replace("=", "\":\"");
+        url = url.replace("&", "\",\"");
         return "{\"" + url + "\"}";
     }
 
@@ -363,7 +369,7 @@ public class CxHttpClient {
         HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
         try {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
-                    TokenLoginResponse.class, HttpStatus.SC_OK, "authenticate", false, false);
+                    TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
             if (!e.getMessage().contains("invalid_scope")) {
                 throw new CxClientException(String.format("Failed to generate access token, failure error was: %s", e.getMessage()), e);
@@ -372,7 +378,7 @@ public class CxHttpClient {
             settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
             requestEntity = generateUrlEncodedFormEntity(settings);
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
-                    TokenLoginResponse.class, HttpStatus.SC_OK, "authenticate", false, false);
+                    TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         }
     }
 
@@ -381,7 +387,7 @@ public class CxHttpClient {
         HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
         try {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
-                    TokenLoginResponse.class, HttpStatus.SC_OK, "authenticate", false, false);
+                    TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
             throw new CxClientException(String.format("Failed to generate access token from refresh token failure error was: %s", e.getMessage()), e);
         }
@@ -403,7 +409,7 @@ public class CxHttpClient {
         parameters.add(new BasicNameValuePair("token_type_hint", "refresh_token"));
         parameters.add(new BasicNameValuePair("token", token));
         parameters.add(new BasicNameValuePair("client_id", clientType.getClientId()));
-        parameters.add(new BasicNameValuePair("client_secret", clientType.getClientSecret()));
+        parameters.add(new BasicNameValuePair(CLIENT_SECRET_PROP, clientType.getClientSecret()));
 
         return new UrlEncodedFormEntity(parameters, "utf-8");
 
@@ -411,13 +417,14 @@ public class CxHttpClient {
 
     private UrlEncodedFormEntity generateUrlEncodedFormEntity(LoginSettings settings) throws UnsupportedEncodingException {
         ClientType clientType = settings.getClientTypeForPasswordAuth();
+        String grantType = StringUtils.defaultString(clientType.getGrantType(), DEFAULT_GRANT_TYPE);
         List<BasicNameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("username", settings.getUsername()));
         parameters.add(new BasicNameValuePair("password", settings.getPassword()));
-        parameters.add(new BasicNameValuePair("grant_type", "password"));
+        parameters.add(new BasicNameValuePair("grant_type", grantType));
         parameters.add(new BasicNameValuePair("scope", clientType.getScopes()));
         parameters.add(new BasicNameValuePair("client_id", clientType.getClientId()));
-        parameters.add(new BasicNameValuePair("client_secret", clientType.getClientSecret()));
+        parameters.add(new BasicNameValuePair(CLIENT_SECRET_PROP, clientType.getClientSecret()));
 
         if (!StringUtils.isEmpty(settings.getTenant())) {
             String authContext = String.format("Tenant:%s", settings.getTenant());
@@ -432,7 +439,7 @@ public class CxHttpClient {
         List<BasicNameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("grant_type", "refresh_token"));
         parameters.add(new BasicNameValuePair("client_id", clientType.getClientId()));
-        parameters.add(new BasicNameValuePair("client_secret", clientType.getClientSecret()));
+        parameters.add(new BasicNameValuePair(CLIENT_SECRET_PROP, clientType.getClientSecret()));
         parameters.add(new BasicNameValuePair("refresh_token", settings.getRefreshToken()));
 
         return new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8.name());
@@ -535,7 +542,7 @@ public class CxHttpClient {
             sslContext.init(null, null, null);
             HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            log.warn("Failed to set SSL TLS : " + e.getMessage());
+            log.warn(String.format("Failed to set SSL TLS : %s", e.getMessage()));
         }
     }
 
