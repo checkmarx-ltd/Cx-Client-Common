@@ -21,7 +21,6 @@ import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.Results;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.SourceLocationType;
-import com.cx.restclient.dto.TokenLoginResponse;
 import com.cx.restclient.dto.scansummary.Severity;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
@@ -36,7 +35,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.auth.AUTH;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 
@@ -82,11 +80,7 @@ public class AstSastClient extends AstClient implements Scanner {
         try {
             ClientType clientType = getClientType();
             LoginSettings settings = getLoginSettings(clientType);
-
-            TokenLoginResponse response = httpClient.generateToken(settings);
-
-            String headerValue = String.format("Bearer %s", response.getAccess_token());
-            httpClient.addCustomHeader(AUTH.WWW_AUTH_RESP, headerValue);
+            httpClient.login(settings);
         } catch (IOException e) {
             super.handleInitError(e);
         }
