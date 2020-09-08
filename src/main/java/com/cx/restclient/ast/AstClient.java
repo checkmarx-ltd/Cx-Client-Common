@@ -182,4 +182,9 @@ public abstract class AstClient {
         }
         return result;
     }
+
+    protected void handleInitError(IOException e) {
+        String message = String.format("Failed to init %s client.", getScannerDisplayName());
+        throw new CxClientException(message, e);
+    }
 }

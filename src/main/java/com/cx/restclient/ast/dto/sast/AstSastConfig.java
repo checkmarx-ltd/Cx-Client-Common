@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Setter
 @NoArgsConstructor
 public class AstSastConfig extends ASTConfig implements Serializable  {
-    private String accessToken;
+    private String clientSecret;
     private String presetName;
     private boolean incremental;
 

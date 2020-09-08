@@ -153,8 +153,7 @@ public class AstScaClient extends AstClient implements Scanner {
         try {
             login();
         } catch (IOException e) {
-            String message = String.format("Failed to init %s client.", getScannerDisplayName());
-            throw new CxClientException(message, e);
+            super.handleInitError(e);
         }
     }
 

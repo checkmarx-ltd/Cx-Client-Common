@@ -11,25 +11,29 @@ import com.cx.restclient.ast.dto.sast.SastScanConfigValue;
 import com.cx.restclient.ast.dto.sast.report.AstSastSummaryResults;
 import com.cx.restclient.ast.dto.sast.report.Finding;
 import com.cx.restclient.ast.dto.sast.report.ScanResultsResponse;
-import com.cx.restclient.ast.dto.sast.report.SingleScanSummary;
 import com.cx.restclient.ast.dto.sast.report.SeverityCounter;
+import com.cx.restclient.ast.dto.sast.report.SingleScanSummary;
 import com.cx.restclient.ast.dto.sast.report.SummaryResponse;
 import com.cx.restclient.common.Scanner;
+import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.Results;
-import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.SourceLocationType;
+import com.cx.restclient.dto.TokenLoginResponse;
 import com.cx.restclient.dto.scansummary.Severity;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
+import com.cx.restclient.osa.dto.ClientType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AUTH;
@@ -37,6 +41,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +50,9 @@ import java.util.Optional;
 public class AstSastClient extends AstClient implements Scanner {
     private static final String ENGINE_TYPE_FOR_API = "sast";
     private static final String REF_TYPE_BRANCH = "branch";
-    private static final String SUMMARY_PATH = "/api/scan-summary";
-    private static final String SCAN_RESULTS_PATH = "/api/results";
+    private static final String SUMMARY_PATH = "/api/scan-summary";     // NOSONAR: changes in these paths are very unlikely
+    private static final String SCAN_RESULTS_PATH = "/api/results";     // NOSONAR
+    private static final String AUTH_PATH = "/auth/realms/organization/protocol/openid-connect/token";     // NOSONAR
     private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
@@ -73,8 +79,34 @@ public class AstSastClient extends AstClient implements Scanner {
     @Override
     public void init() {
         log.debug("Initializing {} client.", getScannerDisplayName());
-        AstSastConfig astConfig = config.getAstSastConfig();
-        httpClient.addCustomHeader(AUTH.WWW_AUTH_RESP, String.format("Bearer %s", astConfig.getAccessToken()));
+        try {
+            ClientType clientType = getClientType();
+            LoginSettings settings = getLoginSettings(clientType);
+
+            TokenLoginResponse response = httpClient.generateToken(settings);
+
+            String headerValue = String.format("Bearer %s", response.getAccess_token());
+            httpClient.addCustomHeader(AUTH.WWW_AUTH_RESP, headerValue);
+        } catch (IOException e) {
+            super.handleInitError(e);
+        }
+    }
+
+    private LoginSettings getLoginSettings(ClientType clientType) throws MalformedURLException {
+        String authUrl = UrlUtils.parseURLToString(config.getAstSastConfig().getApiUrl(), AUTH_PATH);
+        return LoginSettings.builder()
+                .accessControlBaseUrl(authUrl)
+                .clientTypeForPasswordAuth(clientType)
+                .build();
+    }
+
+    private ClientType getClientType() {
+        return ClientType.builder()
+                .clientId("CxFlow")
+                .clientSecret(config.getAstSastConfig().getClientSecret())
+                .scopes("ast-api")
+                .grantType("client_credentials")
+                .build();
     }
 
     @Override
