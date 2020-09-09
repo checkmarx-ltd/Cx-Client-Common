@@ -95,9 +95,10 @@ public class AstSastClient extends AstClient implements Scanner {
     }
 
     private ClientType getClientType() {
+        AstSastConfig astConfig = config.getAstSastConfig();
         return ClientType.builder()
-                .clientId("CxFlow")
-                .clientSecret(config.getAstSastConfig().getClientSecret())
+                .clientId(astConfig.getClientId())
+                .clientSecret(astConfig.getClientSecret())
                 .scopes("ast-api")
                 .grantType("client_credentials")
                 .build();

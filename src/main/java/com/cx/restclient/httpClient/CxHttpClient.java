@@ -148,7 +148,7 @@ public class CxHttpClient {
 
         setCustomProxy(cb, proxyConfig, log);
 
-        if (useSSo) {
+        if (Boolean.TRUE.equals(useSSo)) {
             cb.setDefaultCredentialsProvider(new WindowsCredentialsProvider(new SystemDefaultCredentialsProvider()));
             cb.setDefaultCookieStore(cookieStore);
         } else {
@@ -230,7 +230,7 @@ public class CxHttpClient {
         if (settings.getRefreshToken() != null) {
             token = getAccessTokenFromRefreshToken(settings);
         }
-        else if (useSSo) {
+        else if (Boolean.TRUE.equals(useSSo)) {
             if (settings.getVersion().equals("lower than 9.0")) {
                 ssoLegacyLogin();
             } else {
@@ -294,9 +294,9 @@ public class CxHttpClient {
         apacheClient = cb.setDefaultHeaders(headers).build();
     }
 
-    private TokenLoginResponse ssoLogin() throws CxClientException {
+    private TokenLoginResponse ssoLogin() {
         HttpUriRequest request;
-        HttpResponse response = null;
+        HttpResponse response;
         final String BASE_URL = "/auth/identity/";
 
         RequestConfig requestConfig = RequestConfig.custom()
@@ -366,7 +366,7 @@ public class CxHttpClient {
     }
 
     public TokenLoginResponse generateToken(LoginSettings settings) throws IOException {
-        UrlEncodedFormEntity requestEntity = generateUrlEncodedFormEntity(settings);
+        UrlEncodedFormEntity requestEntity = getAuthRequest(settings);
         HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
         try {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
@@ -377,14 +377,14 @@ public class CxHttpClient {
             }
             ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
             settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
-            requestEntity = generateUrlEncodedFormEntity(settings);
+            requestEntity = getAuthRequest(settings);
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         }
     }
 
     private TokenLoginResponse getAccessTokenFromRefreshToken(LoginSettings settings) throws IOException {
-        UrlEncodedFormEntity requestEntity = generateTokenFromRefreshEntity(settings);
+        UrlEncodedFormEntity requestEntity = getTokenRefreshingRequest(settings);
         HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
         try {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
@@ -395,7 +395,7 @@ public class CxHttpClient {
     }
 
     public void revokeToken(String token) throws IOException {
-        UrlEncodedFormEntity requestEntity = generateRevocationEntity(ClientType.CLI, token);
+        UrlEncodedFormEntity requestEntity = getRevocationRequest(ClientType.CLI, token);
         HttpPost post = new HttpPost(rootUri + REVOCATION);
         try {
             request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
@@ -405,18 +405,17 @@ public class CxHttpClient {
         }
     }
 
-    private UrlEncodedFormEntity generateRevocationEntity(ClientType clientType, String token) throws UnsupportedEncodingException {
+    private static UrlEncodedFormEntity getRevocationRequest(ClientType clientType, String token) {
         List<NameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("token_type_hint", REFRESH_TOKEN_PROP));
         parameters.add(new BasicNameValuePair("token", token));
         parameters.add(new BasicNameValuePair(CLIENT_ID_PROP, clientType.getClientId()));
         parameters.add(new BasicNameValuePair(CLIENT_SECRET_PROP, clientType.getClientSecret()));
 
-        return new UrlEncodedFormEntity(parameters, "utf-8");
-
+        return new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8);
     }
 
-    private UrlEncodedFormEntity generateUrlEncodedFormEntity(LoginSettings settings) {
+    private static UrlEncodedFormEntity getAuthRequest(LoginSettings settings) {
         ClientType clientType = settings.getClientTypeForPasswordAuth();
         String grantType = StringUtils.defaultString(clientType.getGrantType(), DEFAULT_GRANT_TYPE);
         List<BasicNameValuePair> parameters = new ArrayList<>();
@@ -435,7 +434,7 @@ public class CxHttpClient {
         return new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8);
     }
 
-    private UrlEncodedFormEntity generateTokenFromRefreshEntity(LoginSettings settings) throws UnsupportedEncodingException {
+    private static UrlEncodedFormEntity getTokenRefreshingRequest(LoginSettings settings) throws UnsupportedEncodingException {
         ClientType clientType = settings.getClientTypeForRefreshToken();
         List<BasicNameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("grant_type", REFRESH_TOKEN_PROP));

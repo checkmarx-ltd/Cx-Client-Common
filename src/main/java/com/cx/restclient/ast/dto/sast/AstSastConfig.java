@@ -14,6 +14,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class AstSastConfig extends ASTConfig implements Serializable  {
     private String clientSecret;
+    private String clientId;
     private String presetName;
     private boolean incremental;
 

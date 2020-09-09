@@ -101,6 +101,7 @@ public class AstSastTest extends CommonClientTest {
         AstSastConfig astConfig = AstSastConfig.builder()
                 .apiUrl(prop("astSast.apiUrl"))
                 .clientSecret(prop("astSast.clientSecret"))
+                .clientId("CxFlow")
                 .sourceLocationType(SourceLocationType.REMOTE_REPOSITORY)
                 .build();
 
