@@ -94,6 +94,9 @@ public class CxHttpClient {
     private static final String LOCATION_HEADER = "Location";
     private static final String AUTH_MESSAGE = "authenticate";
     private static final String CLIENT_SECRET_PROP = "client_secret";
+    public static final String REFRESH_TOKEN_PROP = "refresh_token";
+    private static final String PASSWORD_PROP = "password";
+    public static final String CLIENT_ID_PROP = "client_id";
 
     private static HttpClient apacheClient;
 
@@ -179,7 +182,7 @@ public class CxHttpClient {
         cb.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
     }
 
-    private static SSLConnectionSocketFactory getTrustAllSSLSocketFactory() throws CxClientException {
+    private static SSLConnectionSocketFactory getTrustAllSSLSocketFactory() {
         TrustStrategy acceptingTrustStrategy = new TrustAllStrategy();
         SSLContext sslContext;
         try {
@@ -190,7 +193,7 @@ public class CxHttpClient {
         return new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
     }
 
-    private static PoolingHttpClientConnectionManager getHttpConnectionManager(boolean disableSSLValidation) throws CxClientException {
+    private static PoolingHttpClientConnectionManager getHttpConnectionManager(boolean disableSSLValidation) {
         ConnectionSocketFactory factory;
         if (disableSSLValidation) {
             factory = getTrustAllSSLSocketFactory();
@@ -216,7 +219,7 @@ public class CxHttpClient {
                 .build();
     }
 
-    public void login(LoginSettings settings) throws IOException, CxClientException {
+    public void login(LoginSettings settings) throws IOException {
         lastLoginSettings = settings;
 
         if(!settings.getSessionCookies().isEmpty()){
@@ -241,7 +244,7 @@ public class CxHttpClient {
         }
     }
 
-    public ArrayList<Cookie> ssoLegacyLogin() throws CxClientException {
+    public ArrayList<Cookie> ssoLegacyLogin() {
         HttpUriRequest request;
         HttpResponse loginResponse = null;
 
@@ -336,7 +339,6 @@ public class CxHttpClient {
             response = apacheClient.execute(request);
             return extractToken(response);
         } catch (IOException e) {
-            log.error(LOGIN_FAILED_MSG + e.getMessage());
             throw new CxClientException(LOGIN_FAILED_MSG + e.getMessage());
         }
     }
@@ -358,13 +360,12 @@ public class CxHttpClient {
     private String retrieveCookies() {
         List<Cookie> cookieList = cookieStore.getCookies();
         final StringBuilder builder = new StringBuilder();
-        cookieList.forEach(cookie -> {
-            builder.append(cookie.getName()).append("=").append(cookie.getValue()).append(";");
-        });
+        cookieList.forEach(cookie ->
+            builder.append(cookie.getName()).append("=").append(cookie.getValue()).append(";"));
         return builder.toString();
     }
 
-    public TokenLoginResponse generateToken(LoginSettings settings) throws IOException, CxClientException {
+    public TokenLoginResponse generateToken(LoginSettings settings) throws IOException {
         UrlEncodedFormEntity requestEntity = generateUrlEncodedFormEntity(settings);
         HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
         try {
@@ -382,7 +383,7 @@ public class CxHttpClient {
         }
     }
 
-    private TokenLoginResponse getAccessTokenFromRefreshToken(LoginSettings settings) throws IOException, CxClientException {
+    private TokenLoginResponse getAccessTokenFromRefreshToken(LoginSettings settings) throws IOException {
         UrlEncodedFormEntity requestEntity = generateTokenFromRefreshEntity(settings);
         HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
         try {
@@ -393,7 +394,7 @@ public class CxHttpClient {
         }
     }
 
-    public void revokeToken(String token) throws IOException, CxClientException {
+    public void revokeToken(String token) throws IOException {
         UrlEncodedFormEntity requestEntity = generateRevocationEntity(ClientType.CLI, token);
         HttpPost post = new HttpPost(rootUri + REVOCATION);
         try {
@@ -406,24 +407,24 @@ public class CxHttpClient {
 
     private UrlEncodedFormEntity generateRevocationEntity(ClientType clientType, String token) throws UnsupportedEncodingException {
         List<NameValuePair> parameters = new ArrayList<>();
-        parameters.add(new BasicNameValuePair("token_type_hint", "refresh_token"));
+        parameters.add(new BasicNameValuePair("token_type_hint", REFRESH_TOKEN_PROP));
         parameters.add(new BasicNameValuePair("token", token));
-        parameters.add(new BasicNameValuePair("client_id", clientType.getClientId()));
+        parameters.add(new BasicNameValuePair(CLIENT_ID_PROP, clientType.getClientId()));
         parameters.add(new BasicNameValuePair(CLIENT_SECRET_PROP, clientType.getClientSecret()));
 
         return new UrlEncodedFormEntity(parameters, "utf-8");
 
     }
 
-    private UrlEncodedFormEntity generateUrlEncodedFormEntity(LoginSettings settings) throws UnsupportedEncodingException {
+    private UrlEncodedFormEntity generateUrlEncodedFormEntity(LoginSettings settings) {
         ClientType clientType = settings.getClientTypeForPasswordAuth();
         String grantType = StringUtils.defaultString(clientType.getGrantType(), DEFAULT_GRANT_TYPE);
         List<BasicNameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("username", settings.getUsername()));
-        parameters.add(new BasicNameValuePair("password", settings.getPassword()));
+        parameters.add(new BasicNameValuePair(PASSWORD_PROP, settings.getPassword()));
         parameters.add(new BasicNameValuePair("grant_type", grantType));
         parameters.add(new BasicNameValuePair("scope", clientType.getScopes()));
-        parameters.add(new BasicNameValuePair("client_id", clientType.getClientId()));
+        parameters.add(new BasicNameValuePair(CLIENT_ID_PROP, clientType.getClientId()));
         parameters.add(new BasicNameValuePair(CLIENT_SECRET_PROP, clientType.getClientSecret()));
 
         if (!StringUtils.isEmpty(settings.getTenant())) {
@@ -431,45 +432,44 @@ public class CxHttpClient {
             parameters.add(new BasicNameValuePair("acr_values", authContext));
         }
 
-        return new UrlEncodedFormEntity(parameters, "utf-8");
+        return new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8);
     }
 
     private UrlEncodedFormEntity generateTokenFromRefreshEntity(LoginSettings settings) throws UnsupportedEncodingException {
         ClientType clientType = settings.getClientTypeForRefreshToken();
         List<BasicNameValuePair> parameters = new ArrayList<>();
-        parameters.add(new BasicNameValuePair("grant_type", "refresh_token"));
-        parameters.add(new BasicNameValuePair("client_id", clientType.getClientId()));
-        parameters.add(new BasicNameValuePair(CLIENT_SECRET_PROP, clientType.getClientSecret()));
-        parameters.add(new BasicNameValuePair("refresh_token", settings.getRefreshToken()));
+        parameters.add(new BasicNameValuePair("grant_type", REFRESH_TOKEN_PROP));
+        parameters.add(new BasicNameValuePair(CLIENT_ID_PROP, clientType.getClientId()));
+        parameters.add(new BasicNameValuePair(REFRESH_TOKEN_PROP, settings.getRefreshToken()));
 
         return new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8.name());
     }
 
     //GET REQUEST
-    public <T> T getRequest(String relPath, String contentType, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection) throws IOException, CxClientException {
+    public <T> T getRequest(String relPath, String contentType, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection) throws IOException {
         return getRequest(rootUri, relPath, CONTENT_TYPE_APPLICATION_JSON, contentType, responseType, expectStatus, failedMsg, isCollection);
     }
 
-    public <T> T getRequest(String rootURL, String relPath, String acceptHeader, String contentType, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection) throws IOException, CxClientException {
+    public <T> T getRequest(String rootURL, String relPath, String acceptHeader, String contentType, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection) throws IOException {
         HttpGet get = new HttpGet(rootURL + relPath);
         get.addHeader(HttpHeaders.ACCEPT, acceptHeader);
         return request(get, contentType, null, responseType, expectStatus, "get " + failedMsg, isCollection, true);
     }
 
     //POST REQUEST
-    public <T> T postRequest(String relPath, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException, CxClientException {
+    public <T> T postRequest(String relPath, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPost post = new HttpPost(rootUri + relPath);
         return request(post, contentType, entity, responseType, expectStatus, failedMsg, false, true);
     }
 
     //PUT REQUEST
-    public <T> T putRequest(String relPath, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException, CxClientException {
+    public <T> T putRequest(String relPath, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPut put = new HttpPut(rootUri + relPath);
         return request(put, contentType, entity, responseType, expectStatus, failedMsg, false, true);
     }
 
     //PATCH REQUEST
-    public void patchRequest(String relPath, String contentType, HttpEntity entity, int expectStatus, String failedMsg) throws IOException, CxClientException {
+    public void patchRequest(String relPath, String contentType, HttpEntity entity, int expectStatus, String failedMsg) throws IOException {
         HttpPatch patch = new HttpPatch(rootUri + relPath);
         request(patch, contentType, entity, null, expectStatus, failedMsg, false, true);
     }
@@ -483,7 +483,7 @@ public class CxHttpClient {
         customHeaders.put(name, value);
     }
 
-    private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException, CxClientException {
+    private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
         if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
         }
@@ -547,7 +547,7 @@ public class CxHttpClient {
     }
 
     //TODO handle missing scope issue with management_and_orchestration_api
-    private StringEntity generateSSOEntity() throws CxClientException {
+    private StringEntity generateSSOEntity() {
         final String clientId = "cxsast_client";
         final String redirectUri = "%2Fcxwebclient%2FauthCallback.html%3F";
         final String responseType = "id_token%20token";
