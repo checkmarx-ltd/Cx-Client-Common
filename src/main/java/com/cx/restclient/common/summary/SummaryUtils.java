@@ -37,9 +37,9 @@ public abstract class SummaryUtils {
         templateData.put("osa", osaResults != null ? osaResults : new OSAResults());
         templateData.put("sca", scaResults != null ? scaResults : new AstScaResults());
 
-        DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults,scaResults);
+        DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults, scaResults);
 
-        templateData.put("dependencyResult", dependencyScanResult !=null ? dependencyScanResult : new DependencyScanResult());
+        templateData.put("dependencyResult", dependencyScanResult != null ? dependencyScanResult : new DependencyScanResult());
 
 
         ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
@@ -51,7 +51,7 @@ public abstract class SummaryUtils {
         int policyViolatedCount;
         //sast:
         if (config.isSastEnabled()) {
-            if (sastResults.isSastResultsReady()) {
+            if (sastResults != null && sastResults.isSastResultsReady()) {
                 boolean sastThresholdExceeded = scanSummary.isSastThresholdExceeded();
                 boolean sastNewResultsExceeded = scanSummary.isSastThresholdForNewResultsExceeded();
                 templateData.put("sastThresholdExceeded", sastThresholdExceeded);
@@ -141,12 +141,12 @@ public abstract class SummaryUtils {
 */
 
         if (config.isOsaEnabled() || config.isAstScaEnabled()) {
-            if (dependencyScanResult !=null && dependencyScanResult.isResultReady()) {
+            if (dependencyScanResult != null && dependencyScanResult.isResultReady()) {
                 boolean thresholdExceeded = scanSummary.isOsaThresholdExceeded();
                 templateData.put("dependencyThresholdExceeded", thresholdExceeded);
-                if(config.isSastEnabled()){
+                if (config.isSastEnabled()) {
                     buildFailed |= thresholdExceeded || buildFailed;
-                }else{
+                } else {
                     buildFailed |= thresholdExceeded;
                 }
 
@@ -154,7 +154,7 @@ public abstract class SummaryUtils {
                 int dependencyHigh = dependencyScanResult.getHighVulnerability();
                 int dependencyMedium = dependencyScanResult.getMediumVulnerability();
                 int dependencyLow = dependencyScanResult.getLowVulnerability();
-                float dependencyMaxCount = Math.max(dependencyHigh, Math.max(dependencyMedium,dependencyLow));
+                float dependencyMaxCount = Math.max(dependencyHigh, Math.max(dependencyMedium, dependencyLow));
                 float dependencyBarNorm = dependencyMaxCount * 10f / 9f;
 
 
@@ -162,10 +162,10 @@ public abstract class SummaryUtils {
                 float dependencyMediumTotalHeight = (float) dependencyMedium / dependencyBarNorm * 238f;
                 float dependencyLowTotalHeight = (float) dependencyLow / dependencyBarNorm * 238f;
 
-                templateData.put("dependencyHighTotalHeight",   dependencyHighTotalHeight);
+                templateData.put("dependencyHighTotalHeight", dependencyHighTotalHeight);
                 templateData.put("dependencyMediumTotalHeight", dependencyMediumTotalHeight);
-                templateData.put("dependencyLowTotalHeight",    dependencyLowTotalHeight);
-            }else{
+                templateData.put("dependencyLowTotalHeight", dependencyLowTotalHeight);
+            } else {
                 buildFailed = true;
             }
         }
@@ -174,7 +174,7 @@ public abstract class SummaryUtils {
         if (config.getEnablePolicyViolations()) {
             Map<String, String> policies = new HashMap<>();
 
-            if (config.isSastEnabled() && !sastResults.getSastPolicies().isEmpty()) {
+            if (config.isSastEnabled() && sastResults != null && !sastResults.getSastPolicies().isEmpty()) {
                 policyViolated = true;
                 policies = sastResults.getSastPolicies().stream().collect(
                         Collectors.toMap(Policy::getPolicyName,
@@ -209,13 +209,13 @@ public abstract class SummaryUtils {
         return writer.toString();
     }
 
-    private static DependencyScanResult resolveDependencyResult(OSAResults osaResults, AstScaResults scaResults){
+    private static DependencyScanResult resolveDependencyResult(OSAResults osaResults, AstScaResults scaResults) {
         DependencyScanResult dependencyScanResult;
-        if(osaResults!=null){
+        if (osaResults != null) {
             dependencyScanResult = new DependencyScanResult(osaResults);
-        }else if(scaResults!=null){
+        } else if (scaResults != null) {
             dependencyScanResult = new DependencyScanResult(scaResults);
-        }else{
+        } else {
             dependencyScanResult = null;
         }
         return dependencyScanResult;

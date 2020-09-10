@@ -11,7 +11,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class AstSastResults implements Serializable, Results {
+public class AstSastResults extends Results implements Serializable {
     private String scanId;
     private AstSastSummaryResults summary;
     private List<Finding> findings;

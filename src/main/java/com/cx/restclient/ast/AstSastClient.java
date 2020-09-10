@@ -99,10 +99,11 @@ public class AstSastClient extends AstClient implements Scanner {
             }
             scanId = extractScanIdFrom(response);
             astResults.setScanId(scanId);
-            return astResults;
-        } catch (IOException e) {
-            throw new CxClientException("Error creating scan.", e);
+        } catch (Exception e) {
+            CxClientException ex = new CxClientException("Error creating scan.", e);
+            astResults.setCreateException(ex);
         }
+        return astResults;
     }
 
     @Override
@@ -135,8 +136,15 @@ public class AstSastClient extends AstClient implements Scanner {
 
     @Override
     public Results waitForScanResults() {
-        waitForScanToFinish(scanId);
-        return retrieveScanResults();
+        AstSastResults result;
+        try {
+            waitForScanToFinish(scanId);
+            result = retrieveScanResults();
+        } catch (CxClientException e) {
+            result = new AstSastResults();
+            result.setWaitException(e);
+        }
+        return result;
     }
 
     private AstSastResults retrieveScanResults() {
@@ -227,16 +235,17 @@ public class AstSastClient extends AstClient implements Scanner {
         if (noFindingsWereDetected(e)) {
             result = new SummaryResponse();
             result.getScansSummaries().add(new SingleScanSummary());
-        }
-        else {
+        } else {
             throw new CxClientException("Error getting scan summary.", e);
         }
         return result;
     }
 
-    /** When no findings are detected, AST-SAST API returns the 404 status with a specific
+    /**
+     * When no findings are detected, AST-SAST API returns the 404 status with a specific
      * error code, which is quite awkward.
      * Response example: {"code":4004,"message":"can't find all the provided scan ids","data":null}
+     *
      * @return true: scan completed successfully and the result contains no findings (normal flow).
      * false: some other error has occurred (error flow).
      */
@@ -324,8 +333,10 @@ public class AstSastClient extends AstClient implements Scanner {
     }
 
     @Override
-    public ScanResults getLatestScanResults() {
-        throw new UnsupportedOperationException();
+    public Results getLatestScanResults() {
+        AstSastResults result = new AstSastResults();
+        result.setWaitException(new UnsupportedOperationException());
+        return result;
     }
 
     @Override

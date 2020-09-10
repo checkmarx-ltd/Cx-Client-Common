@@ -1,34 +1,25 @@
 package com.cx.restclient.general;
 
+import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.SourceLocationType;
 import com.cx.restclient.exception.CxClientException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.ArchiveException;
-import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.UUID;
 
 import static org.junit.Assert.fail;
 
 @Slf4j
 public class AstScaTests extends ScaTestsBase {
-
     @Test
     public void scan_localDirUpload() throws IOException, CxClientException {
         CxScanConfig config = initScaConfig(false);
@@ -58,6 +49,49 @@ public class AstScaTests extends ScaTestsBase {
     }
 
     @Test
+    public void getLatestScanResults_existingResults() {
+        CxScanConfig config = initScaConfig(false);
+        ScanResults latestResults = getLatestResults(config);
+        verifyScanResults(latestResults);
+    }
+
+    /**
+     * Getting latest results for a project that doesn't exist.
+     */
+    @Test
+    public void getLatestScanResults_nonexistentProject() {
+        testMissingResultsCase("nonexistent-project-name");
+    }
+
+    /**
+     * Existing project without any scans.
+     */
+    @Test
+    public void getLatestScanResults_projectWithoutScans() {
+        testMissingResultsCase("common-client-test-02-no-scans");
+    }
+
+    /**
+     * Project with all scans failed (e.g. invalid git repo).
+     */
+    @Test
+    public void getLatestScanResults_projectWithAllScansFailed() {
+        testMissingResultsCase("common-client-test-03-all-scans-failed");
+    }
+
+    /**
+     * Make sure that SCA results are null in different expected cases.
+     */
+    private void testMissingResultsCase(String projectName) {
+        log.info("Checking that scaResults are null for the {} project", projectName);
+        CxScanConfig config = initScaConfig(false);
+        config.setProjectName(projectName);
+        ScanResults latestResults = getLatestResults(config);
+        Assert.assertNotNull("scanResults must not be null.", latestResults);
+        Assert.assertNull("scaResults must be null.", latestResults.getScaResults());
+    }
+
+    @Test
     @Ignore("There is no stable on-prem environment.")
     public void scan_onPremiseAuthentication() throws MalformedURLException {
         scanRemoteRepo(PUBLIC_REPO_PROP, true);
@@ -72,15 +106,28 @@ public class AstScaTests extends ScaTestsBase {
         verifyScanResults(scanResults);
     }
 
+    private ScanResults getLatestResults(CxScanConfig config) {
+        CxClientDelegator client = null;
+        try {
+            client = new CxClientDelegator(config, log);
+        } catch (MalformedURLException e) {
+            failOnException(e);
+        }
+        Assert.assertNotNull(client);
+        client.init();
+
+        return client.getLatestScanResults();
+    }
+
     @Test
     public void scan_localDirUploadIncludeSources() throws IOException, CxClientException {
-        CxScanConfig config = initScaConfig( false);
+        CxScanConfig config = initScaConfig(false);
         localDirScan(config);
     }
 
     @Test
     public void scan_localDirZeroCodeScan() throws IOException, CxClientException {
-        CxScanConfig config = initScaConfig( false);
+        CxScanConfig config = initScaConfig(false);
         localDirScan(config);
     }
 
@@ -102,7 +149,6 @@ public class AstScaTests extends ScaTestsBase {
 
     private void scanRemoteRepo(String repoUrlProp, boolean useOnPremAuthentication) throws MalformedURLException {
         CxScanConfig config = initScaConfig(repoUrlProp, useOnPremAuthentication);
-
         ScanResults scanResults = runScan(config);
         verifyScanResults(scanResults);
     }

@@ -11,13 +11,9 @@ import java.io.Serializable;
 import java.util.EnumMap;
 import java.util.Map;
 
-public class ScanResults implements Serializable, Results {
+public class ScanResults extends Results implements Serializable {
     private final Map<ScannerType, Results> resultsMap = new EnumMap<>(ScannerType.class);
-    
-    private Exception sastCreateException = null;
-    private Exception sastWaitException = null;
-    private Exception osaCreateException = null;
-    private Exception osaWaitException = null;
+
     private Exception generalException = null;
 
     public Map<ScannerType, Results> getResults(){
@@ -56,39 +52,6 @@ public class ScanResults implements Serializable, Results {
     public SASTResults getSastResults() {
         return (SASTResults)resultsMap.get(ScannerType.SAST);
 
-    }
-
-   
-    public Exception getSastCreateException() {
-        return sastCreateException;
-    }
-
-    public void setSastCreateException(Exception sastCreateException) {
-        this.sastCreateException = sastCreateException;
-    }
-
-    public Exception getSastWaitException() {
-        return sastWaitException;
-    }
-
-    public void setSastWaitException(Exception sastWaitException) {
-        this.sastWaitException = sastWaitException;
-    }
-
-    public Exception getOsaCreateException() {
-        return osaCreateException;
-    }
-
-    public void setOsaCreateException(Exception osaCreateException) {
-        this.osaCreateException = osaCreateException;
-    }
-
-    public Exception getOsaWaitException() {
-        return osaWaitException;
-    }
-
-    public void setOsaWaitException(Exception osaWaitException) {
-        this.osaWaitException = osaWaitException;
     }
 
     public Exception getGeneralException() {

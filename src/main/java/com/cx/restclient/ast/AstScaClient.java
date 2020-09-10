@@ -1,41 +1,29 @@
 package com.cx.restclient.ast;
 
-import com.cx.restclient.ast.dto.common.HandlerRef;
-import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
-import com.cx.restclient.ast.dto.common.ScanConfig;
-import com.cx.restclient.ast.dto.sca.AstScaConfig;
-import com.cx.restclient.ast.dto.sca.AstScaResults;
-import com.cx.restclient.ast.dto.sca.CreateProjectRequest;
-import com.cx.restclient.ast.dto.sca.Project;
-import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
-import com.cx.restclient.ast.dto.sca.report.Finding;
+import com.cx.restclient.ast.dto.common.*;
+import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.ast.dto.sca.report.Package;
+import com.cx.restclient.ast.dto.sca.report.*;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
-import com.cx.restclient.sast.utils.zip.CxZipUtils;
-import com.cx.restclient.sast.utils.zip.NewCxZipFile;
-import com.cx.restclient.sast.utils.zip.Zipper;
+import com.cx.restclient.sast.utils.zip.*;
 import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
 import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
 import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
 import com.cx.restclient.sca.utils.fingerprints.FingerprintCollector;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
+import org.apache.http.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
@@ -43,15 +31,10 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
@@ -61,6 +44,18 @@ import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
  * SCA - Software Composition Analysis - is the successor of OSA.
  */
 public class AstScaClient extends AstClient implements Scanner {
+    private static class UrlPaths {
+        private static final String RISK_MANAGEMENT_API = "/risk-management/";
+        public static final String PROJECTS = RISK_MANAGEMENT_API + "projects";
+        public static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + "riskReports/%s/summary";
+        public static final String FINDINGS = RISK_MANAGEMENT_API + "riskReports/%s/vulnerabilities";
+        public static final String PACKAGES = RISK_MANAGEMENT_API + "riskReports/%s/packages";
+        public static final String LATEST_SCAN = RISK_MANAGEMENT_API + "riskReports?size=1&projectId=%s";
+        public static final String GET_UPLOAD_URL = "/api/uploads";
+        public static final String WEB_REPORT = "/#/projects/%s/reports/%s";
+        public static final String RESOLVING_CONFIGURATION_API = "/settings/projects/%s/resolving-configuration";
+    }
+
     private static final String ENGINE_TYPE_FOR_API = "sca";
 
     public static final String ENCODING = StandardCharsets.UTF_8.name();
@@ -79,7 +74,6 @@ public class AstScaClient extends AstClient implements Scanner {
     private String projectId;
     private String scanId;
     private final FingerprintCollector fingerprintCollector;
-    private final boolean isManifestAndFingerprintsOnly;
     private CxSCAResolvingConfiguration resolvingConfiguration;
     private static final String FINGERPRINT_FILE_NAME = ".cxsca.sig";
 
@@ -91,7 +85,6 @@ public class AstScaClient extends AstClient implements Scanner {
 
         httpClient = createHttpClient(astScaConfig.getApiUrl());
         this.resolvingConfiguration = null;
-        this.isManifestAndFingerprintsOnly = !astScaConfig.isIncludeSources();
         fingerprintCollector = new FingerprintCollector(log);
         // Pass tenant name in a custom header. This will allow to get token from on-premise access control server
         // and then use this token for SCA authentication in cloud.
@@ -157,19 +150,13 @@ public class AstScaClient extends AstClient implements Scanner {
     public void init() {
         try {
             login();
-            resolveProject();
-            if (isManifestAndFingerprintsOnly) {
-                this.resolvingConfiguration = getCxSCAResolvingConfigurationForProject(this.projectId);
-                log.info("Got the following manifest patterns {}", this.resolvingConfiguration.getManifests());
-                log.info("Got the following fingerprint patterns {}", this.resolvingConfiguration.getFingerprints());
-            }
         } catch (IOException e) {
             throw new CxClientException("Failed to init CxSCA Client.", e);
         }
     }
 
     public CxSCAResolvingConfiguration getCxSCAResolvingConfigurationForProject(String projectId) throws IOException {
-        log.info("Getting CxSCA Resolving configuration for project: {}", projectId);
+        log.info("Resolving configuration for project: {}", projectId);
         String path = String.format(UrlPaths.RESOLVING_CONFIGURATION_API, URLEncoder.encode(projectId, ENCODING));
 
         return httpClient.getRequest(path,
@@ -178,7 +165,6 @@ public class AstScaClient extends AstClient implements Scanner {
                 HttpStatus.SC_OK,
                 "get CxSCA resolving configuration",
                 false);
-
     }
 
     /**
@@ -188,10 +174,15 @@ public class AstScaClient extends AstClient implements Scanner {
      */
     @Override
     public Results waitForScanResults() {
-        waitForScanToFinish(scanId);
-        AstScaResults scaResult = retrieveScanResults();
-        scaResult.setScaResultReady(true);
-        return scaResult;
+        AstScaResults scaResults;
+        try {
+            waitForScanToFinish(scanId);
+            scaResults = tryGetScanResults(scanId).orElseThrow(() -> new CxClientException("Unable to get scan results: scan not found."));
+        } catch (CxClientException e) {
+            scaResults = new AstScaResults();
+            scaResults.setWaitException(e);
+        }
+        return scaResults;
     }
 
     @Override
@@ -200,34 +191,45 @@ public class AstScaClient extends AstClient implements Scanner {
                 getScannerDisplayName());
         AstScaResults scaResults = new AstScaResults();
         scanId = null;
+        projectId = null;
         try {
             AstScaConfig scaConfig = config.getAstScaConfig();
             SourceLocationType locationType = scaConfig.getSourceLocationType();
             HttpResponse response;
+
+            projectId = resolveRiskManagementProject();
+            boolean isManifestAndFingerprintsOnly = !config.getAstScaConfig().isIncludeSources();
+            if (isManifestAndFingerprintsOnly) {
+                this.resolvingConfiguration = getCxSCAResolvingConfigurationForProject(this.projectId);
+                log.info("Got the following manifest patterns {}", this.resolvingConfiguration.getManifests());
+                log.info("Got the following fingerprint patterns {}", this.resolvingConfiguration.getFingerprints());
+            }
+
             if (locationType == SourceLocationType.REMOTE_REPOSITORY) {
                 response = submitSourcesFromRemoteRepo(scaConfig, projectId);
             } else {
                 if (scaConfig.isIncludeSources()) {
-                    response = submitAllSourcesFromLocalDir();
+                    response = submitAllSourcesFromLocalDir(projectId);
                 } else {
-                    response = submitManifestsAndFingerprintsFromLocalDir();
+                    response = submitManifestsAndFingerprintsFromLocalDir(projectId);
                 }
             }
             this.scanId = extractScanIdFrom(response);
             scaResults.setScanId(scanId);
-            return scaResults;
-        } catch (IOException e) {
-            throw new CxClientException("Error creating scan.", e);
+        } catch (Exception e) {
+            CxClientException ex = new CxClientException("Error creating scan.", e);
+            scaResults.setCreateException(ex);
         }
+        return scaResults;
     }
 
-    private HttpResponse submitManifestsAndFingerprintsFromLocalDir() throws IOException {
+    private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
 
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
 
         PathFilter userFilter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
-        Set<String> scannedFileSet = new HashSet<String>(Arrays.asList(CxSCAFileSystemUtils.scanAndGetIncludedFiles(sourceDir, userFilter)));
+        Set<String> scannedFileSet = new HashSet<>(Arrays.asList(CxSCAFileSystemUtils.scanAndGetIncludedFiles(sourceDir, userFilter)));
 
         PathFilter manifestIncludeFilter = new PathFilter(null, getManifestsIncludePattern(), log);
         if (manifestIncludeFilter.getIncludes().length == 0) {
@@ -252,20 +254,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         optionallyWriteFingerprintsToFile(fingerprints);
 
-        String uploadedArchiveUrl = getSourcesUploadUrl();
-        String cleanPath = uploadedArchiveUrl.split("\\?")[0];
-        log.info("Uploading to: {}",cleanPath);
-        uploadArchive(zipFile, uploadedArchiveUrl);
-
-        //delete only if path not specified in the config
-        if (StringUtils.isEmpty(astScaConfig.getZipFilePath())) {
-            CxZipUtils.deleteZippedSources(zipFile, config, log);
-        }
-
-        RemoteRepositoryInfo uploadedFileInfo = new RemoteRepositoryInfo();
-        uploadedFileInfo.setUrl(new URL(uploadedArchiveUrl));
-
-        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
+        return initiateScanForUpload(projectId, zipFile);
     }
 
 
@@ -282,21 +271,21 @@ public class AstScaClient extends AstClient implements Scanner {
         try {
             zipper = new NewCxZipFile(tempFile, maxZipSizeBytes, log);
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
-            if (zipper.getFileCount() == 0 && fingerprints.getFingerprints().size() == 0) {
-                throw handleFileDeletion(tempFile,"No files found to zip and no supported fingerprints found");
+            if (zipper.getFileCount() == 0 && fingerprints.getFingerprints().isEmpty()) {
+                throw handleFileDeletion(tempFile);
             }
-            if (fingerprints.getFingerprints().size() > 0) {
+            if (!fingerprints.getFingerprints().isEmpty()) {
                 zipper.zipContentAsFile(FINGERPRINT_FILE_NAME, FingerprintCollector.getFingerprintsAsJsonString(fingerprints).getBytes());
             } else {
                 log.info("No supported fingerprints found to zip");
             }
 
-            log.debug("The sources were zipped to {}" , tempFile.getAbsolutePath());
+            log.debug("The sources were zipped to {}", tempFile.getAbsolutePath());
             return tempFile;
         } catch (Zipper.MaxZipSizeReached e) {
             throw handleFileDeletion(tempFile, new IOException("Reached maximum upload size limit of " + FileUtils.byteCountToDisplaySize(maxZipSizeBytes)));
         } catch (IOException ioException) {
-            throw handleFileDeletion(tempFile,ioException);
+            throw handleFileDeletion(tempFile, ioException);
         } finally {
             if (zipper != null) {
                 zipper.close();
@@ -305,7 +294,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     }
 
-    private CxClientException handleFileDeletion(File file, IOException ioException){
+    private CxClientException handleFileDeletion(File file, IOException ioException) {
         try {
             Files.delete(file.toPath());
         } catch (IOException e) {
@@ -316,14 +305,14 @@ public class AstScaClient extends AstClient implements Scanner {
 
     }
 
-    private CxClientException handleFileDeletion(File file, String message){
+    private CxClientException handleFileDeletion(File file) {
         try {
             Files.delete(file.toPath());
         } catch (IOException e) {
             return new CxClientException(e);
         }
 
-        return new CxClientException(message);
+        return new CxClientException("No files found to zip and no supported fingerprints found");
     }
 
     private String getFingerprintsIncludePattern() {
@@ -359,14 +348,50 @@ public class AstScaClient extends AstClient implements Scanner {
         }
     }
 
-    private HttpResponse submitAllSourcesFromLocalDir() throws IOException {
+    private HttpResponse submitAllSourcesFromLocalDir(String projectId) throws IOException {
         log.info("Using local directory flow.");
 
         PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
         File zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
 
+        return initiateScanForUpload(projectId, zipFile);
+    }
+
+    /**
+     * Gets latest scan results using {@link CxScanConfig#getProjectName()} for the current config.
+     *
+     * @return results of the latest successful scan for a project, if present; null - otherwise.
+     */
+    @Override
+    public Results getLatestScanResults() {
+        AstScaResults result = new AstScaResults();
+        try {
+            log.info("Getting latest scan results.");
+            projectId = getRiskManagementProjectId(config.getProjectName());
+            scanId = getLatestScanId(projectId);
+            result = tryGetScanResults(scanId).orElse(null);
+        } catch (Exception e) {
+            CxClientException ex = new CxClientException("Error getting latest scan results.", e);
+            result.setWaitException(ex);
+        }
+        return result;
+    }
+
+    private Optional<AstScaResults> tryGetScanResults(String scanId) {
+        AstScaResults result = null;
+        if (StringUtils.isNotEmpty(scanId)) {
+            result = getScanResults(scanId);
+        } else {
+            log.info("Unable to get scan results");
+        }
+        return Optional.ofNullable(result);
+    }
+
+    private HttpResponse initiateScanForUpload(String projectId, File zipFile) throws IOException {
         String uploadedArchiveUrl = getSourcesUploadUrl();
+        String cleanPath = uploadedArchiveUrl.split("\\?")[0];
+        log.info("Uploading to: {}", cleanPath);
         uploadArchive(zipFile, uploadedArchiveUrl);
 
         //delete only if path not specified in the config
@@ -380,6 +405,27 @@ public class AstScaClient extends AstClient implements Scanner {
         return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
     }
 
+    private String getLatestScanId(String projectId) throws IOException {
+        String result = null;
+        if (StringUtils.isNotEmpty(projectId)) {
+            log.debug("Getting latest scan ID for project ID: {}", projectId);
+            String path = String.format(UrlPaths.LATEST_SCAN, URLEncoder.encode(projectId, ENCODING));
+            JsonNode response = httpClient.getRequest(path,
+                    ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                    ArrayNode.class,
+                    HttpStatus.SC_OK,
+                    "scan ID by project ID",
+                    false);
+
+            result = Optional.ofNullable(response)
+                    // 'riskReportId' is in fact scanId, but the name is kept for backward compatibility.
+                    .map(resp -> resp.at("/0/riskReportId").textValue())
+                    .orElse(null);
+        }
+        String message = (result == null ? "Scan not found" : String.format("Scan ID: %s", result));
+        log.info(message);
+        return result;
+    }
 
     private String getSourcesUploadUrl() throws IOException {
         JsonNode response = httpClient.postRequest(UrlPaths.GET_UPLOAD_URL, null, null, JsonNode.class,
@@ -393,7 +439,7 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     private void uploadArchive(File source, String uploadUrl) throws IOException {
-        log.info("Uploading the zipped sources.");
+        log.info("Uploading the zipped data.");
 
         HttpEntity request = new FileEntity(source);
 
@@ -406,25 +452,18 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private void printWebReportLink(AstScaResults scaResult) {
         if (!StringUtils.isEmpty(scaResult.getWebReportLink())) {
-            log.info("CxSCA scan results location: {}", scaResult.getWebReportLink());
+            log.info("{} scan results location: {}", getScannerDisplayName(), scaResult.getWebReportLink());
         }
-    }
-
-    @Override
-    public ScanResults getLatestScanResults() {
-        // Workaround for SCA async mode - do not fail in NullPointerException.
-        // New feature is planned for next release to support SCA async mode.
-        return new ScanResults();
     }
 
     void testConnection() throws IOException {
         // The calls below allow to check both access control and API connectivity.
         login();
-        getProjects();
+        getRiskManagementProjects();
     }
 
     public void login() throws IOException {
-        log.info("Logging into CxSCA.");
+        log.info("Logging into {}", getScannerDisplayName());
         AstScaConfig scaConfig = config.getAstScaConfig();
 
         LoginSettings settings = new LoginSettings();
@@ -464,39 +503,69 @@ public class AstScaClient extends AstClient implements Scanner {
         }
     }
 
-    private void resolveProject() throws IOException {
+    private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
         log.info("Getting project by name: '{}'", projectName);
-        projectId = getProjectIdByName(projectName);
-        if (projectId == null) {
+        String resolvedProjectId = getRiskManagementProjectId(projectName);
+        if (resolvedProjectId == null) {
             log.info("Project not found, creating a new one.");
-            projectId = createProject(projectName);
-            log.info("Created a project with ID {}", projectId);
+            resolvedProjectId = createRiskManagementProject(projectName);
+            log.info("Created a project with ID {}", resolvedProjectId);
         } else {
-            log.info("Project already exists with ID {}", projectId);
+            log.info("Project already exists with ID {}", resolvedProjectId);
         }
+        return resolvedProjectId;
     }
 
-    private String getProjectIdByName(String name) throws IOException {
-        if (StringUtils.isEmpty(name)) {
+    private String getRiskManagementProjectId(String projectName) throws IOException {
+        log.info("Getting project ID by name: '{}'", projectName);
+
+        if (StringUtils.isEmpty(projectName)) {
             throw new CxClientException("Non-empty project name must be provided.");
         }
 
-        List<Project> allProjects = getProjects();
+        Project project = sendGetProjectRequest(projectName);
 
-        return allProjects.stream()
-                .filter((Project project) -> name.equals(project.getName()))
+        String result = Optional.ofNullable(project)
                 .map(Project::getId)
-                .findFirst()
                 .orElse(null);
+
+        String message = (result == null ? "Project not found" : String.format("Project ID: %s", result));
+        log.info(message);
+
+        return result;
     }
 
-    private List<Project> getProjects() throws IOException {
-        return (List<Project>) httpClient.getRequest(UrlPaths.PROJECTS, ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                Project.class, HttpStatus.SC_OK, "CxSCA projects", true);
+    private Project sendGetProjectRequest(String projectName) throws IOException {
+        Project result;
+        try {
+            String getProjectByName = String.format("%s?name=%s", UrlPaths.PROJECTS, URLEncoder.encode(projectName, ENCODING));
+            result = httpClient.getRequest(getProjectByName,
+                    ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                    Project.class,
+                    HttpStatus.SC_OK,
+                    "CxSCA project ID by name",
+                    false);
+        } catch (CxHTTPClientException e) {
+            if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+                result = null;
+            } else {
+                throw e;
+            }
+        }
+        return result;
     }
 
-    private String createProject(String name) throws IOException {
+    private void getRiskManagementProjects() throws IOException {
+        httpClient.getRequest(UrlPaths.PROJECTS,
+                ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                Project.class,
+                HttpStatus.SC_OK,
+                "CxSCA projects",
+                true);
+    }
+
+    private String createRiskManagementProject(String name) throws IOException {
         CreateProjectRequest request = new CreateProjectRequest();
         request.setName(name);
 
@@ -512,36 +581,35 @@ public class AstScaClient extends AstClient implements Scanner {
         return newProject.getId();
     }
 
-    private AstScaResults retrieveScanResults() {
+    private AstScaResults getScanResults(String scanId) {
+        AstScaResults result;
+        log.debug("Getting results for scan ID {}", scanId);
         try {
-            String reportId = getReportId();
+            result = new AstScaResults();
+            result.setScanId(this.scanId);
 
-            AstScaResults scaResults = new AstScaResults();
-            scaResults.setScanId(scanId);
+            AstScaSummaryResults scanSummary = getSummaryReport(scanId);
+            result.setSummary(scanSummary);
+            printSummary(scanSummary, this.scanId);
 
-            AstScaSummaryResults scanSummary = getSummaryReport(reportId);
-            scaResults.setSummary(scanSummary);
-            printSummary(scanSummary, scanId);
+            List<Finding> findings = getFindings(scanId);
+            result.setFindings(findings);
 
-            List<Finding> findings = getFindings(reportId);
-            scaResults.setFindings(findings);
+            List<Package> packages = getPackages(scanId);
+            result.setPackages(packages);
 
-            List<Package> packages = getPackages(reportId);
-            scaResults.setPackages(packages);
-
-            String reportLink = getWebReportLink(reportId);
-            scaResults.setWebReportLink(reportLink);
-            printWebReportLink(scaResults);
-            scaResults.setScaResultReady(true);
+            String reportLink = getWebReportLink(scanId);
+            result.setWebReportLink(reportLink);
+            printWebReportLink(result);
+            result.setScaResultReady(true);
             log.info("Retrieved SCA results successfully.");
-
-            return scaResults;
         } catch (IOException e) {
             throw new CxClientException("Error retrieving CxSCA scan results.", e);
         }
+        return result;
     }
 
-    private String getWebReportLink(String reportId) {
+    private String getWebReportLink(String scanId) {
         final String MESSAGE = "Unable to generate web report link.";
         String result = null;
         try {
@@ -551,7 +619,7 @@ public class AstScaClient extends AstClient implements Scanner {
             } else {
                 String path = String.format(UrlPaths.WEB_REPORT,
                         URLEncoder.encode(projectId, ENCODING),
-                        URLEncoder.encode(reportId, ENCODING));
+                        URLEncoder.encode(scanId, ENCODING));
 
                 result = UrlUtils.parseURLToString(webAppUrl, path);
             }
@@ -563,26 +631,10 @@ public class AstScaClient extends AstClient implements Scanner {
         return result;
     }
 
-    private String getReportId() throws IOException {
-        log.debug("Getting report ID by scan ID:{}", scanId);
-        String path = String.format(UrlPaths.REPORT_ID,
-                URLEncoder.encode(scanId, ENCODING));
-
-        String reportId = httpClient.getRequest(path,
-                ContentType.CONTENT_TYPE_APPLICATION_JSON,
-                String.class,
-                HttpStatus.SC_OK,
-                "Risk report ID",
-                false);
-        log.debug("Found report ID: {}", reportId);
-        return reportId;
-    }
-
-    private AstScaSummaryResults getSummaryReport(String reportId) throws IOException {
+    private AstScaSummaryResults getSummaryReport(String scanId) throws IOException {
         log.debug("Getting summary report.");
 
-        String path = String.format(UrlPaths.SUMMARY_REPORT,
-                URLEncoder.encode(reportId, ENCODING));
+        String path = String.format(UrlPaths.SUMMARY_REPORT, URLEncoder.encode(scanId, ENCODING));
 
         return httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
@@ -592,10 +644,10 @@ public class AstScaClient extends AstClient implements Scanner {
                 false);
     }
 
-    private List<Finding> getFindings(String reportId) throws IOException {
+    private List<Finding> getFindings(String scanId) throws IOException {
         log.debug("Getting findings.");
 
-        String path = String.format(UrlPaths.FINDINGS, URLEncoder.encode(reportId, ENCODING));
+        String path = String.format(UrlPaths.FINDINGS, URLEncoder.encode(scanId, ENCODING));
 
         ArrayNode responseJson = httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
@@ -609,10 +661,10 @@ public class AstScaClient extends AstClient implements Scanner {
         return Arrays.asList(findings);
     }
 
-    private List<Package> getPackages(String reportId) throws IOException {
+    private List<Package> getPackages(String scanId) throws IOException {
         log.debug("Getting packages.");
 
-        String path = String.format(UrlPaths.PACKAGES, URLEncoder.encode(reportId, ENCODING));
+        String path = String.format(UrlPaths.PACKAGES, URLEncoder.encode(scanId, ENCODING));
 
         return (List<Package>) httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
@@ -624,17 +676,16 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private void printSummary(AstScaSummaryResults summary, String scanId) {
         if (log.isInfoEnabled()) {
-            log.info(String.format("%n----CxSCA risk report summary----"));
-            log.info(String.format("Created on: %s", summary.getCreatedOn()));
-            log.info(String.format("Direct packages: %d", summary.getDirectPackages()));
-            log.info(String.format("High vulnerabilities: %d", summary.getHighVulnerabilityCount()));
-            log.info(String.format("Medium vulnerabilities: %d", summary.getMediumVulnerabilityCount()));
-            log.info(String.format("Low vulnerabilities: %d", summary.getLowVulnerabilityCount()));
-            log.info(String.format("Risk report ID: %s", summary.getRiskReportId()));
-            log.info(String.format("Scan ID: %s", scanId));
+            log.info("----CxSCA risk report summary----");
+            log.info("Created on: {}", summary.getCreatedOn());
+            log.info("Direct packages: {}", summary.getDirectPackages());
+            log.info("High vulnerabilities: {}", summary.getHighVulnerabilityCount());
+            log.info("Medium vulnerabilities: {}", summary.getMediumVulnerabilityCount());
+            log.info("Low vulnerabilities: {}", summary.getLowVulnerabilityCount());
+            log.info("Scan ID: {}", scanId);
             log.info(String.format("Risk score: %.2f", summary.getRiskScore()));
-            log.info(String.format("Total packages: %d", summary.getTotalPackages()));
-            log.info(String.format("Total outdated packages: %d%n", summary.getTotalOutdatedPackages()));
+            log.info("Total packages: {}", summary.getTotalPackages());
+            log.info("Total outdated packages: {}", summary.getTotalOutdatedPackages());
         }
     }
 

@@ -17,7 +17,7 @@ import static com.cx.restclient.sast.utils.SASTParam.SCAN_LINK_FORMAT;
 /**
  * Created by Galn on 05/02/2018.
  */
-public class SASTResults implements Serializable, Results {
+public class SASTResults extends Results implements Serializable {
 
     private long scanId;
 

@@ -31,6 +31,7 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -45,6 +46,7 @@ import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.slf4j.Logger;
@@ -85,6 +87,8 @@ public class CxHttpClient {
     private static String HTTPS_USERNAME = System.getProperty("https.proxyUser");
     private static String HTTPS_PASSWORD = System.getProperty("https.proxyPassword");
 
+    private static final String HTTPS = "https";
+
     private static final String LOGIN_FAILED_MSG = "Fail to login with windows authentication: ";
 
     private static HttpClient apacheClient;
@@ -111,13 +115,25 @@ public class CxHttpClient {
         //create httpclient
         cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
         setSSLTls("TLSv1.2", log);
+        SSLContextBuilder builder = new SSLContextBuilder();
+        SSLConnectionSocketFactory sslConnectionSocketFactory=null;
+        Registry<ConnectionSocketFactory> registry=null;
+        PoolingHttpClientConnectionManager cm=null;
         if (disableSSLValidation) {
             try {
-                cb.setSSLSocketFactory(getTrustAllSSLSocketFactory());
-                cb.setConnectionManager(getHttpConnectionManager(true));
-            } catch (CxClientException e) {
-                log.warn("Failed to disable certificate verification: " + e.getMessage());
+                builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+                sslConnectionSocketFactory = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
+                registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                        .register("http", new PlainConnectionSocketFactory())
+                        .register(HTTPS, sslConnectionSocketFactory)
+                        .build();
+                cm = new PoolingHttpClientConnectionManager(registry);
+                cm.setMaxTotal(100);
+            } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+                log.error(e.getMessage());
             }
+            cb.setSSLSocketFactory(sslConnectionSocketFactory);
+            cb.setConnectionManager(cm);
         } else {
             cb.setConnectionManager(getHttpConnectionManager(false));
         }
@@ -143,7 +159,7 @@ public class CxHttpClient {
             return;
         }
 
-        String scheme = proxyConfig.isUseHttps() ? "https" : "http";
+        String scheme = proxyConfig.isUseHttps() ? HTTPS : "http";
         HttpHost proxy = new HttpHost(proxyConfig.getHost(), proxyConfig.getPort(), scheme);
         if (StringUtils.isNotEmpty(proxyConfig.getUsername()) &&
                 StringUtils.isNotEmpty(proxyConfig.getPassword())) {
@@ -178,7 +194,7 @@ public class CxHttpClient {
             factory = new SSLConnectionSocketFactory(SSLContexts.createDefault());
         }
         Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("https", factory)
+                .register(HTTPS, factory)
                 .register("http", new PlainConnectionSocketFactory())
                 .build();
         PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
@@ -212,6 +228,8 @@ public class CxHttpClient {
                 ssoLegacyLogin();
             } else {
                 token = ssoLogin();
+                // Don't delete this print, it is being used on VS Code plugin
+                System.out.println(String.format("Access Token: %s", token.getAccess_token()));
             }
         } else {
             token = generateToken(settings);
@@ -259,6 +277,10 @@ public class CxHttpClient {
         List<Header> headers = new ArrayList<>();
         headers.add(new BasicHeader(CSRF_TOKEN_HEADER, csrfToken));
         headers.add(new BasicHeader("cookie", String.format("CXCSRFToken=%s; cxCookie=%s", csrfToken, cxCookie)));
+
+        // Don't delete these prints, they are being used on VS Code plugin
+        System.out.println(CSRF_TOKEN_HEADER + ": " + csrfToken);
+        System.out.println(String.format("cookie: CXCSRFToken=%s; cxCookie=%s", csrfToken, cxCookie));
 
         apacheClient = cb.setDefaultHeaders(headers).build();
     }

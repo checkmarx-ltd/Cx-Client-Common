@@ -626,9 +626,9 @@
         margin-right: 6px;
     }
 
-    .cx-report .pdf-report.download-icon, {
+    .cx-report .pdf-report.download-icon {
         margin-right: 6px;
-        border-left: solid 1px #d5d5d
+        border-left: 1px solid #d5d5d5;
     }
 
     .cx-report .summary-section .html-report {
@@ -862,7 +862,6 @@
         padding-bottom: 3px;
     }
 
-    }
     .scan-status .content-scan-status .title-scan-status.success {
         color: #38d87d;
     }
@@ -1015,7 +1014,7 @@
             <div id="summary-results" class="summary-results">
 
             <#if config.isSastEnabled()>
-                <div class="sast-summary <#if config.isSastEnabled() >chart-large</#if>" id="sast-summary">
+                <div class="sast-summary <#if !(config.isOsaEnabled() || config.isAstScaEnabled()) >chart-large</#if>" id="sast-summary">
                     <div class="summary-report-title sast">
                         <div class="summary-title-text sast">CxSAST Vulnerabilities Status</div>
                         <#if sast.sastResultsReady>
@@ -1311,10 +1310,14 @@
                 </div>
             </#if>
 
-            <#if config.isOsaEnabled()|| config.isAstScaEnabled() >
+                <#if config.isOsaEnabled()|| config.isAstScaEnabled() >
         <div class="osa-summary <#if !config.isSastEnabled()>sast-summary chart-large</#if>" id="osa-summary">
             <div class="summary-report-title osa">
+                <#if dependencyResult.scannerType=="AST_SCA">
+                <div class="summary-title-text osa">CxSCA Vulnerabilities & Libraries</div>
+                <#else>
                 <div class="summary-title-text osa">Cx${dependencyResult.scannerType} Vulnerabilities & Libraries</div>
+                </#if>
                 <#if dependencyResult.resultReady>
                     <div id="osa-title-links" class="title-links">
                         <div class="link-to-result summary-link">
@@ -2239,13 +2242,17 @@
         </#if>
     </#if>
 
-    <#if !config.isSastEnabled() && dependencyResult.resultReady>
+    <#if ( config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady>
         <#if dependencyResult.dependencyHighCVEReportTable?size gt 0 || dependencyResult.dependencyMediumCVEReportTable?size gt 0 || dependencyResult.dependencyLowCVEReportTable?size gt 0>
             <div id="osa-full" class="osa-full full-results-section">
                 <div class="summary-table-row cxosa-full">
                     <div class="title-column">
                         <div class="summary-title">
-                            <div class="sum1">Cx${dependencyResult.scannerType}</div>
+                        <#if dependencyResult.scannerType=="AST_SCA">
+                            <div class="sum1">CxSCA</div>
+                            <#else>
+                                <div class="sum1">Cx${dependencyResult.scannerType}</div>
+                        </#if>
                             <div class="sum1">Full Report</div>
                         </div>
                         <div class="detailed-report">

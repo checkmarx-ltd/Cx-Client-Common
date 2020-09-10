@@ -13,7 +13,7 @@ import java.util.List;
 
 import static com.cx.restclient.common.ShragaUtils.formatDate;
 
-public class DependencyScanResult implements Results {
+public class DependencyScanResult extends Results {
     private ScannerType scannerType;
     private boolean resultReady;
     private int highVulnerability;
@@ -32,14 +32,15 @@ public class DependencyScanResult implements Results {
     DependencyScanResult(){}
 
     DependencyScanResult(AstScaResults scaResults){
+        scaResults.calculateVulnerableAndOutdatedPackages();
         this.scannerType = ScannerType.AST_SCA;
         this.highVulnerability = scaResults.getSummary().getHighVulnerabilityCount();
         this.mediumVulnerability = scaResults.getSummary().getMediumVulnerabilityCount();
         this.lowVulnerability = scaResults.getSummary().getLowVulnerabilityCount();
         this.resultReady = scaResults.isScaResultReady();
         this.summaryLink = scaResults.getWebReportLink();
-        this.vulnerableAndOutdated = scaResults.getSummary().getTotalOutdatedPackages();
-        this.nonVulnerableLibraries = scaResults.getSummary().getTotalOkLibraries();
+        this.vulnerableAndOutdated = scaResults.getVulnerableAndOutdated();
+        this.nonVulnerableLibraries = scaResults.getNonVulnerableLibraries();
         this.scanStartTime = formatDate(scaResults.getSummary().getCreatedOn(), "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "dd/MM/yy HH:mm");
         this.scanEndTime ="";
         this.setDependencyCVEReportTableSCA(scaResults.getFindings());

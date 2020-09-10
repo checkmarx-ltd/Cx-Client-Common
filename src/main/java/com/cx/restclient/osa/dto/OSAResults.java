@@ -17,7 +17,7 @@ import static com.cx.restclient.cxArm.utils.CxARMUtils.getPolicyList;
  * Created by Galn on 07/02/2018.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OSAResults implements Serializable, Results {
+public class OSAResults extends Results implements Serializable {
     private String osaScanId;
     private OSASummaryResults results;
     private List<Library> osaLibraries;

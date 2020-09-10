@@ -46,7 +46,7 @@ import static com.cx.restclient.sast.utils.SASTUtils.*;
 public class CxSASTClient extends LegacyClient implements Scanner {
 
     public static final String JENKINS = "jenkins";
- 
+
     private int reportTimeoutSec = 5000;
     private int cxARMTimeoutSec = 1000;
     private Waiter<ResponseQueueScanStatus> sastWaiter;
@@ -54,7 +54,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     private static final String PROJECT_ID_PATH_PARAM = "{projectId}";
     private long scanId;
     private SASTResults sastResults = new SASTResults();
-    
+
     private Waiter<ReportStatus> reportWaiter = new Waiter<ReportStatus>("Scan report", 10, 3) {
         @Override
         public ReportStatus getStatus(String id) throws IOException {
@@ -88,17 +88,17 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         }
 
         private ReportStatus resolveReportStatus(ReportStatus reportStatus) throws CxClientException {
-            if(reportStatus != null ) {
+            if (reportStatus != null) {
                 if (Status.SUCCEEDED == reportStatus.getBaseStatus()) {
                     return reportStatus;
                 } else {
                     throw new CxClientException("Generation of scan report [id=" + reportStatus.getBaseId() + "] failed.");
                 }
-            }else{
+            } else {
                 throw new CxClientException("Generation of scan report failed.");
             }
         }
-        
+
         private void printReportProgress(ReportStatus reportStatus, long startTime) {
             String reportType = reportStatus.getContentType().replace("application/", "");
             log.info("Waiting for server to generate " + reportType + " report. " + (startTime + reportTimeoutSec - (System.currentTimeMillis() / 1000)) + " seconds left to timeout");
@@ -108,7 +108,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     private Waiter<CxARMStatus> cxARMWaiter = new Waiter<CxARMStatus>("CxARM policy violations", 20, 3) {
         @Override
-        public CxARMStatus getStatus(String id) throws  IOException {
+        public CxARMStatus getStatus(String id) throws IOException {
             return getCxARMStatus(id);
         }
 
@@ -118,10 +118,10 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         }
 
         @Override
-        public CxARMStatus resolveStatus(CxARMStatus cxARMStatus)  {
+        public CxARMStatus resolveStatus(CxARMStatus cxARMStatus) {
             return resolveCxARMStatus(cxARMStatus);
         }
-        
+
 
         //CxARM Waiter - overload methods
         private CxARMStatus getCxARMStatus(String projectId) throws CxClientException, IOException {
@@ -142,7 +142,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             return cxARMStatus;
         }
 
-        private void printCxARMProgress( long startTime) {
+        private void printCxARMProgress(long startTime) {
             log.info("Waiting for server to retrieve policy violations. " + (startTime + cxARMTimeoutSec - (System.currentTimeMillis() / 1000)) + " seconds left to timeout");
         }
 
@@ -153,7 +153,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 } else {
                     throw new CxClientException("Getting policy violations of project [id=" + cxARMStatus.getBaseId() + "] failed.");
                 }
-            }else{
+            } else {
                 throw new CxClientException("Getting policy violations of project failed.");
             }
         }
@@ -161,13 +161,13 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
 
     CxSASTClient(CxScanConfig config, Logger log) throws MalformedURLException {
-        super( config, log );
+        super(config, log);
 
         int interval = config.getProgressInterval() != null ? config.getProgressInterval() : 20;
         int retry = config.getConnectionRetries() != null ? config.getConnectionRetries() : 3;
         sastWaiter = new Waiter<ResponseQueueScanStatus>("CxSAST scan", interval, retry) {
             @Override
-            public ResponseQueueScanStatus getStatus(String id) throws  IOException {
+            public ResponseQueueScanStatus getStatus(String id) throws IOException {
                 return getSASTScanStatus(id);
             }
 
@@ -177,35 +177,34 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             }
 
             @Override
-            public ResponseQueueScanStatus resolveStatus(ResponseQueueScanStatus scanStatus)  {
+            public ResponseQueueScanStatus resolveStatus(ResponseQueueScanStatus scanStatus) {
                 return resolveSASTStatus(scanStatus);
             }
         };
     }
 
 
-    
-    
     //**------ API  ------**//
 
     //CREATE SAST scan
-    private long createSASTScan(long projectId)  {
+    private void createSASTScan(long projectId) {
         try {
             log.info("-----------------------------------Create CxSAST Scan:------------------------------------");
             if (config.isAvoidDuplicateProjectScans() != null && config.isAvoidDuplicateProjectScans() && projectHasQueuedScans(projectId)) {
                 throw new CxClientException("\nAvoid duplicate project scans in queue\n");
             }
             if (config.getRemoteType() == null) { //scan is local
-                return createLocalSASTScan(projectId);
+                scanId = createLocalSASTScan(projectId);
             } else {
-                return createRemoteSourceScan(projectId);
+                scanId = createRemoteSourceScan(projectId);
             }
-        }catch (IOException e){
-            throw new CxClientException(e);
+            sastResults.setScanId(scanId);
+        } catch (Exception e) {
+            sastResults.setCreateException(e);
         }
     }
 
-    private long createLocalSASTScan(long projectId) throws IOException{
+    private long createLocalSASTScan(long projectId) throws IOException {
         configureScanSettings(projectId);
         //prepare sources for scan
         PathFilter filter = new PathFilter(config.getSastFolderExclusions(), config.getSastFilterPattern(), log);
@@ -294,16 +293,13 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     //GET SAST results + reports
     @Override
     public Results waitForScanResults() {
-        //SASTResults sastResults;
-
-        log.info("------------------------------------Get CxSAST Results:-----------------------------------");
-        //wait for SAST scan to finish
-        log.info("Waiting for CxSAST scan to finish.");
-        sastWaiter.waitForTaskToFinish(Long.toString(scanId), config.getSastScanTimeoutInMinutes() * 60, log);
-        log.info("Retrieving SAST scan results");
-
-        
         try {
+            log.info("------------------------------------Get CxSAST Results:-----------------------------------");
+            //wait for SAST scan to finish
+            log.info("Waiting for CxSAST scan to finish.");
+            sastWaiter.waitForTaskToFinish(Long.toString(scanId), config.getSastScanTimeoutInMinutes() * 60, log);
+            log.info("Retrieving SAST scan results");
+
             //retrieve SAST scan results
             sastResults = retrieveSASTResults(scanId, projectId);
             if (config.getEnablePolicyViolations()) {
@@ -337,14 +333,14 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                     }
                 }
             }
-        }catch (IOException e){
-            throw new CxClientException(e.getMessage());
+        } catch (Exception e) {
+            sastResults.setWaitException(e);
         }
 
         return sastResults;
     }
 
-    private void resolveSASTViolation(SASTResults sastResults, long projectId)  {
+    private void resolveSASTViolation(SASTResults sastResults, long projectId) {
         try {
             cxARMWaiter.waitForTaskToFinish(Long.toString(projectId), cxARMTimeoutSec, log);
             getProjectViolatedPolicies(httpClient, config.getCxARMUrl(), projectId, SAST.value())
@@ -354,11 +350,11 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         }
     }
 
-    private SASTResults retrieveSASTResults(long scanId, long projectId) throws  IOException {
+    private SASTResults retrieveSASTResults(long scanId, long projectId) throws IOException {
 
-       
+
         SASTStatisticsResponse statisticsResults = getScanStatistics(scanId);
-        
+
         sastResults.setResults(scanId, statisticsResults, config.getUrl(), projectId);
 
         //SAST detailed report
@@ -374,8 +370,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     @Override
     public SASTResults getLatestScanResults() {
-
-        sastResults  = new SASTResults();
+        sastResults = new SASTResults();
         try {
             log.info("---------------------------------Get Last CxSAST Results:--------------------------------");
             List<LastScanResponse> scanList = getLatestSASTStatus(projectId);
@@ -384,8 +379,8 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                     return retrieveSASTResults(s.getId(), projectId);
                 }
             }
-        }catch(IOException e){
-            throw new CxClientException(e.getMessage());
+        } catch (Exception e) {
+            sastResults.setWaitException(e);
         }
         return sastResults;
     }
@@ -468,9 +463,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     }
 
     private CxID createRemoteSourceRequest(long projectId, HttpEntity entity, String sourceType, boolean isSSH) throws IOException {
-        return httpClient.postRequest(String.format(SAST_CREATE_REMOTE_SOURCE_SCAN, projectId, sourceType, isSSH ? "ssh" : ""), isSSH? null : CONTENT_TYPE_APPLICATION_JSON_V1,
+        return httpClient.postRequest(String.format(SAST_CREATE_REMOTE_SOURCE_SCAN, projectId, sourceType, isSSH ? "ssh" : ""), isSSH ? null : CONTENT_TYPE_APPLICATION_JSON_V1,
                 entity, CxID.class, 204, "create " + sourceType + " remote source scan setting");
-        
+
     }
 
     private SASTStatisticsResponse getScanStatistics(long scanId) throws IOException {
@@ -528,30 +523,24 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 scanStatus.getTotalPercent() + "% processed. Status: " + scanStatus.getStage().getValue() + ".");
     }
 
-    private ResponseQueueScanStatus resolveSASTStatus(ResponseQueueScanStatus scanStatus)  {
-        if(scanStatus != null ) {
+    private ResponseQueueScanStatus resolveSASTStatus(ResponseQueueScanStatus scanStatus) {
+        if (scanStatus != null) {
             if (Status.SUCCEEDED == scanStatus.getBaseStatus()) {
                 log.info("SAST scan finished successfully.");
                 return scanStatus;
             } else {
                 throw new CxClientException("SAST scan cannot be completed. status [" + scanStatus.getStage().getValue() + "]: " + scanStatus.getStageDetails());
             }
-        }else{
+        } else {
             throw new CxClientException("SAST scan cannot be completed.");
         }
     }
 
- 
-
     @Override
     public Results initiateScan() {
-
         sastResults = new SASTResults();
-        this.scanId  = createSASTScan(projectId);
-        sastResults.setSastScanLink(config.getUrl(), this.scanId, projectId);
-        sastResults.setScanId(this.scanId);
+        createSASTScan(projectId);
+        sastResults.setSastScanLink(config.getUrl(), scanId, projectId);
         return sastResults;
     }
-
-    
 }

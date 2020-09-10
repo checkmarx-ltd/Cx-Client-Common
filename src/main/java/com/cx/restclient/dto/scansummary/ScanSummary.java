@@ -34,8 +34,8 @@ public class ScanSummary {
         StringBuilder result = new StringBuilder();
 
         for (ThresholdError error : thresholdErrors) {
-            // TODO: Include dependency scanner type into the message.
-            result.append(String.format("%s severity results are above threshold. Results: %d. Threshold: %d.%n",
+            result.append(String.format("%s %s severity results are above threshold. Results: %d. Threshold: %d.%n",
+                    error.getSource().toString(),
                     error.getSeverity().toString().toLowerCase(),
                     error.getValue(),
                     error.getThreshold()));
@@ -69,7 +69,7 @@ public class ScanSummary {
     }
 
     public boolean isOsaThresholdExceeded() {
-        return thresholdErrors.stream().anyMatch(error -> error.getSource() == ErrorSource.DEPENDENCY_SCANNER);
+        return thresholdErrors.stream().anyMatch(error -> error.getSource() == ErrorSource.OSA || error.getSource() == ErrorSource.SCA);
     }
 
     public boolean isSastThresholdForNewResultsExceeded() {
@@ -86,9 +86,10 @@ public class ScanSummary {
         }
     }
 
-    private void addDependencyScanThresholdErrors(CxScanConfig config, OSAResults osaResults, AstScaResults scaResults ) {
-        if (config.isOSAThresholdEffectivelyEnabled() && (scaResults != null) || osaResults!= null) {
+    private void addDependencyScanThresholdErrors(CxScanConfig config, OSAResults osaResults, AstScaResults scaResults) {
+        if (config.isOSAThresholdEffectivelyEnabled() && (scaResults != null || osaResults != null)) {
 
+            ErrorSource errorSource = osaResults != null ? ErrorSource.OSA : ErrorSource.SCA;
             int totalHigh = 0;
             int totalMedium = 0;
             int totalLow = 0;
@@ -113,9 +114,9 @@ public class ScanSummary {
             }
 
             if (hasSummary) {
-                checkForThresholdError(totalHigh, config.getOsaHighThreshold(), ErrorSource.DEPENDENCY_SCANNER, Severity.HIGH);
-                checkForThresholdError(totalMedium, config.getOsaMediumThreshold(), ErrorSource.DEPENDENCY_SCANNER, Severity.MEDIUM);
-                checkForThresholdError(totalLow, config.getOsaLowThreshold(), ErrorSource.DEPENDENCY_SCANNER, Severity.LOW);
+                checkForThresholdError(totalHigh, config.getOsaHighThreshold(), errorSource, Severity.HIGH);
+                checkForThresholdError(totalMedium, config.getOsaMediumThreshold(), errorSource, Severity.MEDIUM);
+                checkForThresholdError(totalLow, config.getOsaLowThreshold(), errorSource, Severity.LOW);
             }
         }
     }
@@ -144,13 +145,10 @@ public class ScanSummary {
         }
     }
 
-    private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults , OSAResults osaResults ) {
-
-
-
+    private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults, OSAResults osaResults) {
         return config.getEnablePolicyViolations() &&
                 ((osaResults != null &&
-                     !osaResults.getOsaPolicies().isEmpty()) ||
+                        !osaResults.getOsaPolicies().isEmpty()) ||
                         (sastResults != null && !sastResults.getSastPolicies().isEmpty()));
     }
 
