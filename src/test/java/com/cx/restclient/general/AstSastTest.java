@@ -100,8 +100,9 @@ public class AstSastTest extends CommonClientTest {
     private static CxScanConfig getScanConfig() throws MalformedURLException {
         AstSastConfig astConfig = AstSastConfig.builder()
                 .apiUrl(prop("astSast.apiUrl"))
+                .clientSecret(prop("astSast.clientSecret"))
+                .clientId("CxFlow")
                 .sourceLocationType(SourceLocationType.REMOTE_REPOSITORY)
-                .accessToken(prop("astSast.accessToken"))
                 .build();
 
         RemoteRepositoryInfo repoInfo = new RemoteRepositoryInfo();
@@ -109,7 +110,7 @@ public class AstSastTest extends CommonClientTest {
         repoInfo.setUrl(repoUrl);
         astConfig.setRemoteRepositoryInfo(repoInfo);
         astConfig.setResultsPageSize(10);
-        astConfig.setPresetName("Default");
+        astConfig.setPresetName("Checkmarx Default");
 
         CxScanConfig config = new CxScanConfig();
         config.setAstSastConfig(astConfig);

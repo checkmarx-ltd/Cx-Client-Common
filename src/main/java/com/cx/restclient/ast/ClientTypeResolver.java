@@ -42,7 +42,11 @@ public class ClientTypeResolver {
         String clientSecret = scopesToUse.equals(scopesForOnPremAuth) ? ClientType.RESOURCE_OWNER.getClientSecret() : "";
 
         String scopesForRequest = String.join(" ", scopesToUse);
-        return new ClientType(ClientType.RESOURCE_OWNER.getClientId(), scopesForRequest, clientSecret);
+
+        return ClientType.builder().clientId(ClientType.RESOURCE_OWNER.getClientId())
+                .scopes(scopesForRequest)
+                .clientSecret(clientSecret)
+                .build();
     }
 
     private Set<String> getScopesForAuth(Set<String> supportedScopes) {

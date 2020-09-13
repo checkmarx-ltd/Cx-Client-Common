@@ -4,6 +4,7 @@ import com.cx.restclient.ast.dto.common.*;
 import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.ast.dto.sca.report.Package;
 import com.cx.restclient.ast.dto.sca.report.*;
+import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
@@ -148,10 +149,11 @@ public class AstScaClient extends AstClient implements Scanner {
 
     @Override
     public void init() {
+        log.debug("Initializing {} client.", getScannerDisplayName());
         try {
             login();
         } catch (IOException e) {
-            throw new CxClientException("Failed to init CxSCA Client.", e);
+            super.handleInitError(e);
         }
     }
 
@@ -466,14 +468,13 @@ public class AstScaClient extends AstClient implements Scanner {
         log.info("Logging into {}", getScannerDisplayName());
         AstScaConfig scaConfig = config.getAstScaConfig();
 
-        LoginSettings settings = new LoginSettings();
-
         String acUrl = scaConfig.getAccessControlUrl();
-
-        settings.setAccessControlBaseUrl(acUrl);
-        settings.setUsername(scaConfig.getUsername());
-        settings.setPassword(scaConfig.getPassword());
-        settings.setTenant(scaConfig.getTenant());
+        LoginSettings settings = LoginSettings.builder()
+                .accessControlBaseUrl(UrlUtils.parseURLToString(acUrl, CxPARAM.AUTHENTICATION))
+                .username(scaConfig.getUsername())
+                .password(scaConfig.getPassword())
+                .tenant(scaConfig.getTenant())
+                .build();
 
         ClientTypeResolver resolver = new ClientTypeResolver();
         ClientType clientType = resolver.determineClientType(acUrl);

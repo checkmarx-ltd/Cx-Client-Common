@@ -1,6 +1,8 @@
 package com.cx.restclient.dto;
 
 import com.cx.restclient.osa.dto.ClientType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.apache.http.cookie.Cookie;
 
@@ -8,13 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class LoginSettings {
     private String accessControlBaseUrl;
     private String username;
     private String password;
     private CharSequence tenant;
     private String refreshToken;
-    private List<Cookie> sessionCookies = new ArrayList<>();
+    private final List<Cookie> sessionCookies = new ArrayList<>();
     private String version;
 
     // TODO: find a way to use a single client type here.

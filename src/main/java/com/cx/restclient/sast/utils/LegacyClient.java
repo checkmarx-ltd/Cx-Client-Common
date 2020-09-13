@@ -36,7 +36,7 @@ import static com.cx.restclient.sast.utils.SASTParam.*;
  */
 public abstract class LegacyClient {
 
-    private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/";
+    private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/" + AUTHENTICATION;
     protected CxHttpClient httpClient;
     protected CxScanConfig config;
     protected Logger log;
@@ -88,7 +88,7 @@ public abstract class LegacyClient {
             teamPath =  teamList.get(0).getFullName();
         }
         httpClient.setTeamPathHeader(teamPath);
-        log.debug(" setTeamPathHeader " + teamPath);
+        log.debug(String.format(" setTeamPathHeader %s", teamPath));
         return teamPath;
     }
     
@@ -175,7 +175,7 @@ public abstract class LegacyClient {
     
     
     public String getCxVersion() throws IOException, CxClientException {
-        String version = "";
+        String version;
         try {
             config.setCxVersion(httpClient.getRequest(CX_VERSION, CONTENT_TYPE_APPLICATION_JSON_V1, CxVersion.class, 200, "cx Version", false));
             String hotfix = "";
@@ -216,16 +216,16 @@ public abstract class LegacyClient {
     }
 
     public LoginSettings getDefaultLoginSettings() throws MalformedURLException {
-        LoginSettings result = new LoginSettings();
-
         String baseUrl = UrlUtils.parseURLToString(config.getUrl(), DEFAULT_AUTH_API_PATH);
-        result.setAccessControlBaseUrl(baseUrl);
+        LoginSettings result = LoginSettings.builder()
+                .accessControlBaseUrl(baseUrl)
+                .username(config.getUsername())
+                .password(config.getPassword())
+                .clientTypeForPasswordAuth(ClientType.RESOURCE_OWNER)
+                .clientTypeForRefreshToken(ClientType.CLI)
+                .build();
 
-        result.setUsername(config.getUsername());
-        result.setPassword(config.getPassword());
         result.getSessionCookies().addAll(config.getSessionCookie());
-        result.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
-        result.setClientTypeForRefreshToken(ClientType.CLI);
 
         return result;
     }
@@ -243,7 +243,7 @@ public abstract class LegacyClient {
             for (EngineConfiguration engineConfiguration : engineConfigurations) {
                 if (engineConfiguration.getName().equalsIgnoreCase(config.getEngineConfigurationName())) {
                     config.setEngineConfigurationId(engineConfiguration.getId());
-                    log.info("Engine configuration: \"" + config.getEngineConfigurationName() + "\" was validated in server");
+                    log.info(String.format("Engine configuration: \"%s\" was validated in server", config.getEngineConfigurationName()));
                 }
             }
             if (config.getEngineConfigurationId() == null) {
@@ -281,8 +281,6 @@ public abstract class LegacyClient {
         }
         
         printTeamPath();
-        
-        //httpClient.setTeamPathHeader(this.teamPath);
     }
 
     public String getTeamIdByName(String teamName) throws CxClientException, IOException {
@@ -348,8 +346,9 @@ public abstract class LegacyClient {
             if (presetName == null) {
                 presetName = getPresetById(config.getPresetId()).getName();
             }
-            log.info("preset name: " + presetName);
+            log.info(String.format("preset name: %s", presetName));
         } catch (Exception e) {
+            log.warn("Error getting preset name.");
         }
     }
 
@@ -364,8 +363,9 @@ public abstract class LegacyClient {
             if (this.teamPath == null) {
                 this.teamPath = getTeamNameById(config.getTeamId());
             }
-            log.info("full team path: " + this.teamPath);
+            log.info(String.format("full team path: %s", this.teamPath));
         } catch (Exception e) {
+            log.warn("Error getting team path.");
         }
     }
 
