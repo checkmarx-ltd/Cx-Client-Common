@@ -236,7 +236,7 @@ public abstract class AstClient {
     }
 
     private String getSourcesUploadUrl() throws IOException {
-        JsonNode response = httpClient.postRequest(AstScaClient.UrlPaths.GET_UPLOAD_URL, null, null, JsonNode.class,
+        JsonNode response = httpClient.postRequest(UrlPaths.GET_UPLOAD_URL, null, null, JsonNode.class,
                 HttpStatus.SC_OK, "get upload URL for sources");
 
         if (response == null || response.get("url") == null) {
