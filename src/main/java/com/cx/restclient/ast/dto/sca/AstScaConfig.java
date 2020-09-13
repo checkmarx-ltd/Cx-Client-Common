@@ -17,8 +17,9 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String tenant;
     private String webAppUrl;
     private boolean includeSources;
+    
     private String FingerprintsIncludePattern;
     private String ManifestsIncludePattern;
     private String FingerprintFilePath;
-    private String zipFilePath;
+
 }

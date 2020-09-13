@@ -45,17 +45,7 @@ import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
  * SCA - Software Composition Analysis - is the successor of OSA.
  */
 public class AstScaClient extends AstClient implements Scanner {
-    private static class UrlPaths {
-        private static final String RISK_MANAGEMENT_API = "/risk-management/";
-        public static final String PROJECTS = RISK_MANAGEMENT_API + "projects";
-        public static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + "riskReports/%s/summary";
-        public static final String FINDINGS = RISK_MANAGEMENT_API + "riskReports/%s/vulnerabilities";
-        public static final String PACKAGES = RISK_MANAGEMENT_API + "riskReports/%s/packages";
-        public static final String LATEST_SCAN = RISK_MANAGEMENT_API + "riskReports?size=1&projectId=%s";
-        public static final String GET_UPLOAD_URL = "/api/uploads";
-        public static final String WEB_REPORT = "/#/projects/%s/reports/%s";
-        public static final String RESOLVING_CONFIGURATION_API = "/settings/projects/%s/resolving-configuration";
-    }
+
 
     private static final String ENGINE_TYPE_FOR_API = "sca";
 
@@ -211,7 +201,7 @@ public class AstScaClient extends AstClient implements Scanner {
                 response = submitSourcesFromRemoteRepo(scaConfig, projectId);
             } else {
                 if (scaConfig.isIncludeSources()) {
-                    response = submitAllSourcesFromLocalDir(projectId);
+                    response = submitAllSourcesFromLocalDir(projectId, astScaConfig.getZipFilePath());
                 } else {
                     response = submitManifestsAndFingerprintsFromLocalDir(projectId);
                 }
@@ -256,7 +246,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         optionallyWriteFingerprintsToFile(fingerprints);
 
-        return initiateScanForUpload(projectId, zipFile);
+        return initiateScanForUpload(projectId, zipFile, astScaConfig.getZipFilePath());
     }
 
 
@@ -350,16 +340,6 @@ public class AstScaClient extends AstClient implements Scanner {
         }
     }
 
-    private HttpResponse submitAllSourcesFromLocalDir(String projectId) throws IOException {
-        log.info("Using local directory flow.");
-
-        PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
-        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
-        File zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
-
-        return initiateScanForUpload(projectId, zipFile);
-    }
-
     /**
      * Gets latest scan results using {@link CxScanConfig#getProjectName()} for the current config.
      *
@@ -390,22 +370,7 @@ public class AstScaClient extends AstClient implements Scanner {
         return Optional.ofNullable(result);
     }
 
-    private HttpResponse initiateScanForUpload(String projectId, File zipFile) throws IOException {
-        String uploadedArchiveUrl = getSourcesUploadUrl();
-        String cleanPath = uploadedArchiveUrl.split("\\?")[0];
-        log.info("Uploading to: {}", cleanPath);
-        uploadArchive(zipFile, uploadedArchiveUrl);
-
-        //delete only if path not specified in the config
-        if (StringUtils.isEmpty(astScaConfig.getZipFilePath())) {
-            CxZipUtils.deleteZippedSources(zipFile, config, log);
-        }
-
-        RemoteRepositoryInfo uploadedFileInfo = new RemoteRepositoryInfo();
-        uploadedFileInfo.setUrl(new URL(uploadedArchiveUrl));
-
-        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
-    }
+   
 
     private String getLatestScanId(String projectId) throws IOException {
         String result = null;
@@ -429,29 +394,7 @@ public class AstScaClient extends AstClient implements Scanner {
         return result;
     }
 
-    private String getSourcesUploadUrl() throws IOException {
-        JsonNode response = httpClient.postRequest(UrlPaths.GET_UPLOAD_URL, null, null, JsonNode.class,
-                HttpStatus.SC_OK, "get upload URL for sources");
-
-        if (response == null || response.get("url") == null) {
-            throw new CxClientException("Unable to get the upload URL.");
-        }
-
-        return response.get("url").asText();
-    }
-
-    private void uploadArchive(File source, String uploadUrl) throws IOException {
-        log.info("Uploading the zipped data.");
-
-        HttpEntity request = new FileEntity(source);
-
-        CxHttpClient uploader = createHttpClient(uploadUrl);
-
-        // Relative path is empty, because we use the whole upload URL as the base URL for the HTTP client.
-        // Content type is empty, because the server at uploadUrl throws an error if Content-Type is non-empty.
-        uploader.putRequest("", "", request, JsonNode.class, HttpStatus.SC_OK, "upload ZIP file");
-    }
-
+   
     private void printWebReportLink(AstScaResults scaResult) {
         if (!StringUtils.isEmpty(scaResult.getWebReportLink())) {
             log.info("{} scan results location: {}", getScannerDisplayName(), scaResult.getWebReportLink());

@@ -124,8 +124,8 @@ public class AstSastClient extends AstClient implements Scanner {
             if (locationType == SourceLocationType.REMOTE_REPOSITORY) {
                 response = submitSourcesFromRemoteRepo(astConfig, config.getProjectName());
             } else {
-                throw new NotImplementedException("The upload flow is not yet supported.");
-            }
+                
+                response = submitAllSourcesFromLocalDir(config.getProjectName(), astConfig.getZipFilePath());            }
             scanId = extractScanIdFrom(response);
             astResults.setScanId(scanId);
         } catch (Exception e) {

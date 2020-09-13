@@ -14,8 +14,8 @@ import java.io.Serializable;
 @SuperBuilder
 public abstract class ASTConfig implements Serializable {
     private String apiUrl;
-
     private SourceLocationType sourceLocationType;
+    private String zipFilePath;
 
     /**
      * Must be specified if sourceLocationType is {@link SourceLocationType#REMOTE_REPOSITORY}

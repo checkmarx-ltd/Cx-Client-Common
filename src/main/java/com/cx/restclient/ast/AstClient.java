@@ -2,18 +2,24 @@ package com.cx.restclient.ast;
 
 import com.cx.restclient.ast.dto.common.*;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.PathFilter;
 import com.cx.restclient.dto.SourceLocationType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
+import com.cx.restclient.sast.utils.zip.CxZipUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -29,6 +35,20 @@ public abstract class AstClient {
 
     protected CxHttpClient httpClient;
 
+    protected static class UrlPaths {
+        public static final String CREATE_SCAN = "/api/scans";
+        public static final String GET_SCAN = "/api/scans/%s";
+        private static final String RISK_MANAGEMENT_API = "/risk-management/";
+        public static final String PROJECTS = RISK_MANAGEMENT_API + "projects";
+        public static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + "riskReports/%s/summary";
+        public static final String FINDINGS = RISK_MANAGEMENT_API + "riskReports/%s/vulnerabilities";
+        public static final String PACKAGES = RISK_MANAGEMENT_API + "riskReports/%s/packages";
+        public static final String LATEST_SCAN = RISK_MANAGEMENT_API + "riskReports?size=1&projectId=%s";
+        public static final String GET_UPLOAD_URL = "/api/uploads";
+        public static final String WEB_REPORT = "/#/projects/%s/reports/%s";
+        public static final String RESOLVING_CONFIGURATION_API = "/settings/projects/%s/resolving-configuration";
+    }
+    
     public AstClient(CxScanConfig config, Logger log) {
         validate(config, log);
         this.config = config;
@@ -187,4 +207,55 @@ public abstract class AstClient {
         String message = String.format("Failed to init %s client.", getScannerDisplayName());
         throw new CxClientException(message, e);
     }
+
+    protected HttpResponse submitAllSourcesFromLocalDir(String projectId, String zipFilePath) throws IOException {
+        log.info("Using local directory flow.");
+
+        PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
+        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
+        File zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
+
+        return initiateScanForUpload(projectId, zipFile, zipFilePath);
+    }
+
+    protected HttpResponse initiateScanForUpload(String projectId, File zipFile, String zipFilePath) throws IOException {
+        String uploadedArchiveUrl = getSourcesUploadUrl();
+        String cleanPath = uploadedArchiveUrl.split("\\?")[0];
+        log.info("Uploading to: {}", cleanPath);
+        uploadArchive(zipFile, uploadedArchiveUrl);
+
+        //delete only if path not specified in the config
+        if (StringUtils.isEmpty(zipFilePath)) {
+            CxZipUtils.deleteZippedSources(zipFile, config, log);
+        }
+
+        RemoteRepositoryInfo uploadedFileInfo = new RemoteRepositoryInfo();
+        uploadedFileInfo.setUrl(new URL(uploadedArchiveUrl));
+
+        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
+    }
+
+    private String getSourcesUploadUrl() throws IOException {
+        JsonNode response = httpClient.postRequest(AstScaClient.UrlPaths.GET_UPLOAD_URL, null, null, JsonNode.class,
+                HttpStatus.SC_OK, "get upload URL for sources");
+
+        if (response == null || response.get("url") == null) {
+            throw new CxClientException("Unable to get the upload URL.");
+        }
+
+        return response.get("url").asText();
+    }
+
+    private void uploadArchive(File source, String uploadUrl) throws IOException {
+        log.info("Uploading the zipped data.");
+
+        HttpEntity request = new FileEntity(source);
+
+        CxHttpClient uploader = createHttpClient(uploadUrl);
+
+        // Relative path is empty, because we use the whole upload URL as the base URL for the HTTP client.
+        // Content type is empty, because the server at uploadUrl throws an error if Content-Type is non-empty.
+        uploader.putRequest("", "", request, JsonNode.class, HttpStatus.SC_OK, "upload ZIP file");
+    }
+
 }

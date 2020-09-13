@@ -37,7 +37,7 @@ public class AstWaiter {
         AtomicInteger errorCounter = new AtomicInteger();
 
         try {
-            String urlPath = String.format(UrlPaths.GET_SCAN,
+            String urlPath = String.format(AstClient.UrlPaths.GET_SCAN,
                     URLEncoder.encode(scanId, AstScaClient.ENCODING));
 
             Awaitility.await()
