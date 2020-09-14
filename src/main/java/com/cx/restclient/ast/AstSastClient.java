@@ -17,16 +17,14 @@ import com.cx.restclient.ast.dto.sast.report.SummaryResponse;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.LoginSettings;
-import com.cx.restclient.dto.Results;
-import com.cx.restclient.dto.ScannerType;
-import com.cx.restclient.dto.SourceLocationType;
+import com.cx.restclient.dto.*;
 import com.cx.restclient.dto.scansummary.Severity;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.osa.dto.ClientType;
+import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.EnumUtils;
@@ -38,6 +36,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -135,6 +134,16 @@ public class AstSastClient extends AstClient implements Scanner {
         return astResults;
     }
 
+    protected HttpResponse submitAllSourcesFromLocalDir(String projectId, String zipFilePath) throws IOException {
+        log.info("Using local directory flow.");
+
+        PathFilter filter = new PathFilter("", "", log);
+        String sourceDir = config.getSourceDir();
+        File zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
+
+        return initiateScanForUpload(projectId, zipFile, zipFilePath);
+    }
+    
     @Override
     protected ScanConfig getScanConfig() {
         String presetName = config.getAstSastConfig().getPresetName();
