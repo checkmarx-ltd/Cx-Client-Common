@@ -32,6 +32,7 @@
         <sonar.organization>checkmarx-ltd</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.login>4749799b2183ff936d8003f0ba7faebe777dab11</sonar.login>
+        <sonar.projectName>Cx-Client-Common</sonar.projectName>
     </properties>
     <organization>
         <name>Checkmarx</name>
