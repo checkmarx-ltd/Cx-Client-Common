@@ -47,6 +47,7 @@ public class AstSastTest extends CommonClientTest {
         AstSastResults astSastResults = finalResults.getAstResults();
         Assert.assertNotNull("AST-SAST results are null.", astSastResults);
         Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(astSastResults.getScanId()));
+        Assert.assertTrue("Web report link is missing.", StringUtils.isNotEmpty(astSastResults.getWebReportLink()));
 
         validateFindings(astSastResults);
         validateSummary(astSastResults);
@@ -100,6 +101,7 @@ public class AstSastTest extends CommonClientTest {
     private static CxScanConfig getScanConfig() throws MalformedURLException {
         AstSastConfig astConfig = AstSastConfig.builder()
                 .apiUrl(prop("astSast.apiUrl"))
+                .webAppUrl(prop("astSast.webAppUrl"))
                 .clientSecret(prop("astSast.clientSecret"))
                 .clientId("CxFlow")
                 .sourceLocationType(SourceLocationType.REMOTE_REPOSITORY)

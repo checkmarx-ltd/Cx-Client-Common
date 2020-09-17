@@ -14,5 +14,6 @@ import java.util.List;
 public class AstSastResults extends Results implements Serializable {
     private String scanId;
     private AstSastSummaryResults summary;
+    private String webReportLink;
     private List<Finding> findings;
 }

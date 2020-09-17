@@ -17,7 +17,11 @@ import com.cx.restclient.ast.dto.sast.report.SummaryResponse;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.*;
+import com.cx.restclient.dto.LoginSettings;
+import com.cx.restclient.dto.PathFilter;
+import com.cx.restclient.dto.Results;
+import com.cx.restclient.dto.ScannerType;
+import com.cx.restclient.dto.SourceLocationType;
 import com.cx.restclient.dto.scansummary.Severity;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
@@ -38,8 +42,10 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -196,11 +202,20 @@ public class AstSastClient extends AstClient implements Scanner {
             List<Finding> findings = getFindings();
             result.setFindings(findings);
 
+            String projectLink = getWebReportLink(config.getAstSastConfig().getWebAppUrl());
+            result.setWebReportLink(projectLink);
+
             return result;
         } catch (IOException e) {
             String message = String.format("Error getting %s scan results.", getScannerDisplayName());
             throw new CxClientException(message, e);
         }
+    }
+
+    @Override
+    protected String getWebReportPath() throws UnsupportedEncodingException {
+        return String.format(WEB_PROJECT_PATH,
+                URLEncoder.encode(config.getProjectName(), ENCODING));
     }
 
     private AstSastSummaryResults getSummary() {

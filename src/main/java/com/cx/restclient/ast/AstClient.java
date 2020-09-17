@@ -1,8 +1,8 @@
 package com.cx.restclient.ast;
 
 import com.cx.restclient.ast.dto.common.*;
+import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.PathFilter;
 import com.cx.restclient.dto.SourceLocationType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
@@ -21,8 +21,10 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,6 +32,7 @@ public abstract class AstClient {
 
     private static final String LOCATION_HEADER = "Location";
     private static final String CREDENTIAL_TYPE_PASSWORD = "password";
+    protected static final String ENCODING = StandardCharsets.UTF_8.name();
 
     protected final CxScanConfig config;
     protected final Logger log;
@@ -41,8 +44,6 @@ public abstract class AstClient {
     public static final String RISK_MANAGEMENT_API = "/risk-management/";
     public static final String GET_UPLOAD_URL = "/api/uploads";
 
-    
-    
     public AstClient(CxScanConfig config, Logger log) {
         validate(config, log);
         this.config = config;
@@ -55,9 +56,11 @@ public abstract class AstClient {
 
     protected abstract HandlerRef getBranchToScan(RemoteRepositoryInfo repoInfo);
 
-    protected abstract HttpResponse submitAllSourcesFromLocalDir(String projectId, String zipFilePath) throws IOException ;
+    protected abstract HttpResponse submitAllSourcesFromLocalDir(String projectId, String zipFilePath) throws IOException;
 
-        protected CxHttpClient createHttpClient(String baseUrl) {
+    protected abstract String getWebReportPath() throws UnsupportedEncodingException;
+
+    protected CxHttpClient createHttpClient(String baseUrl) {
         log.debug("Creating HTTP client.");
         CxHttpClient client = new CxHttpClient(baseUrl,
                 config.getCxOrigin(),
@@ -155,6 +158,23 @@ public abstract class AstClient {
 
     protected URL getEffectiveRepoUrl(RemoteRepositoryInfo repoInfo) {
         return repoInfo.getUrl();
+    }
+
+    protected String getWebReportLink(String baseUrl) {
+        String result = null;
+        try {
+            if (StringUtils.isEmpty(baseUrl)) {
+                log.warn("Unable to generate web report link. Web app URL is not specified.");
+            } else {
+                String path = getWebReportPath();
+                result = UrlUtils.parseURLToString(baseUrl, path);
+            }
+        } catch (MalformedURLException e) {
+            log.warn("Unable to generate web report link. invalid web app URL.", e);
+        } catch (Exception e) {
+            log.warn("Unable to generate web report link. general error.", e);
+        }
+        return result;
     }
 
     /**
