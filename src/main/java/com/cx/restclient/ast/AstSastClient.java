@@ -32,7 +32,6 @@ import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.EnumUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -63,6 +62,7 @@ public class AstSastClient extends AstClient implements Scanner {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String API_VERSION = "*/*; version=0.1";
+    private static final String WEB_PROJECT_PATH = "/#/projects/%s/overview";
 
     private String scanId;
 
