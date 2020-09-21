@@ -1,15 +1,17 @@
 package com.cx.restclient.general;
 
 import com.cx.restclient.CxClientDelegator;
+import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
+import com.cx.restclient.ast.dto.sast.AstSastConfig;
 import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.ast.dto.sast.report.AstSastSummaryResults;
-import com.cx.restclient.ast.dto.sast.AstSastConfig;
 import com.cx.restclient.ast.dto.sast.report.Finding;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.SourceLocationType;
-import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
@@ -22,6 +24,8 @@ import java.util.List;
 
 @Slf4j
 public class AstSastTest extends CommonClientTest {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     //TODO : Fix this test
     @Test
     @Ignore("this test fails and needs to be fixed")
@@ -90,7 +94,27 @@ public class AstSastTest extends CommonClientTest {
 
         boolean someNodeListsAreEmpty = findings.stream().anyMatch(finding -> finding.getNodes().isEmpty());
         Assert.assertFalse("Some of the finding node lists are empty.", someNodeListsAreEmpty);
+
+        log.info("Validating each finding.");
+        findings.forEach(this::validateFinding);
     }
+
+    private void validateFinding(Finding finding) {
+        logFinding(finding);
+        Assert.assertTrue("State is missing.", StringUtils.isNotEmpty(finding.getState()));
+        Assert.assertTrue("Status is missing.", StringUtils.isNotEmpty(finding.getStatus()));
+        Assert.assertTrue("Severity is missing.", StringUtils.isNotEmpty(finding.getSeverity()));
+        Assert.assertTrue("Query name is missing.", StringUtils.isNotEmpty(finding.getQueryName()));
+    }
+
+    private void logFinding(Finding finding) {
+        try {
+            log.info("Validating finding: {}", objectMapper.writeValueAsString(finding));
+        } catch (JsonProcessingException e) {
+            Assert.fail("Error serializing finding to JSON.");
+        }
+    }
+
 
     private void validateInitialResults(ScanResults initialResults) {
         Assert.assertNotNull("Initial scan results are null.", initialResults);

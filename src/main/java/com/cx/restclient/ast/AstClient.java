@@ -27,6 +27,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class AstClient {
 
@@ -162,18 +163,23 @@ public abstract class AstClient {
 
     protected String getWebReportLink(String baseUrl) {
         String result = null;
+        String warning = null;
         try {
-            if (StringUtils.isEmpty(baseUrl)) {
-                log.warn("Unable to generate web report link. Web app URL is not specified.");
-            } else {
+            if (StringUtils.isNotEmpty(baseUrl)) {
                 String path = getWebReportPath();
                 result = UrlUtils.parseURLToString(baseUrl, path);
+            } else {
+                warning = "Web app URL is not specified.";
             }
         } catch (MalformedURLException e) {
-            log.warn("Unable to generate web report link. invalid web app URL.", e);
+            warning = "Invalid web app URL.";
         } catch (Exception e) {
-            log.warn("Unable to generate web report link. general error.", e);
+            warning = "General error.";
         }
+
+        Optional.ofNullable(warning)
+                .ifPresent(warn -> log.warn("Unable to generate web report link. {}", warn));
+
         return result;
     }
 
