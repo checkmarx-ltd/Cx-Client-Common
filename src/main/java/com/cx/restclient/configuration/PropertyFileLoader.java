@@ -41,10 +41,10 @@ public class PropertyFileLoader {
         Properties result = new Properties();
         try (FileReader fileReader = new FileReader(resourceUrl.getPath())) {
             result.load(fileReader);
+            log.debug("Loaded properties from {}", resourceUrl);
         } catch (IOException e) {
-            throw new CxClientException(String.format("Error loading the '%s' resource.", resourceUrl), e);
+            log.warn("Unable to load properties from {}, skipping. {}", resourceUrl, e.getMessage());
         }
-        log.debug("Loaded properties from {}", resourceUrl);
         return result;
     }
 
