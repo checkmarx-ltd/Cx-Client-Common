@@ -64,14 +64,14 @@ import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
  * SCA - Software Composition Analysis - is the successor of OSA.
  */
 public class AstScaClient extends AstClient implements Scanner {
-   private static final String RISK_MANAGEMENT_API = properties.get("astSca.urlPaths.riskManagementApi");
-    public static final String PROJECTS = RISK_MANAGEMENT_API + properties.get("astSca.urlPaths.projects");
-    public static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + properties.get("astSca.urlPaths.summaryReport");
-    public static final String FINDINGS = RISK_MANAGEMENT_API + properties.get("astSca.urlPaths.findings");
-    public static final String PACKAGES = RISK_MANAGEMENT_API + properties.get("astSca.urlPaths.packages");
-    public static final String LATEST_SCAN = RISK_MANAGEMENT_API + properties.get("astSca.urlPaths.latestScan");
-    public static final String WEB_REPORT = properties.get("astSca.urlPaths.webReport");
-    public static final String RESOLVING_CONFIGURATION_API = properties.get("astSca.urlPaths.resolvingConfigurationApi");
+   private static final String RISK_MANAGEMENT_API = properties.get("astSca.riskManagementApi");
+    public static final String PROJECTS = RISK_MANAGEMENT_API + properties.get("astSca.projects");
+    public static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + properties.get("astSca.summaryReport");
+    public static final String FINDINGS = RISK_MANAGEMENT_API + properties.get("astSca.findings");
+    public static final String PACKAGES = RISK_MANAGEMENT_API + properties.get("astSca.packages");
+    public static final String LATEST_SCAN = RISK_MANAGEMENT_API + properties.get("astSca.latestScan");
+    public static final String WEB_REPORT = properties.get("astSca.webReport");
+    public static final String RESOLVING_CONFIGURATION_API = properties.get("astSca.resolvingConfigurationApi");
 
 
     private static final String ENGINE_TYPE_FOR_API = "sca";

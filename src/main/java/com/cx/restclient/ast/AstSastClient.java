@@ -55,10 +55,10 @@ public class AstSastClient extends AstClient implements Scanner {
 
     private static final String ENGINE_TYPE_FOR_API = "sast";
     private static final String REF_TYPE_BRANCH = "branch";
-    private static final String SUMMARY_PATH = properties.get("astSast.urlPaths.scanSummary");
-    private static final String SCAN_RESULTS_PATH = properties.get("astSast.urlPaths.scanResults");
-    private static final String AUTH_PATH = properties.get("astSast.urlPaths.authentication");
-    private static final String WEB_PROJECT_PATH = properties.get("astSast.urlPaths.webProject");
+    private static final String SUMMARY_PATH = properties.get("astSast.scanSummary");
+    private static final String SCAN_RESULTS_PATH = properties.get("astSast.scanResults");
+    private static final String AUTH_PATH = properties.get("astSast.authentication");
+    private static final String WEB_PROJECT_PATH = properties.get("astSast.webProject");
     private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
 
     private static final int DEFAULT_PAGE_SIZE = 1000;

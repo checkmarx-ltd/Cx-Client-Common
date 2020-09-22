@@ -42,9 +42,9 @@ public abstract class AstClient {
     protected CxHttpClient httpClient;
 
     protected static final PropertyFileLoader properties = PropertyFileLoader.getDefaultInstance();
-    public static final String GET_SCAN = properties.get("ast.urlPaths.getScan");
-    public static final String CREATE_SCAN = properties.get("ast.urlPaths.createScan");
-    public static final String GET_UPLOAD_URL = properties.get("ast.urlPaths.getUploadUrl");
+    public static final String GET_SCAN = properties.get("ast.getScan");
+    public static final String CREATE_SCAN = properties.get("ast.createScan");
+    public static final String GET_UPLOAD_URL = properties.get("ast.getUploadUrl");
 
     public AstClient(CxScanConfig config, Logger log) {
         validate(config, log);
