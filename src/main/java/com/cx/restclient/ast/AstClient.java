@@ -3,6 +3,7 @@ package com.cx.restclient.ast;
 import com.cx.restclient.ast.dto.common.*;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.configuration.PropertyFileLoader;
 import com.cx.restclient.dto.SourceLocationType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
@@ -40,10 +41,10 @@ public abstract class AstClient {
 
     protected CxHttpClient httpClient;
 
-    public static final String GET_SCAN = "/api/scans/%s";
-    public static final String CREATE_SCAN = "/api/scans";
-    public static final String RISK_MANAGEMENT_API = "/risk-management/";
-    public static final String GET_UPLOAD_URL = "/api/uploads";
+    protected static final PropertyFileLoader properties = PropertyFileLoader.getDefaultInstance();
+    public static final String GET_SCAN = properties.get("ast.urlPaths.getScan");
+    public static final String CREATE_SCAN = properties.get("ast.urlPaths.createScan");
+    public static final String GET_UPLOAD_URL = properties.get("ast.urlPaths.getUploadUrl");
 
     public AstClient(CxScanConfig config, Logger log) {
         validate(config, log);

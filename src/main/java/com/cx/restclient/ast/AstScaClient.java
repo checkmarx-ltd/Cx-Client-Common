@@ -64,7 +64,7 @@ import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
  * SCA - Software Composition Analysis - is the successor of OSA.
  */
 public class AstScaClient extends AstClient implements Scanner {
-
+    private static final String RISK_MANAGEMENT_API = "/risk-management/";
     public static final String PROJECTS = RISK_MANAGEMENT_API + "projects";
     public static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + "riskReports/%s/summary";
     public static final String FINDINGS = RISK_MANAGEMENT_API + "riskReports/%s/vulnerabilities";
