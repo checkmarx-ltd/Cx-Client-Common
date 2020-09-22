@@ -3,11 +3,11 @@ package com.cx.restclient.general;
 import com.cx.restclient.CxClientDelegator;
 import com.cx.restclient.ast.dto.sca.AstScaConfig;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.configuration.PropertyFileLoader;
 import com.cx.restclient.dto.ProxyConfig;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
-import com.cx.utility.TestingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -15,38 +15,22 @@ import org.junit.BeforeClass;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Properties;
 
 @Slf4j
 public abstract class CommonClientTest {
     private static final String MAIN_PROPERTIES_FILE = "config.properties";
     public static final String OVERRIDE_FILE = "config-secrets.properties";
 
-    static Properties props;
+    private PropertyFileLoader props = new PropertyFileLoader(MAIN_PROPERTIES_FILE, OVERRIDE_FILE);
 
-    @BeforeClass
-    public static void initTest() throws IOException {
-        props = TestingUtils.getProps(MAIN_PROPERTIES_FILE, CommonClientTest.class);
-        loadOverrides(props);
+    protected String prop(String key) {
+        return props.get(key);
     }
 
-    protected static String prop(String key) {
-        return props.getProperty(key);
-    }
-
-    private static void loadOverrides(Properties targetProps) {
-        try {
-            Properties overridingProps = TestingUtils.getProps(OVERRIDE_FILE, CommonClientTest.class);
-            targetProps.putAll(overridingProps);
-        } catch (IOException e) {
-            log.warn("Failed to load property overrides.");
-        }
-    }
-
-    protected static void setProxy(CxScanConfig config) {
+    protected void setProxy(CxScanConfig config) {
         ProxyConfig proxyConfig = new ProxyConfig();
-        proxyConfig.setHost(props.getProperty("proxy.host"));
-        proxyConfig.setPort(Integer.parseInt(props.getProperty("proxy.port")));
+        proxyConfig.setHost(prop("proxy.host"));
+        proxyConfig.setPort(Integer.parseInt(prop("proxy.port")));
         config.setProxyConfig(proxyConfig);
     }
 
@@ -57,10 +41,10 @@ public abstract class CommonClientTest {
 
     protected CxScanConfig initSastConfig(CxScanConfig config, String projectName) {
         config.setReportsDir(new File("C:\\report"));
-        config.setSourceDir(props.getProperty("sastSource"));
-        config.setUsername(props.getProperty("username"));
-        config.setPassword(props.getProperty("password"));
-        config.setUrl(props.getProperty("serverUrl"));
+        config.setSourceDir(prop("sastSource"));
+        config.setUsername(prop("username"));
+        config.setPassword(prop("password"));
+        config.setUrl(prop("serverUrl"));
         config.setCxOrigin("common");
         config.setProjectName(projectName);
         config.setPresetName("Default");
@@ -74,16 +58,27 @@ public abstract class CommonClientTest {
         return config;
     }
 
-    protected static CxScanConfig initScaConfig(boolean useOnPremAuthentication){
-        CxScanConfig config = new CxScanConfig();
-        config.addScannerType(ScannerType.AST_SCA);
-        config.setSastEnabled(false);
-        config.setProjectName(props.getProperty("astSca.projectName"));
-        config.setOsaProgressInterval(5);
-        AstScaConfig sca = TestingUtils.getScaConfig(props, useOnPremAuthentication);
-        config.setAstScaConfig(sca);
+    protected AstScaConfig getScaConfig(boolean useOnPremiseAuthentication) {
+        String accessControlProp, usernameProp, passwordProp;
+        if (useOnPremiseAuthentication) {
+            accessControlProp = "astSca.onPremise.accessControlUrl";
+            usernameProp = "astSca.onPremise.username";
+            passwordProp = "astSca.onPremise.password";
+        } else {
+            accessControlProp = "astSca.cloud.accessControlUrl";
+            usernameProp = "astSca.cloud.username";
+            passwordProp = "astSca.cloud.password";
+        }
 
-        return config;
+        AstScaConfig result = new AstScaConfig();
+        result.setApiUrl(prop("astSca.apiUrl"));
+        result.setWebAppUrl(prop("astSca.webAppUrl"));
+        result.setTenant(prop("astSca.tenant"));
+        result.setAccessControlUrl(prop(accessControlProp));
+        result.setUsername(prop(usernameProp));
+        result.setPassword(prop(passwordProp));
+        result.setIncludeSources(false);
+        return result;
     }
 
     protected ScanResults runScan(CxScanConfig config) throws MalformedURLException, CxClientException {
@@ -106,11 +101,11 @@ public abstract class CommonClientTest {
     protected CxScanConfig initOsaConfig(CxScanConfig config, String projectName) {
         log.info("Scan ProjectName " + projectName);
         config.addScannerType(ScannerType.OSA);
-        config.setSourceDir(props.getProperty("dependencyScanSourceDir"));
+        config.setSourceDir(prop("dependencyScanSourceDir"));
         config.setReportsDir(new File("C:\\report"));
-        config.setUrl(props.getProperty("serverUrl"));
-        config.setUsername(props.getProperty("username"));
-        config.setPassword(props.getProperty("password"));
+        config.setUrl(prop("serverUrl"));
+        config.setUsername(prop("username"));
+        config.setPassword(prop("password"));
 
         config.setCxOrigin("common");
         config.setProjectName(projectName);

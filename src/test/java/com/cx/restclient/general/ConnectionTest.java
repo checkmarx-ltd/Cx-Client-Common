@@ -5,7 +5,6 @@ import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.ast.dto.sca.AstScaConfig;
-import com.cx.utility.TestingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -37,7 +36,7 @@ public class ConnectionTest extends CommonClientTest {
     public void scaConnectionTest() {
         CxScanConfig config = new CxScanConfig();
         config.setCxOrigin("common");
-        AstScaConfig scaConfig = TestingUtils.getScaConfig(props, false);
+        AstScaConfig scaConfig = getScaConfig(false);
         config.setAstScaConfig(scaConfig);
         config.addScannerType(ScannerType.AST_SCA);
         try {
@@ -52,9 +51,9 @@ public class ConnectionTest extends CommonClientTest {
         CxScanConfig config = new CxScanConfig();
         config.setSastEnabled(true);
         config.setUseSSOLogin(true);
-        config.setUsername(props.getProperty("username"));
-        config.setPassword(props.getProperty("password"));
-        config.setUrl(props.getProperty("serverUrl"));
+        config.setUsername(prop("username"));
+        config.setPassword(prop("password"));
+        config.setUrl(prop("serverUrl"));
         config.setCxOrigin("common");
 
         return config;

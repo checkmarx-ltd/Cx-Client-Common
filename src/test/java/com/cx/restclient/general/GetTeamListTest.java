@@ -34,9 +34,9 @@ public class GetTeamListTest extends CommonClientTest {
 
     private CxScanConfig initConfig() {
         CxScanConfig config = new CxScanConfig();
-        config.setUsername(props.getProperty("username"));
-        config.setPassword(props.getProperty("password"));
-        config.setUrl(props.getProperty("serverUrl"));
+        config.setUsername(prop("username"));
+        config.setPassword(prop("password"));
+        config.setUrl(prop("serverUrl"));
         config.setCxOrigin("common");
         return config;
     }

@@ -46,7 +46,7 @@ public class ClientTypeResolverTest extends CommonClientTest {
         }
     }
 
-    private static void testDetermineClientType(String urlPropName) {
+    private void testDetermineClientType(String urlPropName) {
         ClientTypeResolver resolver = new ClientTypeResolver();
         ClientType clientType = resolver.determineClientType(prop(urlPropName));
         Assert.assertNotNull("Client type is null.", clientType);

@@ -122,7 +122,7 @@ public class AstSastTest extends CommonClientTest {
         Assert.assertTrue("Scan ID is missing.", StringUtils.isNotEmpty(initialResults.getAstResults().getScanId()));
     }
 
-    private static CxScanConfig getScanConfig() throws MalformedURLException {
+    private CxScanConfig getScanConfig() throws MalformedURLException {
         AstSastConfig astConfig = AstSastConfig.builder()
                 .apiUrl(prop("astSast.apiUrl"))
                 .webAppUrl(prop("astSast.webAppUrl"))
