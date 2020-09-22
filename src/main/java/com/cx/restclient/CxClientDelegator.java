@@ -2,24 +2,22 @@ package com.cx.restclient;
 
 import com.cx.restclient.ast.AstSastClient;
 import com.cx.restclient.ast.AstScaClient;
+import com.cx.restclient.ast.dto.sca.AstScaResults;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.summary.SummaryUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-
+import com.cx.restclient.configuration.PropertyFileLoader;
 import com.cx.restclient.dto.Results;
 import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
-import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
-import com.cx.restclient.ast.dto.sca.AstScaResults;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 
 import java.net.MalformedURLException;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
-import java.util.Properties;
 
 import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_COMPLIANT_STATUS;
 import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_VIOLATED_STATUS;
@@ -30,13 +28,14 @@ import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
  */
 
 public class CxClientDelegator implements Scanner {
+    private static PropertyFileLoader properties = PropertyFileLoader.getDefaultInstance();
 
     private static final String PRINT_LINE = "-----------------------------------------------------------------------------------------";
 
     private Logger log;
     private CxScanConfig config;
 
-    Map<ScannerType, Scanner> scannersMap = new HashMap<>();
+    Map<ScannerType, Scanner> scannersMap = new EnumMap<>(ScannerType.class);
 
     public CxClientDelegator(CxScanConfig config, Logger log) throws MalformedURLException {
 
@@ -64,25 +63,9 @@ public class CxClientDelegator implements Scanner {
         this(new CxScanConfig(serverUrl, username, password, origin, disableCertificateValidation), log);
     }
 
-    //API Scans methods
-    public String getClientVersion() {
-        String version = "";
-        try {
-            Properties properties = new Properties();
-            java.io.InputStream is = getClass().getClassLoader().getResourceAsStream("common.properties");
-            if (is != null) {
-                properties.load(is);
-                version = properties.getProperty("version");
-            }
-        } catch (Exception e) {
-            throw new CxClientException(e.getMessage());
-        }
-        return version;
-    }
-
     @Override
     public void init() {
-        log.info("Initializing Cx client [" + getClientVersion() + "]");
+        log.info("Initializing Cx client [{}]", properties.get("version"));
         scannersMap.values().forEach(Scanner::init);
     }
 
@@ -154,10 +137,10 @@ public class CxClientDelegator implements Scanner {
             } else {
                 log.info(PROJECT_POLICY_VIOLATED_STATUS);
                 if (hasSastPolicies) {
-                    log.info("SAST violated policies names: " + getPoliciesNames(sastResults.getSastPolicies()));
+                    log.info("SAST violated policies names: {}", getPoliciesNames(sastResults.getSastPolicies()));
                 }
                 if (hasOsaViolations) {
-                    log.info("OSA violated policies names: " + getPoliciesNames(osaResults.getOsaPolicies()));
+                    log.info("OSA violated policies names: {}", getPoliciesNames(osaResults.getOsaPolicies()));
                 }
                 log.info(PRINT_LINE);
             }

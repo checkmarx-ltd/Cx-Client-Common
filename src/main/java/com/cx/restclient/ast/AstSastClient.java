@@ -17,7 +17,6 @@ import com.cx.restclient.ast.dto.sast.report.SummaryResponse;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.configuration.PropertyFileLoader;
 import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.PathFilter;
 import com.cx.restclient.dto.Results;
@@ -51,8 +50,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class AstSastClient extends AstClient implements Scanner {
-    private static final PropertyFileLoader properties = PropertyFileLoader.getDefaultInstance();
-
     private static final String ENGINE_TYPE_FOR_API = "sast";
     private static final String REF_TYPE_BRANCH = "branch";
     private static final String SUMMARY_PATH = properties.get("astSast.scanSummary");
