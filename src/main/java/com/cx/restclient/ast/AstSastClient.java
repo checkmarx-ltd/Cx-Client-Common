@@ -17,6 +17,7 @@ import com.cx.restclient.ast.dto.sast.report.SummaryResponse;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.configuration.PropertyFileLoader;
 import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.PathFilter;
 import com.cx.restclient.dto.Results;
@@ -50,11 +51,14 @@ import java.util.List;
 import java.util.Optional;
 
 public class AstSastClient extends AstClient implements Scanner {
+    private static final PropertyFileLoader properties = PropertyFileLoader.getDefaultInstance();
+
     private static final String ENGINE_TYPE_FOR_API = "sast";
     private static final String REF_TYPE_BRANCH = "branch";
-    private static final String SUMMARY_PATH = "/api/scan-summary";     // NOSONAR: changes in these paths are very unlikely
-    private static final String SCAN_RESULTS_PATH = "/api/results";     // NOSONAR
-    private static final String AUTH_PATH = "/auth/realms/organization/protocol/openid-connect/token";     // NOSONAR
+    private static final String SUMMARY_PATH = properties.get("astSast.urlPaths.scanSummary");
+    private static final String SCAN_RESULTS_PATH = properties.get("astSast.urlPaths.scanResults");
+    private static final String AUTH_PATH = properties.get("astSast.urlPaths.authentication");
+    private static final String WEB_PROJECT_PATH = properties.get("astSast.urlPaths.webProject");
     private static final String URL_PARSING_EXCEPTION = "URL parsing exception.";
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
@@ -62,7 +66,6 @@ public class AstSastClient extends AstClient implements Scanner {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String API_VERSION = "*/*; version=0.1";
-    private static final String WEB_PROJECT_PATH = "/#/projects/%s/overview";
 
     private String scanId;
 
