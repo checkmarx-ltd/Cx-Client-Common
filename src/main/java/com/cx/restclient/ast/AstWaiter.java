@@ -20,7 +20,7 @@ import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.cx.restclient.ast.AstClient.GET_SCAN;
+import static com.cx.restclient.ast.AstClient.ENCODING;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -39,8 +39,7 @@ public class AstWaiter {
         AtomicInteger errorCounter = new AtomicInteger();
 
         try {
-            String urlPath = String.format(GET_SCAN,
-                    URLEncoder.encode(scanId, AstScaClient.ENCODING));
+            String urlPath = String.format(AstClient.GET_SCAN, URLEncoder.encode(scanId, ENCODING));
 
             Awaitility.await()
                     .atMost(timeout)
