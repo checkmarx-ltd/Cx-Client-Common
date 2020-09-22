@@ -2,12 +2,14 @@ package com.cx.restclient.configuration;
 
 import com.cx.restclient.exception.CxClientException;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 
+@Slf4j
 public class PropertyFileLoader {
     private static final String DEFAULT_FILENAME = "common.properties";
 
@@ -29,24 +31,31 @@ public class PropertyFileLoader {
 
         properties = new Properties();
         for (String filename : filenames) {
-            Properties singleFileProperties = getPropertiesFromResource(filename);
+            URL url = getResourceUrl(filename);
+            Properties singleFileProperties = getPropertiesFromResource(url);
             properties.putAll(singleFileProperties);
         }
     }
 
-    private Properties getPropertiesFromResource(String filename) {
+    private Properties getPropertiesFromResource(URL resourceUrl) {
         Properties result = new Properties();
+        try (FileReader fileReader = new FileReader(resourceUrl.getPath())) {
+            result.load(fileReader);
+        } catch (IOException e) {
+            throw new CxClientException(String.format("Error loading the '%s' resource.", resourceUrl), e);
+        }
+        log.debug("Loaded properties from {}", resourceUrl);
+        return result;
+    }
+
+    private URL getResourceUrl(String filename) {
+        log.debug("Getting resource URL for a property file: {}", filename);
         ClassLoader classLoader = this.getClass().getClassLoader();
-        URL resource = classLoader.getResource(filename);
-        if (resource == null) {
+        URL result = classLoader.getResource(filename);
+        if (result == null) {
             throw new CxClientException(String.format("Resource '%s' is not found.", filename));
         }
-        try {
-            result.load(new FileReader(resource.getFile()));
-        } catch (IOException e) {
-            throw new CxClientException(String.format("Error loading the '%s' resource.", filename), e);
-        }
-
+        log.debug("Property file URL: {}", result);
         return result;
     }
 
