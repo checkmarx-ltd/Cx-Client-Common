@@ -19,7 +19,7 @@ import java.net.MalformedURLException;
 @Slf4j
 public abstract class CommonClientTest {
     private static final String MAIN_PROPERTIES_FILE = "config.properties";
-    public static final String OVERRIDE_FILE = "config-secrets11111111111.properties";
+    public static final String OVERRIDE_FILE = "config-secrets.properties";
 
     private PropertyFileLoader props = new PropertyFileLoader(MAIN_PROPERTIES_FILE, OVERRIDE_FILE);
 
