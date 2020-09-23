@@ -4,9 +4,8 @@ import com.cx.restclient.exception.CxClientException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.Properties;
 
 @Slf4j
@@ -32,33 +31,23 @@ public class PropertyFileLoader {
 
         properties = new Properties();
         for (String filename : filenames) {
-            URL url = getResourceUrl(filename);
-            Properties singleFileProperties = getPropertiesFromResource(url);
+            Properties singleFileProperties = getPropertiesFromResource(filename);
             properties.putAll(singleFileProperties);
         }
     }
 
-    private Properties getPropertiesFromResource(URL resourceUrl) {
+    private Properties getPropertiesFromResource(String resourceName) {
         Properties result = new Properties();
-        if (resourceUrl != null) {
-            log.debug("Loading properties from resource: {}", resourceUrl);
-            try (FileReader fileReader = new FileReader(resourceUrl.getPath())) {
-                result.load(fileReader);
-            } catch (IOException e) {
-                throw new CxClientException(String.format("Error loading the '%s' resource.", resourceUrl), e);
-            }
-        }
-        return result;
-    }
 
-    private URL getResourceUrl(String filename) {
-        log.debug("Getting resource URL for a property file: {}", filename);
-        ClassLoader classLoader = this.getClass().getClassLoader();
-        URL result = classLoader.getResource(filename);
-        if (result != null) {
-            log.debug("Property file URL: {}", result);
-        } else {
-            log.warn("Unable to find resource: {}, skipping.", filename);
+        log.debug("Loading properties from resource: {}", resourceName);
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream(resourceName)) {
+            if (input != null) {
+                result.load(input);
+            } else {
+                log.warn("Unable to find resource: {}, skipping.", resourceName);
+            }
+        } catch (IOException e) {
+            throw new CxClientException(String.format("Error loading the '%s' resource.", resourceName), e);
         }
         return result;
     }

@@ -28,7 +28,7 @@ import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
  */
 
 public class CxClientDelegator implements Scanner {
-    private static PropertyFileLoader properties = PropertyFileLoader.getDefaultInstance();
+    private static final PropertyFileLoader properties = PropertyFileLoader.getDefaultInstance();
 
     private static final String PRINT_LINE = "-----------------------------------------------------------------------------------------";
 
