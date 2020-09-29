@@ -67,7 +67,7 @@ public abstract class AstClient {
         CxHttpClient client = new CxHttpClient(baseUrl,
                 config.getCxOrigin(),
                 config.isDisableCertificateValidation(),
-                config.isUseSSOLogin(),
+                false,      // AST clients don't support SSO.
                 null,
                 config.getProxyConfig(),
                 log);
