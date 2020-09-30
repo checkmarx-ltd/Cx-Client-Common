@@ -98,7 +98,7 @@ public class CxHttpClient {
     private static final String PASSWORD_PROP = "password";
     public static final String CLIENT_ID_PROP = "client_id";
 
-    private static HttpClient apacheClient;
+    private HttpClient apacheClient;
 
     private Logger log;
     private TokenLoginResponse token;
