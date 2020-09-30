@@ -55,9 +55,9 @@ public class ConnectionTest extends CommonClientTest {
         config.setPassword(prop("password"));
         config.setUrl(prop("serverUrl"));
         config.setCxOrigin("common");
-
+        config.setTeamPath("\\CxServer");
+        config.setPresetName("Checkmarx Default");
+        config.setProjectName("testSSO");
         return config;
     }
-
-
 }
