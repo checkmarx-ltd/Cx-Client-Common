@@ -254,7 +254,7 @@ public class AstScaClient extends AstClient implements Scanner {
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
         byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
 
-        return initiateScanForUpload(projectId, zipFile, zipFilePath);
+        return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig());
     }
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
@@ -288,7 +288,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         optionallyWriteFingerprintsToFile(fingerprints);
 
-        return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig.getZipFilePath());
+        return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig);
     }
 
 

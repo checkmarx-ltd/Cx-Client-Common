@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 @Getter
 @Setter
@@ -25,4 +26,5 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String fingerprintsIncludePattern;
     private String manifestsIncludePattern;
     private String fingerprintFilePath;
+    private HashMap<String,String> envVariables;
 }

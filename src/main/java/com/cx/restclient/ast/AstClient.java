@@ -236,7 +236,7 @@ public abstract class AstClient {
         results.setException(new CxClientException(message, e));
     }
 
-    protected HttpResponse initiateScanForUpload(String projectId, byte[] zipFile, String zipFilePath) throws IOException {
+    protected HttpResponse initiateScanForUpload(String projectId, byte[] zipFile, ASTConfig scanConfig) throws IOException {
         String uploadedArchiveUrl = getSourcesUploadUrl();
         String cleanPath = uploadedArchiveUrl.split("\\?")[0];
         log.info("Uploading to: {}", cleanPath);
