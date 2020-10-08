@@ -3,10 +3,8 @@ package com.cx.restclient.ast;
 import com.cx.restclient.ast.dto.common.HandlerRef;
 import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
 import com.cx.restclient.ast.dto.common.ScanConfig;
-import com.cx.restclient.ast.dto.sca.AstScaConfig;
-import com.cx.restclient.ast.dto.sca.AstScaResults;
-import com.cx.restclient.ast.dto.sca.CreateProjectRequest;
-import com.cx.restclient.ast.dto.sca.Project;
+import com.cx.restclient.ast.dto.common.ScanConfigValue;
+import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
 import com.cx.restclient.ast.dto.sca.report.Finding;
 import com.cx.restclient.ast.dto.sca.report.Package;
@@ -112,9 +110,18 @@ public class AstScaClient extends AstClient implements Scanner {
 
     @Override
     protected ScanConfig getScanConfig() {
+
+        HashMap<String, String> envVariables = config.getAstScaConfig().getEnvVariables();
+
+        ScanConfigValue configValue = ScaScanConfigValue.builder()
+                .additionalMetadata(envVariables)
+                .build();
+
         return ScanConfig.builder()
                 .type(ENGINE_TYPE_FOR_API)
+                .value(configValue)
                 .build();
+
     }
 
     @Override
