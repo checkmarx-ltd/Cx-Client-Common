@@ -38,6 +38,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -111,10 +112,20 @@ public class AstScaClient extends AstClient implements Scanner {
     @Override
     protected ScanConfig getScanConfig() {
 
+        String sastProjectId = config.getAstScaConfig().getSastProjectId();
+        String sastServerUrl = config.getAstScaConfig().getSastServerUrl();
+        String sastUsername = config.getAstScaConfig().getSastUsername();
+        String sastPassword = config.getAstScaConfig().getSastPassword();
+
         HashMap<String, String> envVariables = config.getAstScaConfig().getEnvVariables();
+        JSONObject envJsonString = new JSONObject(envVariables);
 
         ScanConfigValue configValue = ScaScanConfigValue.builder()
-                .additionalMetadata(envVariables)
+                .environmentVariables(envJsonString.toString())
+                .sastProjectId(sastProjectId)
+                .sastServerUrl(sastServerUrl)
+                .sastUsername(sastUsername)
+                .sastPassword(sastPassword)
                 .build();
 
         return ScanConfig.builder()

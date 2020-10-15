@@ -10,6 +10,7 @@ import java.util.HashMap;
 @Getter
 @Setter
 public class AstScaConfig extends ASTConfig implements Serializable {
+
     private String accessControlUrl;
     private String username;
     private String password;
@@ -26,5 +27,10 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String fingerprintsIncludePattern;
     private String manifestsIncludePattern;
     private String fingerprintFilePath;
+    private String sastProjectId;
+    private String sastServerUrl;
+    private String sastUsername;
+    private String sastPassword;
     private HashMap<String,String> envVariables;
+
 }

@@ -17,5 +17,10 @@ import java.util.Map;
 @AllArgsConstructor
 public class ScaScanConfigValue implements ScanConfigValue {
 
-    private Map<String, String> additionalMetadata;
+    private String environmentVariables;
+    private String sastProjectId;
+    private String sastServerUrl;
+    private String sastUsername;
+    private String sastPassword;
+
 }
