@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 
 @Getter
 @Setter
@@ -32,5 +33,6 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String sastUsername;
     private String sastPassword;
     private HashMap<String,String> envVariables;
+    private List<String> configFilePaths;
 
 }
