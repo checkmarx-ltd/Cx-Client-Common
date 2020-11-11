@@ -146,7 +146,8 @@ public abstract class LegacyClient {
                     config.getRefreshToken(),
                     config.isProxy(),
                     config.getProxyConfig(),
-                    log);
+                    log,
+                    config.getNTLM());
         }
     }
 

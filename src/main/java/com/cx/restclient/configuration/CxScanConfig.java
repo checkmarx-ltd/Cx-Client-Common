@@ -113,6 +113,7 @@ public class CxScanConfig implements Serializable {
     private final List<Cookie> sessionCookies = new ArrayList<>();
     private Boolean isProxy = true;
     private ProxyConfig proxyConfig;
+    private Boolean useNTLM=false;
 
 
     public CxScanConfig() {
@@ -810,5 +811,13 @@ public class CxScanConfig implements Serializable {
 
     public void setToken(TokenLoginResponse token) {
         this.token = token;
+    }
+
+    public Boolean getNTLM() {
+        return useNTLM;
+    }
+
+    public void setNTLM(Boolean ntlm) {
+        useNTLM = ntlm;
     }
 }

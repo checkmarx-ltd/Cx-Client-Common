@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.*;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
@@ -22,6 +23,7 @@ import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
+import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -62,10 +64,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.cx.restclient.common.CxPARAM.*;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
@@ -88,6 +87,8 @@ public class CxHttpClient implements Closeable {
     public static final String REFRESH_TOKEN_PROP = "refresh_token";
     private static final String PASSWORD_PROP = "password";
     public static final String CLIENT_ID_PROP = "client_id";
+    private static final String KEY_USER = "user";
+    private static final String KEY_DOMAIN = "domain";
 
     private HttpClient apacheClient;
 
@@ -97,6 +98,7 @@ public class CxHttpClient implements Closeable {
     private final String refreshToken;
     private String cxOrigin;
     private Boolean useSSo;
+    private Boolean useNTLM;
     private LoginSettings lastLoginSettings;
     private String teamPath;
     private CookieStore cookieStore = new BasicCookieStore();
@@ -105,12 +107,13 @@ public class CxHttpClient implements Closeable {
 
 
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log) throws CxClientException {
+                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
         this.log = log;
         this.rootUri = rootUri;
         this.refreshToken = refreshToken;
         this.cxOrigin = origin;
         this.useSSo = isSSO;
+        this.useNTLM = useNTLM;
         //create httpclient
         cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
         setSSLTls("TLSv1.2", log);
@@ -151,8 +154,13 @@ public class CxHttpClient implements Closeable {
             cb.setConnectionReuseStrategy(new NoConnectionReuseStrategy());
         }
         cb.setDefaultAuthSchemeRegistry(getAuthSchemeProviderRegistry());
-        apacheClient = cb.build();
-    }
+
+        if (useNTLM)
+        {
+            setNTLMProxy(proxyConfig, cb, log);
+        }
+        else apacheClient = cb.build();
+}
 
     @Deprecated
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
@@ -202,6 +210,72 @@ public class CxHttpClient implements Closeable {
         apacheClient = cb.build();
     }
 
+        private void setNTLMProxy(ProxyConfig proxyConfig, HttpClientBuilder cb, Logger log) {
+
+        if (proxyConfig == null ||
+                StringUtils.isEmpty(proxyConfig.getHost()) ||
+                proxyConfig.getPort() == 0) {
+            log.info("Proxy configuration not provided.");
+            apacheClient = cb.build();
+            return;
+        }
+
+        log.info("Setting NTLM proxy for Checkmarx http client");
+        HttpHost proxy = new HttpHost(proxyConfig.getHost(), proxyConfig.getPort(), "http");
+
+        HashMap<String, String> userDomainMap = splitDomainAndTheUserName(proxyConfig.getUsername());
+        String user = userDomainMap.get(KEY_USER);
+        String domain = userDomainMap.get(KEY_DOMAIN);
+
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        final NTCredentials credentials = new NTCredentials(user, proxyConfig.getPassword(), null, domain);
+        credsProvider.setCredentials(AuthScope.ANY, credentials);
+
+        apacheClient = HttpClientBuilder.create()
+                .setDefaultCredentialsProvider(credsProvider)
+                .setProxy(proxy)
+                .setProxyAuthenticationStrategy(ProxyAuthenticationStrategy.INSTANCE)
+                .setDefaultRequestConfig(RequestConfig.custom()
+                        .setAuthenticationEnabled(true)
+                        .setProxyPreferredAuthSchemes(Arrays.asList(AuthPolicy.NTLM))
+                        .build()
+                )
+                .build();
+    }
+
+    private static HashMap<String,String> splitDomainAndTheUserName(String userName)
+    {
+        String domain="";
+        String user="";
+        // If the username has a backslash, then the domain is the first part and the username is the second part
+        if (userName.contains("\\")) {
+            String[] parts = userName.split("[\\\\]");
+            if (parts.length == 2) {
+                domain = parts[0];
+                user = parts[1];
+            }
+        } else if (userName.contains("/")) {
+            // If the username has a slash, then the domain is the first part and the username is the second part
+            String[] parts = userName.split("[/]");
+            if (parts.length == 2) {
+                domain = parts[0];
+                user = parts[1];
+            }
+        } else if (userName.contains("@")) {
+            // If the username has an asterisk, then the domain is the second part and the username is the first part
+            String[] parts = userName.split("[@]");
+            if (parts.length == 2) {
+                user = parts[0];
+                domain = parts[1];
+            }
+        }
+
+        HashMap<String,String> userDomain = new HashMap<String,String>();
+        userDomain.put(KEY_USER,user);
+        userDomain.put(KEY_DOMAIN, domain);
+        return userDomain;
+    }
+
     private static boolean setCustomProxy(HttpClientBuilder cb, ProxyConfig proxyConfig, Logger logi) {
         if (proxyConfig == null ||
                 StringUtils.isEmpty(proxyConfig.getHost()) ||
@@ -213,10 +287,10 @@ public class CxHttpClient implements Closeable {
         HttpHost proxy = new HttpHost(proxyConfig.getHost(), proxyConfig.getPort(), scheme);
         if (StringUtils.isNotEmpty(proxyConfig.getUsername()) &&
                 StringUtils.isNotEmpty(proxyConfig.getPassword())) {
-            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
-            CredentialsProvider credsProvider = new BasicCredentialsProvider();
-            credsProvider.setCredentials(new AuthScope(proxy), credentials);
-            cb.setDefaultCredentialsProvider(credsProvider);
+                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
+                CredentialsProvider credsProvider = new BasicCredentialsProvider();
+                credsProvider.setCredentials(new AuthScope(proxy), credentials);
+                cb.setDefaultCredentialsProvider(credsProvider);
         }
 
         logi.info("Setting proxy for Checkmarx http client");

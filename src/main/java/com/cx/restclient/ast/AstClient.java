@@ -73,7 +73,8 @@ public abstract class AstClient {
                 null,
                 config.isProxy(),
                 config.getProxyConfig(),
-                log);
+                log,
+                config.getNTLM());
         //initializing Team Path to prevent null pointer in login when called from automation
         client.setTeamPathHeader("");
 
