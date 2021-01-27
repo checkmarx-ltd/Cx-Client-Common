@@ -355,6 +355,7 @@ public class CxHttpClient implements Closeable {
 
     public void login(LoginSettings settings) throws IOException {
         lastLoginSettings = settings;
+        log.info("Print lastLoginSettings: " + lastLoginSettings);
 
         if (!settings.getSessionCookies().isEmpty()) {
             setSessionCookies(settings.getSessionCookies());
@@ -364,6 +365,7 @@ public class CxHttpClient implements Closeable {
         if (settings.getRefreshToken() != null) {
             token = getAccessTokenFromRefreshToken(settings);
         } else if (Boolean.TRUE.equals(useSSo)) {
+            log.info("Is it Use SSO?");
             if (settings.getVersion().equals("lower than 9.0")) {
                 ssoLegacyLogin();
             } else {
@@ -375,6 +377,7 @@ public class CxHttpClient implements Closeable {
         } else {
             token = generateToken(settings);
         }
+        log.info("Got token");
     }
 
     public ArrayList<Cookie> ssoLegacyLogin() {
