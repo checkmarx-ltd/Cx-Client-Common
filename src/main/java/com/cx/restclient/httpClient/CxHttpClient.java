@@ -119,25 +119,13 @@ public class CxHttpClient implements Closeable {
         //create httpclient
         cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
         setSSLTls("TLSv1.2", log);
-        SSLContextBuilder builder = new SSLContextBuilder();
-        SSLConnectionSocketFactory sslConnectionSocketFactory = null;
-        Registry<ConnectionSocketFactory> registry;
-        PoolingHttpClientConnectionManager cm = null;
         if (disableSSLValidation) {
             try {
-                builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-                sslConnectionSocketFactory = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
-                registry = RegistryBuilder.<ConnectionSocketFactory>create()
-                        .register("http", new PlainConnectionSocketFactory())
-                        .register(HTTPS, sslConnectionSocketFactory)
-                        .build();
-                cm = new PoolingHttpClientConnectionManager(registry);
-                cm.setMaxTotal(100);
-            } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-                log.error(e.getMessage());
+                cb.setSSLSocketFactory(getTrustAllSSLSocketFactory());
+                cb.setConnectionManager(getHttpConnectionManager(true));
+            } catch (CxClientException e) {
+                log.warn("Failed to disable certificate verification: " + e.getMessage());
             }
-            cb.setSSLSocketFactory(sslConnectionSocketFactory);
-            cb.setConnectionManager(cm);
         } else {
             cb.setConnectionManager(getHttpConnectionManager(false));
         }
@@ -157,18 +145,16 @@ public class CxHttpClient implements Closeable {
         }
         cb.setDefaultAuthSchemeRegistry(getAuthSchemeProviderRegistry());
 
-        if (useNTLM)
-        {
+        if (useNTLM) {
             setNTLMProxy(proxyConfig, cb, log);
-        }
-        else apacheClient = cb.build();
-}
+        } else apacheClient = cb.build();
+    }
 
-	public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-			boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
-		this(rootUri,origin ,disableSSLValidation, isSSO, refreshToken, isProxy,proxyConfig, log , useNTLM);
-		this.cxOriginUrl = originUrl;
-	}
+    public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
+                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM);
+        this.cxOriginUrl = originUrl;
+    }
 
     public void setRootUri(String rootUri) {
         this.rootUri = rootUri;
@@ -226,7 +212,7 @@ public class CxHttpClient implements Closeable {
         apacheClient = cb.build();
     }
 
-        private void setNTLMProxy(ProxyConfig proxyConfig, HttpClientBuilder cb, Logger log) {
+    private void setNTLMProxy(ProxyConfig proxyConfig, HttpClientBuilder cb, Logger log) {
 
         if (proxyConfig == null ||
                 StringUtils.isEmpty(proxyConfig.getHost()) ||
@@ -259,10 +245,9 @@ public class CxHttpClient implements Closeable {
                 .build();
     }
 
-    private static HashMap<String,String> splitDomainAndTheUserName(String userName)
-    {
-        String domain="";
-        String user="";
+    private static HashMap<String, String> splitDomainAndTheUserName(String userName) {
+        String domain = "";
+        String user = "";
         // If the username has a backslash, then the domain is the first part and the username is the second part
         if (userName.contains("\\")) {
             String[] parts = userName.split("[\\\\]");
@@ -286,8 +271,8 @@ public class CxHttpClient implements Closeable {
             }
         }
 
-        HashMap<String,String> userDomain = new HashMap<String,String>();
-        userDomain.put(KEY_USER,user);
+        HashMap<String, String> userDomain = new HashMap<String, String>();
+        userDomain.put(KEY_USER, user);
         userDomain.put(KEY_DOMAIN, domain);
         return userDomain;
     }
@@ -303,10 +288,10 @@ public class CxHttpClient implements Closeable {
         HttpHost proxy = new HttpHost(proxyConfig.getHost(), proxyConfig.getPort(), scheme);
         if (StringUtils.isNotEmpty(proxyConfig.getUsername()) &&
                 StringUtils.isNotEmpty(proxyConfig.getPassword())) {
-                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
-                CredentialsProvider credsProvider = new BasicCredentialsProvider();
-                credsProvider.setCredentials(new AuthScope(proxy), credentials);
-                cb.setDefaultCredentialsProvider(credsProvider);
+            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
+            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            credsProvider.setCredentials(new AuthScope(proxy), credentials);
+            cb.setDefaultCredentialsProvider(credsProvider);
         }
 
         logi.info("Setting proxy for Checkmarx http client");
