@@ -46,10 +46,8 @@ public abstract class LegacyClient {
 
     public LegacyClient(CxScanConfig config, Logger log) throws MalformedURLException {
         this.config = config;
-        log.info("isDisableCertificateValidation() this.config: " + this.config.isDisableCertificateValidation());
         this.log = log;
         initHttpClient(config, log);
-
         validateConfig(config);
     }
 
@@ -161,7 +159,6 @@ public abstract class LegacyClient {
                     config.getProxyConfig(),
                     log,
                     config.getNTLM());
-            log.info("Value of isDisableCertificateValidation in that point: " + config.isDisableCertificateValidation());
         }
     }
 
@@ -196,7 +193,6 @@ public abstract class LegacyClient {
                     hotfix = " Hotfix [" + config.getCxVersion().getHotFix() + "].";
                 }
             } catch (Exception ex) {
-                log.debug(ex.getMessage());
             }
 
             version = config.getCxVersion().getVersion();
@@ -219,20 +215,13 @@ public abstract class LegacyClient {
         log.info("Logging into the Checkmarx service.");
 
         if (config.getToken() != null) {
-            log.info("config.getToken() != null");
             httpClient.setToken(config.getToken());
-            log.info("Print token: " + config.getToken());
-            log.info("Print httpClient: " + httpClient );
             return;
         }
-        log.info("config.getToken() == null");
         LoginSettings settings = getDefaultLoginSettings();
-        log.info("Print Setting: " + settings);
         settings.setRefreshToken(config.getRefreshToken());
         settings.setVersion(version);
         httpClient.login(settings);
-        log.info("Print Version: " + version);
-        log.info("httpClient.login(settings)" + httpClient);
     }
 
     public LoginSettings getDefaultLoginSettings() throws MalformedURLException {
