@@ -15,6 +15,7 @@
         <url>https://github.com/checkmarx-ltd/Cx-Client-Common/tree/master</url>
     </scm>
          <!-- Trigger-->
+
     <licenses>
         <license>
             <name>MIT License</name>
