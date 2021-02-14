@@ -20,7 +20,7 @@ public class CxScanConfig implements Serializable {
     private String cxOriginUrl;
     private CxVersion cxVersion;
 
-    private Boolean disableCertificateValidation = false;
+    private boolean disableCertificateValidation = false;
     private boolean useSSOLogin = false;
 
     private String sourceDir;
@@ -184,11 +184,11 @@ public class CxScanConfig implements Serializable {
         this.cxOriginUrl = cxOriginUrl;
     } 
     
-    public Boolean isDisableCertificateValidation() {
+    public boolean isDisableCertificateValidation() {
         return disableCertificateValidation;
     }
 
-    public void setDisableCertificateValidation(Boolean disableCertificateValidation) {
+    public void setDisableCertificateValidation(boolean disableCertificateValidation) {
         this.disableCertificateValidation = disableCertificateValidation;
     }
 
