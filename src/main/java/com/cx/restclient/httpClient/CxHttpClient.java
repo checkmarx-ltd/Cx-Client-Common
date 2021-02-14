@@ -119,6 +119,7 @@ public class CxHttpClient implements Closeable {
         //create httpclient
         cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
         setSSLTls("TLSv1.2", log);
+
         if (disableSSLValidation) {
             try {
                 cb.setSSLSocketFactory(getTrustAllSSLSocketFactory());
