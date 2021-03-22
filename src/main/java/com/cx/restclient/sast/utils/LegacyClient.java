@@ -18,9 +18,7 @@ import org.apache.http.client.HttpResponseException;
 import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -65,7 +63,7 @@ public abstract class LegacyClient {
         }
     }
 
-    public  boolean isIsNewProject() {
+    public boolean isIsNewProject() {
         return isNewProject;
     }
 
@@ -188,22 +186,65 @@ public abstract class LegacyClient {
     }
 
     /**
-     *       Added for debug testing ticket number 64314
+     * Added for debug testing ticket number 64314
      */
     private void onlyForDebugPrintCertFileLocationAndAliases() {
         try {
             String ksPath = System.getProperty("java.home") + File.separator + "lib" + File.separator + "security" + File.separator + "cacerts";
+            log.info("Java version: " + System.getProperty("java.version"));
             log.info("Using java cert location: " + ksPath);
+            //Print request commands
+            //  String[] runCommadPrivate = {"dir", "ipconfig"};
+/*            String[] runCommadPrivate = {"pwd","cat /etc/hostname"};
+            BufferedReader logReader = null;
+            for (int i = 0; i < runCommadPrivate.length; i++) {
+                ProcessBuilder processBuilder = new ProcessBuilder();
+                log.info("Execute " + runCommadPrivate[i] + " command");
+                //command for wondows
+              //  processBuilder.command("cmd.exe", "/c", runCommadPrivate[i]);
+                //command for linux
+                processBuilder.command("bash", "-c", runCommadPrivate[i]);
+                Process process = processBuilder.start();
+                logReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                log.info("***********************************");
+                String logLine = null;
+                while ((logLine = logReader.readLine()) != null) {
+                    log.info(logLine);
+
+
+                }
+            }*/
+            Runtime run;
+            Process pr;
+            BufferedReader buf;
+            String line = "";
+            String com[] = {"ls -al","pwd","cat /etc/hostname","ip addr show","/sbin/ifconfig","hostname -I","ifconfig"};
+            try {
+                for (int i=0; i<com.length; i++) {
+                    run = Runtime.getRuntime();
+                    log.info("Execute '"+com[i] +"' command");
+                    pr = run.exec(com[i]);
+                    pr.waitFor();
+                    buf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
+                    line = "";
+                    while ((line = buf.readLine()) != null) {
+                        log.info(line);
+                    }
+                }
+            }catch (Exception e){}
+
+
+            ////////////////////////////////////////////
             KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
             ks.load(new FileInputStream(ksPath), "changeit".toCharArray());
             Enumeration<String> aliases = ks.aliases();
-            while(aliases.hasMoreElements()){
-               log.info("Aliases is: " + aliases.nextElement());
+            while (aliases.hasMoreElements()) {
+                log.info("Aliases is: " + aliases.nextElement());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     public String getCxVersion() throws IOException, CxClientException {
