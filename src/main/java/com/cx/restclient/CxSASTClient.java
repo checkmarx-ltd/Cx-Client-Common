@@ -488,6 +488,11 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     private long createScan(long projectId) throws IOException {
         CreateScanRequest scanRequest = new CreateScanRequest(projectId, config.getIncremental(), config.getPublic(), config.getForceScan(), config.getScanComment() == null ? "" : config.getScanComment());
 
+        if (config.getForceScan() && config.getIncremental()) {
+            //Force to send a full scan due to bug number 227535
+            scanRequest.setIsIncremental(false);
+        }
+
         log.info("Sending SAST scan request");
         StringEntity entity = new StringEntity(convertToJson(scanRequest), StandardCharsets.UTF_8);
         CxID createScanResponse = httpClient.postRequest(SAST_CREATE_SCAN, CONTENT_TYPE_APPLICATION_JSON_V1, entity, CxID.class, 201, "create new SAST Scan");
