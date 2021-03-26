@@ -54,18 +54,21 @@ public abstract class HttpClientHelper {
 
     private static <T> T convertToStrObject(HttpResponse response, Class<T> valueType) throws CxClientException {
         ObjectMapper mapper = getObjectMapper();
+        String json = "";
         try {
             if (response.getEntity() == null) {
                 return null;
             }
-            String json = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
+            json = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
             if (valueType.equals(String.class)) {
                 return (T) json;
             }
             return mapper.readValue(json, valueType);
 
         } catch (IOException e) {
-            throw new CxClientException("Failed to parse json response: " + e.getMessage());
+            int statusCode = response.getStatusLine().getStatusCode();
+            throw new CxClientException("Failed to parse json, response code: " + statusCode +  ", response: " + json +
+                    ", exception: " + e.getMessage());
         }
     }
 
