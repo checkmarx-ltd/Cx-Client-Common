@@ -5,10 +5,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
 
 @Getter
 @Setter
 public class AstScaConfig extends ASTConfig implements Serializable {
+
     private String accessControlUrl;
     private String username;
     private String password;
@@ -25,4 +28,11 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String fingerprintsIncludePattern;
     private String manifestsIncludePattern;
     private String fingerprintFilePath;
+    private String sastProjectId;
+    private String sastServerUrl;
+    private String sastUsername;
+    private String sastPassword;
+    private HashMap<String,String> envVariables;
+    private List<String> configFilePaths;
+
 }

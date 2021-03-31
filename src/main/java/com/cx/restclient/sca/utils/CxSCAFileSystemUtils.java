@@ -4,6 +4,9 @@ import com.cx.restclient.dto.PathFilter;
 import org.apache.tools.ant.DirectoryScanner;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 public class CxSCAFileSystemUtils {
 
@@ -30,6 +33,24 @@ public class CxSCAFileSystemUtils {
         }
 
         return ds;
+    }
+
+    public static HashMap<String, String> convertStringToKeyValueMap(String envString) {
+
+        HashMap<String, String> envMap = new HashMap<>();
+        //"Key1:Val1,Key2:Val2"
+        String trimmedString = envString.replace("\"","");
+        List<String> envlist = Arrays.asList(trimmedString.split(","));
+
+        for( String pair : envlist)
+        {
+            String[] splitFromColon = pair.split(":",2);
+            String key = (splitFromColon[0]).trim();
+            String value = (splitFromColon[1]).trim();
+            envMap.put(key, value);
+        }
+        return envMap;
+
     }
 
 }
