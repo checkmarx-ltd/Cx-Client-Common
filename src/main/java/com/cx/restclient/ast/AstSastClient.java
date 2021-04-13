@@ -161,7 +161,7 @@ public class AstSastClient extends AstClient implements Scanner {
         String sourceDir = config.getSourceDir();
         byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
 
-        return initiateScanForUpload(projectId, zipFile, zipFilePath);
+        return initiateScanForUpload(projectId, zipFile, config.getAstSastConfig());
     }
 
     @Override
