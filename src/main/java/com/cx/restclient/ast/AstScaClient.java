@@ -122,7 +122,7 @@ public class AstScaClient extends AstClient implements Scanner {
         String sastUsername = config.getAstScaConfig().getSastUsername();
         String sastPassword = config.getAstScaConfig().getSastPassword();
 
-        HashMap<String, String> envVariables = config.getAstScaConfig().getEnvVariables();
+        Map<String, String> envVariables = config.getAstScaConfig().getEnvVariables();
         JSONObject envJsonString = new JSONObject(envVariables);
 
         ScanConfigValue configValue = ScaScanConfigValue.builder()
@@ -350,11 +350,11 @@ public class AstScaClient extends AstClient implements Scanner {
         log.info("Source Directory : " + sourceDir);
         List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
 
-        for(String filePathString : configFilePaths) {
+        for(String configFileString : configFilePaths) {
 
-            if (StringUtils.isNotEmpty(filePathString)) {
+            if (StringUtils.isNotEmpty(configFileString)) {
                 String fileSystemSeparator = FileSystems.getDefault().getSeparator();
-                Path configFilePath = checkIfFileExists(sourceDir, filePathString, fileSystemSeparator);
+                Path configFilePath = CxSCAFileSystemUtils.checkIfFileExists(sourceDir, configFileString, fileSystemSeparator, log);
 
                 if (configFilePath != null) {
                     configFileDestination = Paths.get(sourceDir, fileSystemSeparator, SCA_CONFIG_FOLDER_NAME);
@@ -366,6 +366,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
                     } else {
                         Files.copy(configFilePath, configFileDestination.resolve(configFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        log.info("Config file (" + configFilePath + ") copied to directory: " + configFileDestination);
                     }
                 }
             }
@@ -373,34 +374,7 @@ public class AstScaClient extends AstClient implements Scanner {
         return configFileDestination;
     }
 
-    private Path checkIfFileExists(String sourceDir, String configFileString, String fileSystemSeparator) {
-        Path configFilePath = Paths.get("");
-        try {
-            configFilePath = Paths.get(configFileString);
-            if (Files.notExists(configFilePath)) {
-                configFilePath = Paths.get(sourceDir, fileSystemSeparator, configFileString);
-                if (Files.notExists(configFilePath)) {
-                    log.info("Config file doesnt exist at the given location.");
-                    return null;
-                }
-            }
-
-        }
-        catch (InvalidPathException e)
-        {
-            log.error("Invalid config file path. Error Message :" + e.getMessage());
-        }
-        catch (SecurityException e)
-        {
-            log.error("Unable to access the config file. Error Message :" + e.getMessage());
-        }
-        catch (Exception e)
-        {
-            log.error("Error while determing the existence of config file. Error Message :" + e.getMessage());
-        }
-        return configFilePath;
-    }
-
+    
 
     private File zipDirectoryAndFingerprints(String sourceDir, List<String> paths, CxSCAScanFingerprints fingerprints) throws IOException {
         File result = config.getZipFile();

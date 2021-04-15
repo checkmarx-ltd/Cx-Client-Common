@@ -1,12 +1,13 @@
 package com.cx.restclient.ast.dto.sca;
 
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+
 import com.cx.restclient.ast.dto.common.ASTConfig;
+
 import lombok.Getter;
 import lombok.Setter;
-
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.List;
 
 @Getter
 @Setter
@@ -32,7 +33,7 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String sastServerUrl;
     private String sastUsername;
     private String sastPassword;
-    private HashMap<String,String> envVariables;
+    private Map<String,String> envVariables;
     private List<String> configFilePaths;
 
 }
