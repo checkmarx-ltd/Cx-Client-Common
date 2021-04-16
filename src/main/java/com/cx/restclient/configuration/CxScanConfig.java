@@ -284,10 +284,12 @@ public class CxScanConfig implements Serializable {
         return teamPath;
     }
 
-    public void setTeamPath(String teamPath) {
+    public void setTeamPath(String teamPath) {    	
+    	//Make teampath always in the form /CxServer/Team1. User might have used '\' in the path.	
         if (!StringUtils.isEmpty(teamPath) && !teamPath.startsWith("\\") && !teamPath.startsWith(("/"))) {
-            teamPath = "\\" + teamPath;
+            teamPath = "/" + teamPath;            
         }
+        teamPath = teamPath.replaceAll("\\\\", "/");
         this.teamPath = teamPath;
     }
 

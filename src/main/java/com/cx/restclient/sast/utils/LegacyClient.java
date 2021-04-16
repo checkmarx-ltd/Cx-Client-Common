@@ -78,11 +78,14 @@ public abstract class LegacyClient {
             }
             //Create newProject
             CreateProjectRequest request = new CreateProjectRequest(config.getProjectName(), config.getTeamId(), config.getPublic());
+            log.info("Project not found, creating a new one.: '{}' with Team '{}'", config.getProjectName(), teamPath);
             projectId = createNewProject(request, teamPath).getId();
+            log.info("Created a project with ID {}", projectId);
             setIsNewProject(true);
         } else {
             projectId = projects.get(0).getId();
             setIsNewProject(false);
+            log.info("Project already exists with ID {}", projectId);
         }
 
         return projectId;

@@ -507,11 +507,12 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
+        String assignedTeam = config.getTeamPath();
         log.info("Getting project by name: '{}'", projectName);
         String resolvedProjectId = getRiskManagementProjectId(projectName);
         if (resolvedProjectId == null) {
             log.info("Project not found, creating a new one.");
-            resolvedProjectId = createRiskManagementProject(projectName);
+            resolvedProjectId = createRiskManagementProject(projectName, assignedTeam);
             log.info("Created a project with ID {}", resolvedProjectId);
         } else {
             log.info("Project already exists with ID {}", resolvedProjectId);
@@ -567,9 +568,13 @@ public class AstScaClient extends AstClient implements Scanner {
                 true);
     }
 
-    private String createRiskManagementProject(String name) throws IOException {
+    private String createRiskManagementProject(String name, String assignedTeam) throws IOException {
         CreateProjectRequest request = new CreateProjectRequest();
         request.setName(name);
+        if(!StringUtils.isEmpty(assignedTeam)) {
+        	request.addAssignedTeams(assignedTeam);        
+        	log.info("Team name: "+assignedTeam);
+        }
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
 
