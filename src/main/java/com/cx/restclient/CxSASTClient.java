@@ -213,6 +213,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 scanId = createRemoteSourceScan(projectId);
             }
             sastResults.setScanId(scanId);
+            log.info("SAST scan created successfully: Scan ID is " + scanId);
             sastResults.setSastScanLink(config.getUrl(), scanId, projectId);
         } catch (Exception e) {
             log.error(e.getMessage());
