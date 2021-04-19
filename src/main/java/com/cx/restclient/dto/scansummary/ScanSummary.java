@@ -26,7 +26,7 @@ public class ScanSummary {
 
         addNewResultThresholdErrors(config, sastResults);
 
-        policyViolated = determinePolicyViolation(config, sastResults, osaResults);
+        policyViolated = determinePolicyViolation(config, sastResults, osaResults, scaResults);
     }
 
     @Override
@@ -145,11 +145,11 @@ public class ScanSummary {
         }
     }
 
-    private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults, OSAResults osaResults) {
+    private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {
         return config.getEnablePolicyViolations() &&
                 ((osaResults != null &&
                         !osaResults.getOsaPolicies().isEmpty()) ||
-                        (sastResults != null && !sastResults.getSastPolicies().isEmpty()));
+                        (sastResults != null && !sastResults.getSastPolicies().isEmpty())) || (scaResults != null && scaResults.isBreakTheBuild() && scaResults.isPolicyViolated());
     }
 
     private void checkForThresholdError(int value, Integer threshold, ErrorSource source, Severity severity) {
