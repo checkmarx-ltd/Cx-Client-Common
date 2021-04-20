@@ -3,6 +3,7 @@ package com.cx.restclient.ast.dto.sca;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
 import com.cx.restclient.ast.dto.sca.report.Finding;
 import com.cx.restclient.ast.dto.sca.report.Package;
+import com.cx.restclient.ast.dto.sca.report.PolicyEvaluation;
 import com.cx.restclient.dto.Results;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +21,7 @@ import java.util.List;
 @AllArgsConstructor
 public class AstScaResults extends Results implements Serializable {
     private String scanId;
+    private String reportId;
     private AstScaSummaryResults summary;
     private String webReportLink;
     private List<Finding> findings;
@@ -27,6 +29,9 @@ public class AstScaResults extends Results implements Serializable {
     private boolean scaResultReady;
     private int nonVulnerableLibraries;
     private int vulnerableAndOutdated;
+    private List<PolicyEvaluation> policyEvaluations;
+    private boolean policyViolated;
+    private boolean breakTheBuild;
 
     public void calculateVulnerableAndOutdatedPackages() {
         int sum;

@@ -132,6 +132,7 @@ public class CxClientDelegator implements Scanner {
 
             OSAResults osaResults = (OSAResults) scanResults.get(ScannerType.OSA);
             SASTResults sastResults = (SASTResults) scanResults.get(ScannerType.SAST);
+            AstScaResults scaResults = (AstScaResults) scanResults.get(ScannerType.AST_SCA);
 
             boolean hasOsaViolations =
                     osaResults != null &&
@@ -143,8 +144,13 @@ public class CxClientDelegator implements Scanner {
             if (sastResults != null && sastResults.getSastPolicies() != null && !sastResults.getSastPolicies().isEmpty()) {
                 hasSastPolicies = true;
             }
+            
+            boolean hasScaViolations = false;
+            if (scaResults != null && scaResults.isPolicyViolated()) {
+            	hasScaViolations = true;
+            }            
 
-            if (!hasSastPolicies && !hasOsaViolations) {
+            if (!hasSastPolicies && !hasOsaViolations && !hasScaViolations) {
                 log.info(PROJECT_POLICY_COMPLIANT_STATUS);
                 log.info(PRINT_LINE);
             } else {
@@ -154,6 +160,9 @@ public class CxClientDelegator implements Scanner {
                 }
                 if (hasOsaViolations) {
                     log.info("OSA violated policies names: {}", getPoliciesNames(osaResults.getOsaPolicies()));
+                }
+                if (hasScaViolations) {
+                    log.info("SCA policies are violated.");
                 }
                 log.info(PRINT_LINE);
             }

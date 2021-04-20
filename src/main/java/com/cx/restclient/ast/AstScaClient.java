@@ -10,6 +10,7 @@ import com.cx.restclient.ast.dto.sca.Project;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
 import com.cx.restclient.ast.dto.sca.report.Finding;
 import com.cx.restclient.ast.dto.sca.report.Package;
+import com.cx.restclient.ast.dto.sca.report.PolicyEvaluation;
 import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
@@ -70,6 +71,9 @@ public class AstScaClient extends AstClient implements Scanner {
     private static final String LATEST_SCAN = RISK_MANAGEMENT_API + properties.get("astSca.latestScan");
     private static final String WEB_REPORT = properties.get("astSca.webReport");
     private static final String RESOLVING_CONFIGURATION_API = properties.get("astSca.resolvingConfigurationApi");
+    private static final String REPORTID_API = RISK_MANAGEMENT_API + properties.get("astSca.reportId");
+    private static final String POLICY_MANAGEMENT_API = properties.get("astSca.policyManagementApi");
+    private static final String POLICY_MANAGEMENT_EVALUATION_API = POLICY_MANAGEMENT_API + properties.get("astSca.policyManagementEvaliation");
 
     private static final String REPORT_SCA_PACKAGES = "cxSCAPackages";
     private static final String REPORT_SCA_FINDINGS = "cxSCAVulnerabilities";
@@ -91,6 +95,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private String projectId;
     private String scanId;
+    private String reportId;
     private final FingerprintCollector fingerprintCollector;
     private CxSCAResolvingConfiguration resolvingConfiguration;
     private static final String FINGERPRINT_FILE_NAME = ".cxsca.sig";
@@ -594,7 +599,10 @@ public class AstScaClient extends AstClient implements Scanner {
         try {
             result = new AstScaResults();
             result.setScanId(this.scanId);
-
+           
+            reportId = getReportId(scanId);
+            result.setReportId(reportId);
+            
             AstScaSummaryResults scanSummary = getSummaryReport(scanId);
             result.setSummary(scanSummary);
             printSummary(scanSummary, this.scanId);
@@ -603,7 +611,14 @@ public class AstScaClient extends AstClient implements Scanner {
             result.setFindings(findings);
 
             List<Package> packages = getPackages(scanId);
-            result.setPackages(packages);
+            result.setPackages(packages);            
+            
+            if(config.isEnablePolicyViolations()) {
+            	List<PolicyEvaluation> policyEvaluations = getPolicyEvaluation(reportId);
+            	result.setPolicyEvaluations(policyEvaluations);
+            	printPolicyEvaluations(policyEvaluations);
+            	determinePolicyViolations(result);
+            }
 
             String reportLink = getWebReportLink(config.getAstScaConfig().getWebAppUrl());
             result.setWebReportLink(reportLink);
@@ -665,7 +680,47 @@ public class AstScaClient extends AstClient implements Scanner {
                 "CxSCA findings",
                 true);
     }
+    
+    public String getReportId(String scanId) throws IOException {
+        log.debug("Getting report id.");
 
+        String path = String.format(REPORTID_API, URLEncoder.encode(scanId, ENCODING));
+
+        String resultReportId =  (String) httpClient.getRequest(path,
+                ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                String.class,
+                HttpStatus.SC_OK,
+                "CxSCA Risk ReportId",
+                false);
+        return StringUtils.strip(resultReportId, "\"");
+    }
+    
+    public List<PolicyEvaluation> getPolicyEvaluation(String reportId) throws IOException {
+        log.debug("Getting policy evaluation for the scan report id " + reportId + ".");
+
+        String path = String.format(POLICY_MANAGEMENT_EVALUATION_API, URLEncoder.encode(reportId, ENCODING));
+
+        return (List<PolicyEvaluation>) httpClient.getRequest(path,
+                ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                PolicyEvaluation.class,
+                HttpStatus.SC_OK,
+                "CxSCA policy evaulation",
+                true);
+    }
+
+    private void determinePolicyViolations(AstScaResults result) {
+    
+    	result.getPolicyEvaluations().forEach((p)-> { 
+	    		if(p.getIsViolated()) {
+	    			//its enough even one policy is violated
+	    			result.setPolicyViolated(true);
+	    			if(p.getActions().isBreakBuild())
+	    				result.setBreakTheBuild(true);	    			
+	    		}
+    		}
+    	);    	
+    }
+    
     private void printSummary(AstScaSummaryResults summary, String scanId) {
         if (log.isInfoEnabled()) {
             log.info("----CxSCA risk report summary----");
@@ -679,6 +734,25 @@ public class AstScaClient extends AstClient implements Scanner {
             log.info("Total packages: {}", summary.getTotalPackages());
             log.info("Total outdated packages: {}", summary.getTotalOutdatedPackages());
         }
+    }
+    
+    private void printPolicyEvaluations(List<PolicyEvaluation> policyEvaulations) {
+        if (log.isInfoEnabled()) {
+            log.info("----CxSCA Policy Evaluation Results----");            
+            policyEvaulations.forEach((p)-> printPolicyEvaluation(p));
+            log.info("---------------------------------------");
+        }
+    }
+    
+    private void printPolicyEvaluation(PolicyEvaluation p) {
+    	if (log.isInfoEnabled()) {
+            log.info("  Policy name: " + p.getName() + " | Violated:" + p.getIsViolated() + " | Policy Description: " + p.getDescription());
+        
+        	p.getRules().forEach((r)->
+            log.info("    Rule name: " + r.getName() + " | Violated:" + r.getIsViolated())
+            );
+        
+    	}
     }
 
     private void validate(AstScaConfig config) {
