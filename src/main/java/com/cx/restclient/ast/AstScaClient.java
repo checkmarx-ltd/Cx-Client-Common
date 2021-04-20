@@ -3,10 +3,8 @@ package com.cx.restclient.ast;
 import com.cx.restclient.ast.dto.common.HandlerRef;
 import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
 import com.cx.restclient.ast.dto.common.ScanConfig;
-import com.cx.restclient.ast.dto.sca.AstScaConfig;
-import com.cx.restclient.ast.dto.sca.AstScaResults;
-import com.cx.restclient.ast.dto.sca.CreateProjectRequest;
-import com.cx.restclient.ast.dto.sca.Project;
+import com.cx.restclient.ast.dto.common.ScanConfigValue;
+import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
 import com.cx.restclient.ast.dto.sca.report.Finding;
 import com.cx.restclient.ast.dto.sca.report.Package;
@@ -45,6 +43,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -52,7 +51,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.file.Files;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -99,6 +98,7 @@ public class AstScaClient extends AstClient implements Scanner {
     private final FingerprintCollector fingerprintCollector;
     private CxSCAResolvingConfiguration resolvingConfiguration;
     private static final String FINGERPRINT_FILE_NAME = ".cxsca.sig";
+    private static final String SCA_CONFIG_FOLDER_NAME = ".cxsca.configurations";
 
     public AstScaClient(CxScanConfig config, Logger log) {
         super(config, log);
@@ -121,9 +121,28 @@ public class AstScaClient extends AstClient implements Scanner {
 
     @Override
     protected ScanConfig getScanConfig() {
+
+        String sastProjectId = config.getAstScaConfig().getSastProjectId();
+        String sastServerUrl = config.getAstScaConfig().getSastServerUrl();
+        String sastUsername = config.getAstScaConfig().getSastUsername();
+        String sastPassword = config.getAstScaConfig().getSastPassword();
+
+        Map<String, String> envVariables = config.getAstScaConfig().getEnvVariables();
+        JSONObject envJsonString = new JSONObject(envVariables);
+
+        ScanConfigValue configValue = ScaScanConfigValue.builder()
+                .environmentVariables(envJsonString.toString())
+                .sastProjectId(sastProjectId)
+                .sastServerUrl(sastServerUrl)
+                .sastUsername(sastUsername)
+                .sastPassword(sastPassword)
+                .build();
+
         return ScanConfig.builder()
                 .type(ENGINE_TYPE_FOR_API)
+                .value(configValue)
                 .build();
+
     }
 
     @Override
@@ -279,15 +298,22 @@ public class AstScaClient extends AstClient implements Scanner {
 
         PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
+
+        Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
+
         byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
 
-        return initiateScanForUpload(projectId, zipFile, zipFilePath);
+        FileUtils.deleteDirectory(configFileDestination.toFile());
+
+        return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig());
     }
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
 
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
+
+        Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
 
         PathFilter userFilter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
         if (ArrayUtils.isNotEmpty(userFilter.getIncludes()) && !ArrayUtils.contains(userFilter.getIncludes(), "**")) {
@@ -318,9 +344,42 @@ public class AstScaClient extends AstClient implements Scanner {
 
         optionallyWriteFingerprintsToFile(fingerprints);
 
-        return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig.getZipFilePath());
+        FileUtils.deleteDirectory(configFileDestination.toFile());
+
+        return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig);
     }
 
+    private Path copyConfigFileToSourceDir(String sourceDir) throws IOException {
+
+        Path configFileDestination = Paths.get("");
+        log.info("Source Directory : " + sourceDir);
+        List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
+
+        for(String configFileString : configFilePaths) {
+
+            if (StringUtils.isNotEmpty(configFileString)) {
+                String fileSystemSeparator = FileSystems.getDefault().getSeparator();
+                Path configFilePath = CxSCAFileSystemUtils.checkIfFileExists(sourceDir, configFileString, fileSystemSeparator, log);
+
+                if (configFilePath != null) {
+                    configFileDestination = Paths.get(sourceDir, fileSystemSeparator, SCA_CONFIG_FOLDER_NAME);
+
+                    if (Files.notExists(configFileDestination)) {
+                        Path destDir = Files.createDirectory(configFileDestination);
+                        Files.copy(configFilePath, destDir.resolve(configFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        log.info("Config file (" + configFilePath + ") copied to directory: " + configFileDestination);
+
+                    } else {
+                        Files.copy(configFilePath, configFileDestination.resolve(configFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        log.info("Config file (" + configFilePath + ") copied to directory: " + configFileDestination);
+                    }
+                }
+            }
+        }
+        return configFileDestination;
+    }
+
+    
 
     private File zipDirectoryAndFingerprints(String sourceDir, List<String> paths, CxSCAScanFingerprints fingerprints) throws IOException {
         File result = config.getZipFile();
