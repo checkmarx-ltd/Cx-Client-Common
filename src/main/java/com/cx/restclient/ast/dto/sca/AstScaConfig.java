@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.cx.restclient.ast.dto.common.ASTConfig;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AstScaConfig extends ASTConfig implements Serializable {
 
     private String accessControlUrl;
