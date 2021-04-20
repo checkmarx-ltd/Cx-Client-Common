@@ -306,7 +306,7 @@
                         <version>1.5</version>
                         <configuration>
                             <executable>/usr/bin/gpg</executable>
-                            <passphrase>Checkmarx123456</passphrase>
+                            <passphrase>${gnupgp.passphrase}</passphrase>
                         </configuration>
                         <executions>
                             <execution>
