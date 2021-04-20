@@ -11,6 +11,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AstScaConfig extends ASTConfig implements Serializable {
 
     private String accessControlUrl;
