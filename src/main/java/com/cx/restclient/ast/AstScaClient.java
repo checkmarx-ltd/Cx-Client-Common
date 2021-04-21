@@ -289,6 +289,7 @@ public class AstScaClient extends AstClient implements Scanner {
             log.error(e.getMessage());
             setState(State.FAILED);
             scaResults.setException(new CxClientException("Error creating scan.", e));
+            throw new CxClientException(e.getMessage());
         }
         return scaResults;
     }
