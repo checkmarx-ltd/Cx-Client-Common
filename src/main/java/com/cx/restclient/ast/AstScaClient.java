@@ -304,6 +304,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
 
+        
         FileUtils.deleteDirectory(configFileDestination.toFile());
 
         return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig());
@@ -345,6 +346,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         optionallyWriteFingerprintsToFile(fingerprints);
 
+        
         FileUtils.deleteDirectory(configFileDestination.toFile());
 
         return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig);
@@ -356,6 +358,7 @@ public class AstScaClient extends AstClient implements Scanner {
         log.info("Source Directory : " + sourceDir);
         List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
 
+        if(configFilePaths != null) {
         for(String configFileString : configFilePaths) {
 
             if (StringUtils.isNotEmpty(configFileString)) {
@@ -376,6 +379,7 @@ public class AstScaClient extends AstClient implements Scanner {
                     }
                 }
             }
+        }
         }
         return configFileDestination;
     }
