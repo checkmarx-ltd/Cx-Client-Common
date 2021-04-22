@@ -286,7 +286,7 @@ public class AstScaClient extends AstClient implements Scanner {
             this.scanId = extractScanIdFrom(response);
             scaResults.setScanId(scanId);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error occurred while initiating scan.", e);
             setState(State.FAILED);
             scaResults.setException(new CxClientException("Error creating scan.", e));         
         }
@@ -311,18 +311,17 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
-
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
-
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
-
+        String additinalFilters = getAdditionalManifestFilters(configFileDestination);
+        String finalFilters =  additinalFilters + getManifestsIncludePattern();
         PathFilter userFilter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
         if (ArrayUtils.isNotEmpty(userFilter.getIncludes()) && !ArrayUtils.contains(userFilter.getIncludes(), "**")) {
             userFilter.addToIncludes("**");
         }
         Set<String> scannedFileSet = new HashSet<>(Arrays.asList(CxSCAFileSystemUtils.scanAndGetIncludedFiles(sourceDir, userFilter)));
 
-        PathFilter manifestIncludeFilter = new PathFilter(null, getManifestsIncludePattern(), log);
+        PathFilter manifestIncludeFilter = new PathFilter(null,finalFilters , log);
         if (manifestIncludeFilter.getIncludes().length == 0) {
             throw new CxClientException(String.format("Using manifest only mode requires include filter. Resolving config does not have include patterns defined: %s", getManifestsIncludePattern()));
         }
@@ -350,6 +349,26 @@ public class AstScaClient extends AstClient implements Scanner {
 
         return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig);
     }
+    /**
+     * 
+     * This method gets the additional config file(from different package manager) manifest filters 
+     * e.g. returns "settings.xml,npmrc"/"
+     **/
+    
+	private String getAdditionalManifestFilters(Path configFileDestination) {
+		List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
+		String additionalFilters = "";
+		if (configFilePaths != null) {
+			for (String configFileString : configFilePaths) {
+				if (StringUtils.isNotEmpty(configFileString)) {
+					if (configFileString.lastIndexOf("\\") != -1)
+						configFileString = configFileString.substring(configFileString.lastIndexOf("\\") + 1);
+					additionalFilters = additionalFilters.concat("**/" + configFileString + ",");
+				}
+			}
+		}
+		return additionalFilters;
+	}
 
     private Path copyConfigFileToSourceDir(String sourceDir) throws IOException {
 
@@ -373,7 +392,8 @@ public class AstScaClient extends AstClient implements Scanner {
                         log.info("Config file (" + configFilePath + ") copied to directory: " + configFileDestination);
 
                     } else {
-                        Files.copy(configFilePath, configFileDestination.resolve(configFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        Path r = configFileDestination.resolve(configFilePath.getFileName());
+                        Files.copy(configFilePath,r , StandardCopyOption.REPLACE_EXISTING);
                         log.info("Config file (" + configFilePath + ") copied to directory: " + configFileDestination);
                     }
                 }

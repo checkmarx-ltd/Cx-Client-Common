@@ -58,15 +58,16 @@ public class CxSCAFileSystemUtils {
 
     }
     
-    public static Path checkIfFileExists(String sourceDir, String fileString, String fileSystemSeparator, Logger log) {
-        Path filePath = Paths.get("");
+    public static Path checkIfFileExists(String sourceDir, String fileString, String fileSystemSeparator, Logger log) 
+    {
+        Path filePath = null;
         try {
             filePath = Paths.get(fileString);
-            if (Files.notExists(filePath)) {
+            if (Files.notExists(filePath) && !filePath.isAbsolute()) {
                 filePath = Paths.get(sourceDir, fileSystemSeparator, fileString);
                 if (Files.notExists(filePath)) {
                     log.info("File doesnt exist at the given location.");
-                    return null;
+                    filePath = null;
                 }
             }
 
