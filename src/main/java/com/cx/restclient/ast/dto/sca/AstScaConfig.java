@@ -32,6 +32,7 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String manifestsIncludePattern;
     private String fingerprintFilePath;
     private String sastProjectId;
+    private String sastProjectName;
     private String sastServerUrl;
     private String sastUsername;
     private String sastPassword;

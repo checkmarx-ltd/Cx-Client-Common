@@ -22,5 +22,6 @@ public class ScaScanConfigValue implements ScanConfigValue {
     private String sastServerUrl;
     private String sastUsername;
     private String sastPassword;
+    private String sastProjectName;
 
 }

@@ -126,6 +126,7 @@ public class AstScaClient extends AstClient implements Scanner {
         String sastServerUrl = config.getAstScaConfig().getSastServerUrl();
         String sastUsername = config.getAstScaConfig().getSastUsername();
         String sastPassword = config.getAstScaConfig().getSastPassword();
+        String sastProjectName = config.getAstScaConfig().getSastProjectName();
 
         Map<String, String> envVariables = config.getAstScaConfig().getEnvVariables();
         JSONObject envJsonString = new JSONObject(envVariables);
@@ -136,6 +137,7 @@ public class AstScaClient extends AstClient implements Scanner {
                 .sastServerUrl(sastServerUrl)
                 .sastUsername(sastUsername)
                 .sastPassword(sastPassword)
+                .sastProjectName(sastProjectName)
                 .build();
 
         return ScanConfig.builder()
