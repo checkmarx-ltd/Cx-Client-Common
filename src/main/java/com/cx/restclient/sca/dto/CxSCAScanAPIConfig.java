@@ -7,4 +7,5 @@ import lombok.Getter;
 @Getter
 public class CxSCAScanAPIConfig {
     private boolean isZeroCodeZip;
+    private String includeSourceCode;
 }
