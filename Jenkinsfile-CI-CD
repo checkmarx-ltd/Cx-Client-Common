@@ -491,10 +491,13 @@ pipeline {
                 }
 
                 stage('Maven Central') {
+                    environment {
+                        GNUPG_TOKEN = credentials('gnupg-credentials')
+                    }
                     steps {
                         script {
                             //sh "docker run --rm --name publish-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -v /root/.gnupg:/root/.gnupg -w /usr/src/cx-common maven:3.6.1-jdk-8 mvn deploy -P release"
-                            sh "mvn deploy -P release -DskipTests -Dcxcommon.version=${env.cxCommonVersion}"
+                            sh "mvn deploy -P release -DskipTests -Dcxcommon.version=${env.cxCommonVersion} -Dgpg.passphrase=${GNUPG_TOKEN}"
                         }
                     }
                     post {

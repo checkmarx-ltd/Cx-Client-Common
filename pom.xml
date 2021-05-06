@@ -306,7 +306,10 @@
                         <version>1.5</version>
                         <configuration>
                             <executable>/usr/bin/gpg</executable>
-                            <passphrase>Checkmarx123456</passphrase>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
                         </configuration>
                         <executions>
                             <execution>
