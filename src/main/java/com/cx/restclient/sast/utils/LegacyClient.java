@@ -93,12 +93,17 @@ public abstract class LegacyClient {
 
 
     public String configureTeamPath() throws IOException, CxClientException {
-
+    	
+    	if(StringUtils.isEmpty(config.getTeamPath())){
         List<Team> teamList = populateTeamList();
         //If there is no chosen teamPath, just add first one from the teams list as default
         if (StringUtils.isEmpty(teamPath) && teamList != null && !teamList.isEmpty()) {
             teamPath = teamList.get(0).getFullName();
         }
+    	}else{
+    		teamPath=config.getTeamPath();
+    	}
+    	
         httpClient.setTeamPathHeader(teamPath);
         log.debug(String.format(" setTeamPathHeader %s", teamPath));
         return teamPath;
