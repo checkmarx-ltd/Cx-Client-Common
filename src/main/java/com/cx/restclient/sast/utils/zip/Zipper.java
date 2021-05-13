@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 
 public class Zipper {
     private final Logger log;
@@ -37,8 +39,10 @@ public class Zipper {
             log.debug("No files to zip");
             throw new NoFilesToZip();
         }
-
-        zipFile(baseDir, ds.getIncludedFiles(), outputStream, maxZipSize, listener);
+        //Check if symbolic link exists
+        if (!Files.isSymbolicLink(baseDir.toPath()) && (Files.isDirectory(baseDir.toPath(), LinkOption.NOFOLLOW_LINKS))) {
+            zipFile(baseDir, ds.getIncludedFiles(), outputStream, maxZipSize, listener);
+        }
     }
 
     private void zipFile(File baseDir, String[] files, OutputStream outputStream, long maxZipSize, ZipListener listener) throws IOException {
