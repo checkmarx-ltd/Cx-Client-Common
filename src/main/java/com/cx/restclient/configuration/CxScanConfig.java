@@ -289,7 +289,9 @@ public class CxScanConfig implements Serializable {
         if (!StringUtils.isEmpty(teamPath) && !teamPath.startsWith("\\") && !teamPath.startsWith(("/"))) {
             teamPath = "/" + teamPath;            
         }
+        if(!StringUtils.isEmpty(teamPath)&& teamPath!=null){
         teamPath = teamPath.replace("\\", "/");
+        }
         this.teamPath = teamPath;
     }
 
