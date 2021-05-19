@@ -1,47 +1,16 @@
 package com.cx.restclient.httpClient;
 
-import static com.cx.restclient.common.CxPARAM.CSRF_TOKEN_HEADER;
-import static com.cx.restclient.common.CxPARAM.ORIGIN_HEADER;
-import static com.cx.restclient.common.CxPARAM.REVOCATION;
-import static com.cx.restclient.common.CxPARAM.SSO_AUTHENTICATION;
-import static com.cx.restclient.common.CxPARAM.TEAM_PATH;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
-import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToObject;
-import static com.cx.restclient.httpClient.utils.HttpClientHelper.extractResponseBody;
-import static com.cx.restclient.httpClient.utils.HttpClientHelper.validateResponse;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
-import javax.annotation.Nullable;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-
+import com.cx.restclient.common.ErrorMessage;
+import com.cx.restclient.dto.LoginSettings;
+import com.cx.restclient.dto.ProxyConfig;
+import com.cx.restclient.dto.TokenLoginResponse;
+import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.exception.CxHTTPClientException;
+import com.cx.restclient.exception.CxTokenExpiredException;
+import com.cx.restclient.osa.dto.ClientType;
+import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
+import org.apache.http.*;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
@@ -53,14 +22,7 @@ import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.config.Registry;
@@ -81,12 +43,7 @@ import org.apache.http.impl.auth.DigestSchemeFactory;
 import org.apache.http.impl.auth.win.WindowsCredentialsProvider;
 import org.apache.http.impl.auth.win.WindowsNTLMSchemeFactory;
 import org.apache.http.impl.auth.win.WindowsNegotiateSchemeFactory;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.ProxyAuthenticationStrategy;
-import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
+import org.apache.http.impl.client.*;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
@@ -97,25 +54,36 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.slf4j.Logger;
 
-import com.cx.restclient.common.ErrorMessage;
-import com.cx.restclient.dto.LoginSettings;
-import com.cx.restclient.dto.ProxyConfig;
-import com.cx.restclient.dto.TokenLoginResponse;
-import com.cx.restclient.exception.CxClientException;
-import com.cx.restclient.exception.CxHTTPClientException;
-import com.cx.restclient.exception.CxTokenExpiredException;
-import com.cx.restclient.osa.dto.ClientType;
-import com.google.gson.Gson;
+import javax.annotation.Nullable;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+import static com.cx.restclient.common.CxPARAM.*;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
+import static com.cx.restclient.httpClient.utils.HttpClientHelper.*;
 
 
 /**
  * Created by Galn on 05/02/2018.
  */
 public class CxHttpClient implements Closeable {
-	
-	private static String HTTP_NO_HOST = System.getProperty("http.nonProxyHosts");
-	private static String HTTPS_NO_HOST = System.getProperty("https.nonProxyHosts");
-	
+
+    private static String HTTP_NO_HOST = System.getProperty("http.nonProxyHosts");
+    private static String HTTPS_NO_HOST = System.getProperty("https.nonProxyHosts");
+
     private static final String HTTPS = "https";
 
     private static final String LOGIN_FAILED_MSG = "Fail to login with windows authentication: ";
@@ -197,18 +165,16 @@ public class CxHttpClient implements Closeable {
         }
         cb.setDefaultAuthSchemeRegistry(getAuthSchemeProviderRegistry());
 
-        if (useNTLM)
-        {
+        if (useNTLM) {
             setNTLMProxy(proxyConfig, cb, log);
-        }
-        else apacheClient = cb.build();
-}
+        } else apacheClient = cb.build();
+    }
 
-	public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-			boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
-		this(rootUri,origin ,disableSSLValidation, isSSO, refreshToken, isProxy,proxyConfig, log , useNTLM);
-		this.cxOriginUrl = originUrl;
-	}
+    public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
+                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM);
+        this.cxOriginUrl = originUrl;
+    }
 
     public void setRootUri(String rootUri) {
         this.rootUri = rootUri;
@@ -266,7 +232,7 @@ public class CxHttpClient implements Closeable {
         apacheClient = cb.build();
     }
 
-        private void setNTLMProxy(ProxyConfig proxyConfig, HttpClientBuilder cb, Logger log) {
+    private void setNTLMProxy(ProxyConfig proxyConfig, HttpClientBuilder cb, Logger log) {
 
         if (proxyConfig == null ||
                 StringUtils.isEmpty(proxyConfig.getHost()) ||
@@ -299,10 +265,9 @@ public class CxHttpClient implements Closeable {
                 .build();
     }
 
-    private static HashMap<String,String> splitDomainAndTheUserName(String userName)
-    {
-        String domain="";
-        String user="";
+    private static HashMap<String, String> splitDomainAndTheUserName(String userName) {
+        String domain = "";
+        String user = "";
         // If the username has a backslash, then the domain is the first part and the username is the second part
         if (userName.contains("\\")) {
             String[] parts = userName.split("[\\\\]");
@@ -326,8 +291,8 @@ public class CxHttpClient implements Closeable {
             }
         }
 
-        HashMap<String,String> userDomain = new HashMap<String,String>();
-        userDomain.put(KEY_USER,user);
+        HashMap<String, String> userDomain = new HashMap<String, String>();
+        userDomain.put(KEY_USER, user);
         userDomain.put(KEY_DOMAIN, domain);
         return userDomain;
     }
@@ -343,10 +308,10 @@ public class CxHttpClient implements Closeable {
         HttpHost proxy = new HttpHost(proxyConfig.getHost(), proxyConfig.getPort(), scheme);
         if (StringUtils.isNotEmpty(proxyConfig.getUsername()) &&
                 StringUtils.isNotEmpty(proxyConfig.getPassword())) {
-                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
-                CredentialsProvider credsProvider = new BasicCredentialsProvider();
-                credsProvider.setCredentials(new AuthScope(proxy), credentials);
-                cb.setDefaultCredentialsProvider(credsProvider);
+            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
+            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            credsProvider.setCredentials(new AuthScope(proxy), credentials);
+            cb.setDefaultCredentialsProvider(credsProvider);
         }
 
         logi.info("Setting proxy for Checkmarx http client");
@@ -361,7 +326,7 @@ public class CxHttpClient implements Closeable {
             public HttpRoute determineRoute(
                     final HttpHost host,
                     final HttpRequest request,
-                    final HttpContext context) throws HttpException {  
+                    final HttpContext context) throws HttpException {
                 String hostname = host.getHostName();
                 String noHost = proxyConfig.getNoproxyHosts(); // StringUtils.isNotEmpty(HTTP_NO_HOST) ? HTTP_NO_HOST : HTTPS_NO_HOST;
                 if (StringUtils.isNotEmpty(noHost)) {
@@ -369,8 +334,8 @@ public class CxHttpClient implements Closeable {
                     for (String nonHost : hosts) {
                         try {
                             if (matchNonProxyHostWildCard(hostname, noHost)) {
-                            	logi.debug("Bypassing proxy as host " + hostname + " is found in the nonProxyHosts");
-                                return new HttpRoute(host); 
+                                logi.debug("Bypassing proxy as host " + hostname + " is found in the nonProxyHosts");
+                                return new HttpRoute(host);
                             }
                         } catch (PatternSyntaxException e) {
                             logi.warn("Wrong nonProxyHost param: " + nonHost);
@@ -381,23 +346,23 @@ public class CxHttpClient implements Closeable {
             }
         };
     }
-    
+
     /*
-	 * '*' is the only wildcard support in nonProxyHosts JVM argument.
-	 *  * in Java regex has different meaning than required here.
-	 *  Hence the custom logic
-	 */
-	private static boolean matchNonProxyHostWildCard(String sourceHost, String nonProxyHost) {
-		if(nonProxyHost.indexOf("*")> -1)
-			nonProxyHost = nonProxyHost.replaceAll("\\.", "\\\\.");
-		
-		nonProxyHost = nonProxyHost.replaceAll("\\*", "\\.\\*");
-			
-		Pattern p = Pattern.compile(nonProxyHost);//. represents single character  
-		Matcher m = p.matcher(sourceHost);  
-		return m.matches();  
-	}
-	
+     * '*' is the only wildcard support in nonProxyHosts JVM argument.
+     *  * in Java regex has different meaning than required here.
+     *  Hence the custom logic
+     */
+    private static boolean matchNonProxyHostWildCard(String sourceHost, String nonProxyHost) {
+        if (nonProxyHost.indexOf("*") > -1)
+            nonProxyHost = nonProxyHost.replaceAll("\\.", "\\\\.");
+
+        nonProxyHost = nonProxyHost.replaceAll("\\*", "\\.\\*");
+
+        Pattern p = Pattern.compile(nonProxyHost);//. represents single character
+        Matcher m = p.matcher(sourceHost);
+        return m.matches();
+    }
+
 
     private static SSLConnectionSocketFactory getTrustAllSSLSocketFactory() {
         TrustStrategy acceptingTrustStrategy = new TrustAllStrategy();
@@ -699,6 +664,15 @@ public class CxHttpClient implements Closeable {
         customHeaders.put(name, value);
     }
 
+    public HttpResponse getRequest(HttpRequestBase httpMethod) {
+        try {
+            return apacheClient.execute(httpMethod);
+        } catch (IOException e) {
+            log.error("Fail to execute http method", e);
+        }
+        return null;
+    }
+
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
         if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
@@ -769,7 +743,7 @@ public class CxHttpClient implements Closeable {
         final String responseType = "id_token%20token";
         final String nonce = "9313f0902ba64e50bc564f5137f35a52";
         final String isPrompt = "true";
-        final String scopes = "sast_api openid sast-permissions access-control-permissions access_control_api management_and_orchestration_api".replace(" ", "%20");
+        final String scopes = "sast_api openid sast-permissions access-control-permissions access_control_api".replace(" ", "%20");
         final String providerId = "2"; //windows provider id
 
         String redirectUrl = MessageFormat.format("/CxRestAPI/auth/identity/connect/authorize/callback" +
