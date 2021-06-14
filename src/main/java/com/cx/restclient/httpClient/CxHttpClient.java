@@ -2,6 +2,7 @@ package com.cx.restclient.httpClient;
 
 import static com.cx.restclient.common.CxPARAM.CSRF_TOKEN_HEADER;
 import static com.cx.restclient.common.CxPARAM.ORIGIN_HEADER;
+import static com.cx.restclient.common.CxPARAM.ORIGIN_URL_HEADER;
 import static com.cx.restclient.common.CxPARAM.REVOCATION;
 import static com.cx.restclient.common.CxPARAM.SSO_AUTHENTICATION;
 import static com.cx.restclient.common.CxPARAM.TEAM_PATH;
@@ -711,6 +712,7 @@ public class CxHttpClient implements Closeable {
 
         try {
             httpMethod.addHeader(ORIGIN_HEADER, cxOrigin);
+            httpMethod.addHeader(ORIGIN_URL_HEADER, cxOriginUrl);
             httpMethod.addHeader(TEAM_PATH, this.teamPath);
             if (token != null) {
                 httpMethod.addHeader(HttpHeaders.AUTHORIZATION, token.getToken_type() + " " + token.getAccess_token());
