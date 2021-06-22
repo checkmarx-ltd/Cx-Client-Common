@@ -20,9 +20,7 @@ import static com.cx.restclient.common.CxPARAM.CX_REPORT_LOCATION;
  */
 public abstract class OSAUtils {
     private static final String[] SUPPORTED_EXTENSIONS = {"jar", "war", "ear", "aar", "dll", "exe", "msi", "nupkg", "egg", "whl", "tar.gz", "gem", "deb", "udeb",
-            "dmg", "drpm", "rpm", "pkg.tar.xz", "swf", "swc", "air", "apk", "zip", "gzip", "tar.bz2", "tgz", "c", "cc", "cp", "cpp", "css", "c++", "h", "hh", "hpp",
-            "hxx", "h++", "m", "mm", "pch", "java", "c#", "cs", "csharp", "go", "goc", "js", "plx", "pm", "ph", "cgi", "fcgi", "psgi", "al", "perl", "t", "p6m", "p6l", "nqp,6pl", "6pm",
-            "p6", "php", "py", "rb", "swift", "clj", "cljx", "cljs", "cljc"};
+            "dmg", "drpm", "rpm", "pkg.tar.xz", "swf", "swc", "air", "apk", "zip", "gzip", "tar.bz2", "tgz", "js"};
 
     private static final String INCLUDE_ALL_EXTENSIONS = "**/**";
     private static final String JSON_EXTENSION = ".json";
