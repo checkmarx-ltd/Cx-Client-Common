@@ -170,7 +170,15 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         sastWaiter = new Waiter<ResponseQueueScanStatus>("CxSAST scan", interval, retry) {
             @Override
             public ResponseQueueScanStatus getStatus(String id) throws IOException {
-                return getSASTScanStatus(id);
+                ResponseQueueScanStatus statusResponse = null;
+                try {
+                    statusResponse = getSASTScanStatus(id);
+                } catch (Exception e) {
+
+                    ResponseSastScanStatus statusResponseTemp = getSASTScanOutOfQueueStatus(id);
+                    statusResponse = statusResponseTemp.convertResponseSastScanStatusToResponseQueueScanStatus(statusResponseTemp);
+                }
+                return statusResponse;
             }
 
             @Override
@@ -222,13 +230,13 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     }
 
     private long createLocalSASTScan(long projectId) throws IOException {
-        if(isScanWithSettingsSupported()){
+        if (isScanWithSettingsSupported()) {
             log.info("Uploading the zipped source code.");
             PathFilter filter = new PathFilter(config.getSastFolderExclusions(), config.getSastFilterPattern(), log);
             byte[] zipFile = CxZipUtils.getZippedSources(config, filter, config.getSourceDir(), log);
-            ScanWithSettingsResponse response = scanWithSettings(zipFile,projectId,false );
+            ScanWithSettingsResponse response = scanWithSettings(zipFile, projectId, false);
             return response.getId();
-        }else{
+        } else {
             configureScanSettings(projectId);
             //prepare sources for scan
             PathFilter filter = new PathFilter(config.getSastFolderExclusions(), config.getSastFilterPattern(), log);
@@ -534,8 +542,26 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     //SCAN Waiter - overload methods
     public ResponseQueueScanStatus getSASTScanStatus(String scanId) throws IOException {
+
         ResponseQueueScanStatus scanStatus = httpClient.getRequest(SAST_QUEUE_SCAN_STATUS.replace(SCAN_ID_PATH_PARAM, scanId), CONTENT_TYPE_APPLICATION_JSON_V1, ResponseQueueScanStatus.class, 200, "SAST scan status", false);
         String currentStatus = scanStatus.getStage().getValue();
+
+        if (CurrentStatus.FAILED.value().equals(currentStatus) || CurrentStatus.CANCELED.value().equals(currentStatus) ||
+                CurrentStatus.DELETED.value().equals(currentStatus) || CurrentStatus.UNKNOWN.value().equals(currentStatus)) {
+            scanStatus.setBaseStatus(Status.FAILED);
+        } else if (CurrentStatus.FINISHED.value().equals(currentStatus)) {
+            scanStatus.setBaseStatus(Status.SUCCEEDED);
+        } else {
+            scanStatus.setBaseStatus(Status.IN_PROGRESS);
+        }
+
+        return scanStatus;
+    }
+
+    //Check SAST scan status via sast/scans/{scanId} API
+    public ResponseSastScanStatus getSASTScanOutOfQueueStatus(String scanId) throws IOException {
+        ResponseSastScanStatus scanStatus = httpClient.getRequest(SAST_SCAN.replace(SCAN_ID_PATH_PARAM, scanId), CONTENT_TYPE_APPLICATION_JSON_V1, ResponseSastScanStatus.class, 200, "SAST scan status", false);
+        String currentStatus = scanStatus.getStatus().getName();
 
         if (CurrentStatus.FAILED.value().equals(currentStatus) || CurrentStatus.CANCELED.value().equals(currentStatus) ||
                 CurrentStatus.DELETED.value().equals(currentStatus) || CurrentStatus.UNKNOWN.value().equals(currentStatus)) {
@@ -590,20 +616,20 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         log.info("Uploading zip file");
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-        if(!isRemote) {
+        if (!isRemote) {
             try (InputStream is = new ByteArrayInputStream(zipFile)) {
                 InputStreamBody streamBody = new InputStreamBody(is, ContentType.APPLICATION_OCTET_STREAM, ZIPPED_SOURCE);
                 builder.addPart(ZIPPED_SOURCE, streamBody);
             }
         }
-        builder.addTextBody("projectId",Long.toString(projectId), ContentType.APPLICATION_JSON);
-        builder.addTextBody("overrideProjectSetting", super.isIsNewProject()?"true":"false" , ContentType.APPLICATION_JSON);
-        builder.addTextBody("isIncremental", config.getIncremental().toString() , ContentType.APPLICATION_JSON);
-        builder.addTextBody("isPublic", config.getPublic().toString() , ContentType.APPLICATION_JSON);
-        builder.addTextBody("forceScan", config.getForceScan().toString() , ContentType.APPLICATION_JSON);
-        builder.addTextBody("presetId", config.getPresetId().toString() , ContentType.APPLICATION_JSON);
-        builder.addTextBody("comment", config.getScanComment()==null?"":config.getScanComment() , ContentType.APPLICATION_JSON);
-        builder.addTextBody("engineConfigurationId", config.getEngineConfigurationId()!=null?config.getEngineConfigurationId().toString():ENGINE_CONFIGURATION_ID_DEFAULT , ContentType.APPLICATION_JSON);
+        builder.addTextBody("projectId", Long.toString(projectId), ContentType.APPLICATION_JSON);
+        builder.addTextBody("overrideProjectSetting", super.isIsNewProject() ? "true" : "false", ContentType.APPLICATION_JSON);
+        builder.addTextBody("isIncremental", config.getIncremental().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("isPublic", config.getPublic().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("forceScan", config.getForceScan().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("presetId", config.getPresetId().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("comment", config.getScanComment() == null ? "" : config.getScanComment(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("engineConfigurationId", config.getEngineConfigurationId() != null ? config.getEngineConfigurationId().toString() : ENGINE_CONFIGURATION_ID_DEFAULT, ContentType.APPLICATION_JSON);
         HttpEntity entity = builder.build();
         return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
     }
