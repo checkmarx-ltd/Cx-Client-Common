@@ -4,8 +4,10 @@ import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.*;
+import com.cx.restclient.dto.Results;
+import com.cx.restclient.dto.Status;
 import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.exception.CxOSAException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.osa.dto.*;
 import com.cx.restclient.osa.utils.OSAUtils;
@@ -13,8 +15,10 @@ import com.cx.restclient.sast.utils.LegacyClient;
 import com.cx.restclient.sast.utils.State;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
+import org.whitesource.agent.utils.CommandLineErrors;
 import org.whitesource.fs.ComponentScan;
 
 import java.io.IOException;
@@ -105,6 +109,16 @@ public class CxOSAClient extends LegacyClient implements Scanner {
                 return osaResults;
             }
         }
+        if (!validateOsaDependencies(osaDependenciesJson)) {
+            log.error("Fail to resolve dependencies: " + osaDependenciesJson);
+            List<String> failedCommands = CommandLineErrors.getFailedCommands();
+            for (String fc : failedCommands) {
+                log.error("Failed command: " + fc);
+            }
+            setState(State.FAILED);
+            osaResults.setException(new CxOSAException("Failed to resolve dependencies for OSA scan: \n" + osaDependenciesJson));
+            return osaResults;
+        }
 
         try {
             scanId = sendOSAScan(osaDependenciesJson, projectId);
@@ -121,6 +135,13 @@ public class CxOSAClient extends LegacyClient implements Scanner {
         return osaResults;
     }
 
+    private boolean validateOsaDependencies(String osaDependenciesJson) {
+        if (StringUtils.isNotEmpty(osaDependenciesJson) &&
+                !osaDependenciesJson.equalsIgnoreCase("[{\"dependencies\":[],\"projectToken\":\" \"}]")) {
+            return true;
+        }
+        return false;
+    }
 
     public void setOsaFSAProperties(Properties fsaConfig) {  //For CxMaven plugin
         config.setOsaFsaConfig(fsaConfig);
