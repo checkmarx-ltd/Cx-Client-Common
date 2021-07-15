@@ -114,7 +114,7 @@ public class CxScanConfig implements Serializable {
     private final List<Cookie> sessionCookies = new ArrayList<>();
     private Boolean isProxy = true;
     private ProxyConfig proxyConfig;
-    private Boolean useNTLM=false;
+    private Boolean useNTLM = false;
 
 
     public CxScanConfig() {
@@ -127,6 +127,7 @@ public class CxScanConfig implements Serializable {
         this.cxOrigin = cxOrigin;
         this.disableCertificateValidation = disableCertificateValidation;
     }
+
     public CxScanConfig(String url, String username, String password, String cxOrigin, String cxOriginUrl, boolean disableCertificateValidation) {
         this.url = url;
         this.username = username;
@@ -135,8 +136,8 @@ public class CxScanConfig implements Serializable {
         this.cxOriginUrl = cxOriginUrl;
         this.disableCertificateValidation = disableCertificateValidation;
     }
-    
-    
+
+
     public CxScanConfig(String url, String refreshToken, String cxOrigin, boolean disableCertificateValidation) {
         this.url = url;
         this.refreshToken = refreshToken;
@@ -175,15 +176,15 @@ public class CxScanConfig implements Serializable {
     public String getCxOriginUrl() {
         return cxOriginUrl;
     }
-    
+
     public void setCxOrigin(String cxOrigin) {
         this.cxOrigin = cxOrigin;
     }
 
     public void setCxOriginUrl(String cxOriginUrl) {
         this.cxOriginUrl = cxOriginUrl;
-    } 
-    
+    }
+
     public boolean isDisableCertificateValidation() {
         return disableCertificateValidation;
     }
@@ -284,13 +285,13 @@ public class CxScanConfig implements Serializable {
         return teamPath;
     }
 
-    public void setTeamPath(String teamPath) {    	
-    	//Make teampath always in the form /CxServer/Team1. User might have used '\' in the path.	
+    public void setTeamPath(String teamPath) {
+        //Make teampath always in the form /CxServer/Team1. User might have used '\' in the path.
         if (!StringUtils.isEmpty(teamPath) && !teamPath.startsWith("\\") && !teamPath.startsWith(("/"))) {
-            teamPath = "/" + teamPath;            
+            teamPath = "/" + teamPath;
         }
-        if(!StringUtils.isEmpty(teamPath)&& teamPath!=null){
-        teamPath = teamPath.replace("\\", "/");
+        if (!StringUtils.isEmpty(teamPath) && teamPath != null) {
+            teamPath = teamPath.replace("\\", "/");
         }
         this.teamPath = teamPath;
     }
