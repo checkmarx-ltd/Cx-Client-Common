@@ -20,9 +20,4 @@ public class CxClientException extends RuntimeException {
         super(cause);
     }
 
-
-    public static void main(String[] args) {
-
-    }
-
 }
