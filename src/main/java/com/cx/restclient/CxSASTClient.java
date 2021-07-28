@@ -162,7 +162,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     };
 
 
-    CxSASTClient(CxScanConfig config, Logger log) throws MalformedURLException {
+    CxSASTClient(CxScanConfig config, Logger log) throws MalformedURLException{
         super(config, log);
 
         int interval = config.getProgressInterval() != null ? config.getProgressInterval() : 20;
@@ -170,14 +170,18 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         sastWaiter = new Waiter<ResponseQueueScanStatus>("CxSAST scan", interval, retry) {
             @Override
             public ResponseQueueScanStatus getStatus(String id) throws IOException {
-                ResponseQueueScanStatus statusResponse = null;
+                ResponseQueueScanStatus statusResponse;
                 try {
                     statusResponse = getSASTScanStatus(id);
-                } catch (Exception e) {
-
-                    ResponseSastScanStatus statusResponseTemp = getSASTScanOutOfQueueStatus(id);
-                    statusResponse = statusResponseTemp.convertResponseSastScanStatusToResponseQueueScanStatus(statusResponseTemp);
+                } catch (MalformedURLException e) {
+                    try {
+                        ResponseSastScanStatus statusResponseTemp = getSASTScanOutOfQueueStatus(id);
+                        statusResponse = statusResponseTemp.convertResponseSastScanStatusToResponseQueueScanStatus(statusResponseTemp);
+                    }catch (MalformedURLException exception){
+                        throw new MalformedURLException ("Failed with next error: " + exception);
+                    }
                 }
+
                 return statusResponse;
             }
 
