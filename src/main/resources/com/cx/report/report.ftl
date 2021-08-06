@@ -2119,7 +2119,7 @@
                                         <th>##</th>
                                     </tr>
                                     <#list sast.queryList as query>
-                                        <#if query.severity == "High">
+                                        <#if query.severity == sast.languageMap["High"]>
                                             <tr>
                                                 <td>${query.name}</td>
                                                 <td>${query.result?size}</td>
@@ -2172,7 +2172,7 @@
                                         <th>##</th>
                                     </tr>
                                     <#list sast.queryList as query>
-                                        <#if query.severity == "Medium">
+                                        <#if query.severity == sast.languageMap["Medium"]>
                                             <tr>
                                                 <td>${query.name}</td>
                                                 <td>${query.result?size}</td>
@@ -2226,7 +2226,7 @@
                                         <th>##</th>
                                     </tr>
                                     <#list sast.queryList as query>
-                                        <#if query.severity == "Low">
+                                        <#if query.severity == sast.languageMap["Low"]>
                                             <tr>
                                                 <td>${query.name}</td>
                                                 <td>${query.result?size}</td>
@@ -2372,7 +2372,7 @@
                                     <div class="full-start-end-text">
                                         End:
                                     </div>
-                                    <div class="full-start-end-date" id="osa-full-end-date">${dependencyResult.scanEndTime}</div>
+                                    <div class="full-start-end-date" id="osa-full-end-date">-</div>
                                 </div>
                             </div>
 

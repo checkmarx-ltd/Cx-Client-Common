@@ -54,7 +54,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     private static final String SCAN_WITH_SETTINGS_URL = "sast/scanWithSettings";
     private static final String ENGINE_CONFIGURATION_ID_DEFAULT = "0";
     private long scanId;
-    private SASTResults sastResults = new SASTResults();
+    private SASTResults sastResults = new SASTResults(log);
     private static final String SWAGGER_LOCATION = "help/swagger/docs/v1.1";
     private static final String ZIPPED_SOURCE = "zippedSource";
     private Waiter<ReportStatus> reportWaiter = new Waiter<ReportStatus>("Scan report", 10, 3) {
@@ -187,7 +187,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     @Override
     public Results init() {
-        SASTResults initSastResults = new SASTResults();
+        SASTResults initSastResults = new SASTResults(log);
         try {
             initiate();
         } catch (CxClientException e) {
@@ -394,7 +394,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         if (config.getGenerateXmlReport() == null || config.getGenerateXmlReport()) {
             byte[] cxReport = getScanReport(sastResults.getScanId(), ReportType.XML, CONTENT_TYPE_APPLICATION_XML_V1);
             CxXMLResults reportObj = convertToXMLResult(cxReport);
-            sastResults.setScanDetailedReport(reportObj);
+            sastResults.setScanDetailedReport(reportObj,config,log);
             sastResults.setRawXMLReport(cxReport);
         }
         sastResults.setSastResultsReady(true);
@@ -403,7 +403,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     @Override
     public SASTResults getLatestScanResults() {
-        sastResults = new SASTResults();
+        sastResults = new SASTResults(log);
         try {
             log.info("---------------------------------Get Last CxSAST Results:--------------------------------");
             List<LastScanResponse> scanList = getLatestSASTStatus(projectId);
@@ -574,7 +574,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     @Override
     public Results initiateScan() {
-        sastResults = new SASTResults();
+        sastResults = new SASTResults(log);
         createSASTScan(projectId);
         return sastResults;
     }
