@@ -109,7 +109,8 @@ public class CxOSAClient extends LegacyClient implements Scanner {
                 return osaResults;
             }
         }
-        if (!validateOsaDependencies(osaDependenciesJson)) {
+        if ((!validateOsaDependencies(osaDependenciesJson) && dependenciesErrorsExist()) ||
+                (config.isOsaFailOnError() && dependenciesErrorsExist())) {
             log.error("Fail to resolve dependencies: " + osaDependenciesJson);
             List<String> failedCommands = CommandLineErrors.getFailedCommands();
             for (String fc : failedCommands) {
@@ -133,6 +134,10 @@ public class CxOSAClient extends LegacyClient implements Scanner {
         osaResults.setOsaProjectSummaryLink(config.getUrl(), projectId);
         osaResults.setOsaScanId(scanId);
         return osaResults;
+    }
+
+    private boolean dependenciesErrorsExist() {
+        return CommandLineErrors.getFailedCommands() != null && !CommandLineErrors.getFailedCommands().isEmpty();
     }
 
     private boolean validateOsaDependencies(String osaDependenciesJson) {
