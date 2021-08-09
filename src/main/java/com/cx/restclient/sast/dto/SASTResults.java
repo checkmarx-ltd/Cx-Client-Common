@@ -171,9 +171,7 @@ public class SASTResults extends Results implements Serializable {
 	}
 
     /* 
-     * It will attach High,Low,Medium equivalent word to report 
-     * and will check while printing the report on UI 
-     * for comparision while checking severity 
+     *It will create a map for lanaguage specific severity 
      * */ 
 	private void fillLanguageEquivalent(String locale) {
 		//Setting sast language equivalent for HTML Report 
@@ -456,38 +454,42 @@ public class SASTResults extends Results implements Serializable {
          return new SimpleDateFormat(displayDatePattern, locale).format(date);
     }
 
+    
+    
     private Date createStartDate(String scanStart) throws Exception {
         DateFormat formatter;
         Date formattedDate = null;
-        
-        for (SupportedLanguage lang : SupportedLanguage.values()) {
-        	try{
-            	DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.DEFAULT,lang.getLocale());
-            	formattedDate=df.parse(scanStart);
-            	log.debug("Selected language for SAST is "+lang.getLocale());
-            	if(formattedDate!=null){
-            	    break;
-            	}
-            } catch (Exception ignored) {
-            	//Chinese language parsing for Long date 
-            	try{
-				DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT, lang.getLocale());
+			try {
+				//for chinese simplified parsing
+				if(this.language.equalsIgnoreCase("zh-CN")) {
+					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT,
+							Locale.SIMPLIFIED_CHINESE);
 				formattedDate = df.parse(scanStart);
-				log.debug("Selected language for SAST is "+lang.getLocale());
-				if (formattedDate != null) {
-					break;
+				log.debug("Selected language for SAST is " + this.language);
+				//for chinese Taiwan parsing
+				}else if (this.language.equalsIgnoreCase("zh-TW")){
+					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT,
+							Locale.TRADITIONAL_CHINESE);
+				formattedDate = df.parse(scanStart);
+				log.debug("Selected language for SAST is " + this.language);
+				}else{
+					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.DEFAULT, new Locale(this.language));
+					formattedDate = df.parse(scanStart);
+					log.debug("Selected language for SAST is " + this.language);
 				}
-            	}catch(Exception ignored1){
-            		
-            	}
-            }
-        }
-
+				
+			} catch (Exception ignored) {
+					
+			}
         if(formattedDate == null){
             throw new Exception(String.format("Failed parsing date [%s]", scanStart));
         }
         return formattedDate;
     }
+
+    
+    
+    
 
     private Date createTimeDate(String scanTime) throws ParseException {
         //"00h:00m:30s"
