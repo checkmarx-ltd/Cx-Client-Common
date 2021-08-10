@@ -173,10 +173,13 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 ResponseQueueScanStatus statusResponse = null;
                 try {
                     statusResponse = getSASTScanStatus(id);
-                } catch (Exception e) {
-
-                    ResponseSastScanStatus statusResponseTemp = getSASTScanOutOfQueueStatus(id);
-                    statusResponse = statusResponseTemp.convertResponseSastScanStatusToResponseQueueScanStatus(statusResponseTemp);
+                } catch (MalformedURLException e) {
+                    try {
+                        ResponseSastScanStatus statusResponseTemp = getSASTScanOutOfQueueStatus(id);
+                        statusResponse = statusResponseTemp.convertResponseSastScanStatusToResponseQueueScanStatus(statusResponseTemp);
+                    }catch (MalformedURLException exception){
+                        throw new MalformedURLException ("Failed with next error: " + exception);
+                    }
                 }
                 return statusResponse;
             }
