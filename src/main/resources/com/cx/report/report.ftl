@@ -2116,7 +2116,7 @@
                                 <table id="sast-cve-table-high" class="cve-table sast-cve-table sast-cve-table-high">
                                     <tr>
                                         <th>Vulnerability</th>
-                                        <th>##</th>
+                                        <th>Issues Found</th>
                                     </tr>
                                     <#list sast.queryList as query>
                                         <#if query.severity == sast.languageMap["High"]>
@@ -2169,7 +2169,7 @@
                                        class="cve-table sast-cve-table sast-cve-table-medium">
                                     <tr>
                                         <th>Vulnerability</th>
-                                        <th>##</th>
+                                        <th>Issues Found</th>
                                     </tr>
                                     <#list sast.queryList as query>
                                         <#if query.severity == sast.languageMap["Medium"]>
@@ -2223,7 +2223,7 @@
                                 <table id="sast-cve-table-low" class="cve-table sast-cve-table sast-cve-table-low">
                                     <tr>
                                         <th>Vulnerability</th>
-                                        <th>##</th>
+                                        <th>Issues Found</th>
                                     </tr>
                                     <#list sast.queryList as query>
                                         <#if query.severity == sast.languageMap["Low"]>
