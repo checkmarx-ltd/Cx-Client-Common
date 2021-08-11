@@ -30,7 +30,7 @@ public abstract class SummaryUtils {
 
         Map<String, Object> templateData = new HashMap<>();
         templateData.put("config", config);
-        templateData.put("sast", sastResults != null ? sastResults : new SASTResults(null));
+        templateData.put("sast", sastResults != null ? sastResults : new SASTResults());
 
         // TODO: null value for "osa" should be handled inside the template.
         templateData.put("osa", osaResults != null ? osaResults : new OSAResults());

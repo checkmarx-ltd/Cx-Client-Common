@@ -13,14 +13,6 @@ public enum SupportedLanguage {
     zhCN(Locale.SIMPLIFIED_CHINESE,"高危","中危","低危","信息"),
     zhTW(Locale.TRADITIONAL_CHINESE,"高","中","低","信息"),
     ruRU(new Locale("ru"),"Высокое","Среднее","Низкое","Информация");
-
-    //TODO: Add fitting format
-//    JAPANESE(new Locale("ja-JP"), "ss"),
-//    KOREAN(new Locale("ko-KR"), "ss"),
-//    PORTUGUESE_BR(new Locale("pt-BR"), "ss"),
-//    CHINESE_CN(new Locale("zn-CN"), "ss"),
-//    CHINESE_TW(new Locale("zn-TW"), "ss");
-
     private final Locale locale;
     private final String High;
     private final String Medium;

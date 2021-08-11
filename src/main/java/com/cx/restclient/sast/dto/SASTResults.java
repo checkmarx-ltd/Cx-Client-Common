@@ -25,7 +25,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import org.slf4j.Logger;
+
 
 import static com.cx.restclient.common.CxPARAM.AUTHENTICATION;
 import static com.cx.restclient.cxArm.utils.CxARMUtils.getPolicyList;
@@ -45,7 +45,7 @@ public class SASTResults extends Results implements Serializable {
     private int medium = 0;
     private int low = 0;
     private int information = 0;
-    private static final String log_Mesaage="Selected language for SAST is: ";
+    private static final String log_Mesaage="User's preferred language from access token is: ";
 
     private int newHigh = 0;
     private int newMedium = 0;
@@ -63,11 +63,7 @@ public class SASTResults extends Results implements Serializable {
     private String language="";
     private Locale locale;
     private transient Map languageMap;
-    private transient Logger log;
-    
-    public SASTResults(Logger log){
-    	this.log=log;
-    }
+  
     public Map getLanguageMap() {
 		return languageMap;
 	}
@@ -107,14 +103,14 @@ public class SASTResults extends Results implements Serializable {
         High, Medium, Low, Information;
     }
 
-    public void setScanDetailedReport(CxXMLResults reportObj,CxScanConfig config,Logger log) throws IOException {
+    public void setScanDetailedReport(CxXMLResults reportObj,CxScanConfig config) throws IOException {
     	
     	//intiate httpclient for access token
-    	CxHttpClient client = getHttpClient(config,log);
+    	CxHttpClient client = getHttpClient(config);
     	LoginSettings loginsetting = getLoginSettings(config);
     	TokenLoginResponse token = client.generateToken(loginsetting);
-    	String locale= getLocaleFromAccessToken(token);
-    	fillLanguageEquivalent(locale);
+    	getLocaleFromAccessToken(token);
+    	fillLanguageEquivalent(this.language);
     	
     	this.scanStart = reportObj.getScanStart();
         this.scanTime = reportObj.getScanTime();
@@ -156,7 +152,7 @@ public class SASTResults extends Results implements Serializable {
      * which will use to identify which language is used in SAST
      * 
      * */ 
-    private String getLocaleFromAccessToken(TokenLoginResponse token) {
+    private void getLocaleFromAccessToken(TokenLoginResponse token) {
     	String actToken = token.getAccess_token();
     	String locale="";
     	String[] split_string = actToken.split("\\.");
@@ -166,9 +162,8 @@ public class SASTResults extends Results implements Serializable {
         String body = new String(base64Url.decode(base64EncodedBody));
         String tokenToParse=body.replace("\"", "'");
         JSONObject json = new JSONObject(tokenToParse);  
-        locale = json.getString("locale");  
-        this.language=locale;
-    	return locale;
+        locale = json.getString("locale");
+        this.language=locale.replace("-", "");
 	}
 
     /* 
@@ -176,7 +171,6 @@ public class SASTResults extends Results implements Serializable {
      * */ 
 	private void fillLanguageEquivalent(String locale) {
 		//Setting sast language equivalent for HTML Report 
-		locale=locale.replace("-", "");
         Map<String, String> languageMap = new HashMap<String,String>();
         SupportedLanguage lang = SupportedLanguage.valueOf(locale);
         languageMap.put("High", lang.getHigh());
@@ -198,7 +192,7 @@ public class SASTResults extends Results implements Serializable {
 		return loginsetting;
 	}
 
-	public CxHttpClient getHttpClient(CxScanConfig config,Logger log) throws  MalformedURLException{
+	public CxHttpClient getHttpClient(CxScanConfig config) throws  MalformedURLException{
     	CxHttpClient httpClient=null;
     	 if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
     		 httpClient = new CxHttpClient(
@@ -210,7 +204,7 @@ public class SASTResults extends Results implements Serializable {
                      config.getRefreshToken(),
                      config.isProxy(),
                      config.getProxyConfig(),
-                     log,
+                     null,
                      config.getNTLM());
          }
 		return httpClient;
@@ -458,33 +452,20 @@ public class SASTResults extends Results implements Serializable {
     
     
     private Date createStartDate(String scanStart) throws Exception {
-        DateFormat formatter;
-        Date formattedDate = null;
-			try {
-				//for chinese simplified parsing
-				if(this.language.equalsIgnoreCase("zh-CN")) {
-					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT,
-							Locale.SIMPLIFIED_CHINESE);
-				formattedDate = df.parse(scanStart);
-				log.debug(log_Mesaage + this.language);
-				//for chinese Taiwan parsing
-				}else if (this.language.equalsIgnoreCase("zh-TW")){
-					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT,
-							Locale.TRADITIONAL_CHINESE);
-				formattedDate = df.parse(scanStart);
-				log.debug( log_Mesaage + this.language);
-				}else{
-					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.DEFAULT, new Locale(this.language));
-					formattedDate = df.parse(scanStart);
-					log.debug(log_Mesaage + this.language);
-				}
-				
-			} catch (Exception ignored) {
-					
-			}
-        if(formattedDate == null){
-            throw new Exception(String.format("Failed parsing date [%s]", scanStart));
-        }
+		DateFormat formatter;
+		Date formattedDate = null;
+		SupportedLanguage lang = SupportedLanguage.valueOf(this.language);
+		try {
+			lang.getLocale();
+			DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.DEFAULT, lang.getLocale());
+			formattedDate = df.parse(scanStart);
+		} catch (Exception ignored) {
+			DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT, lang.getLocale());
+			formattedDate = df.parse(scanStart);
+		}
+		if (formattedDate == null) {
+			throw new Exception(String.format("Failed parsing date [%s]", scanStart));
+		}
         return formattedDate;
     }
 
