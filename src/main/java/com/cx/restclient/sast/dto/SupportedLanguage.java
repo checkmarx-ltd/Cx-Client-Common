@@ -4,15 +4,15 @@ import java.util.Locale;
 
 public enum SupportedLanguage {
 
-	en_US(new Locale("en"),"High","Medium","Low","Information"),
-	ja_JP(new Locale("ja"),"高","中","低","情報"),
-    fr_FR(new Locale("fr"),"Haute","Moyenne","Basse","Informations"),
-    pt_BR(new Locale("pt"),"Alto","Médio","Baixo","Em formação"),
-    es_ES(new Locale("es", "ES"),"Alta","Medio","Baja","Información"),
-    ko_KR(new Locale("ko"),"높음","중간","낮음","정보"),
-    zh_CN(Locale.SIMPLIFIED_CHINESE,"高危","中危","低危","信息"),
-    zh_TW(Locale.TRADITIONAL_CHINESE,"高","中","低","信息"),
-    ru_RU(new Locale("ru"),"Высокое","Среднее","Низкое","Информация");
+	enUS(new Locale("en"),"High","Medium","Low","Information"),
+	jaJP(new Locale("ja"),"高","中","低","情報"),
+    frFR(new Locale("fr"),"Haute","Moyenne","Basse","Informations"),
+    ptBR(new Locale("pt"),"Alto","Médio","Baixo","Em formação"),
+    esES(new Locale("es", "ES"),"Alta","Medio","Baja","Información"),
+    koKR(new Locale("ko"),"높음","중간","낮음","정보"),
+    zhCN(Locale.SIMPLIFIED_CHINESE,"高危","中危","低危","信息"),
+    zhTW(Locale.TRADITIONAL_CHINESE,"高","中","低","信息"),
+    ruRU(new Locale("ru"),"Высокое","Среднее","Низкое","Информация");
 
     //TODO: Add fitting format
 //    JAPANESE(new Locale("ja-JP"), "ss"),

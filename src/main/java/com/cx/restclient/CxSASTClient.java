@@ -57,6 +57,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     private SASTResults sastResults = new SASTResults(log);
     private static final String SWAGGER_LOCATION = "help/swagger/docs/v1.1";
     private static final String ZIPPED_SOURCE = "zippedSource";
+    private static final String SAST_SCAN= "SAST scan status";
     private Waiter<ReportStatus> reportWaiter = new Waiter<ReportStatus>("Scan report", 10, 3) {
         @Override
         public ReportStatus getStatus(String id) throws IOException {
@@ -548,7 +549,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     //SCAN Waiter - overload methods
     public ResponseQueueScanStatus getSASTScanStatus(String scanId) throws IOException {
 
-        ResponseQueueScanStatus scanStatus = httpClient.getRequest(SAST_QUEUE_SCAN_STATUS.replace(SCAN_ID_PATH_PARAM, scanId), CONTENT_TYPE_APPLICATION_JSON_V1, ResponseQueueScanStatus.class, 200, "SAST scan status", false);
+        ResponseQueueScanStatus scanStatus = httpClient.getRequest(SAST_QUEUE_SCAN_STATUS.replace(SCAN_ID_PATH_PARAM, scanId), CONTENT_TYPE_APPLICATION_JSON_V1, ResponseQueueScanStatus.class, 200, SAST_SCAN, false);
         String currentStatus = scanStatus.getStage().getValue();
 
         if (CurrentStatus.FAILED.value().equals(currentStatus) || CurrentStatus.CANCELED.value().equals(currentStatus) ||
@@ -565,7 +566,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     //Check SAST scan status via sast/scans/{scanId} API
     public ResponseSastScanStatus getSASTScanOutOfQueueStatus(String scanId) throws IOException {
-        ResponseSastScanStatus scanStatus = httpClient.getRequest(SAST_SCAN.replace(SCAN_ID_PATH_PARAM, scanId), CONTENT_TYPE_APPLICATION_JSON_V1, ResponseSastScanStatus.class, 200, "SAST scan status", false);
+        ResponseSastScanStatus scanStatus = httpClient.getRequest(SAST_SCAN.replace(SCAN_ID_PATH_PARAM, scanId), CONTENT_TYPE_APPLICATION_JSON_V1, ResponseSastScanStatus.class, 200, SAST_SCAN, false);
         String currentStatus = scanStatus.getStatus().getName();
 
         if (CurrentStatus.FAILED.value().equals(currentStatus) || CurrentStatus.CANCELED.value().equals(currentStatus) ||
@@ -610,7 +611,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     private boolean isScanWithSettingsSupported() {
         try {
-            HashMap swaggerResponse = this.httpClient.getRequest(SWAGGER_LOCATION, CONTENT_TYPE_APPLICATION_JSON, HashMap.class, 200, "SAST scan status", false);
+            HashMap swaggerResponse = this.httpClient.getRequest(SWAGGER_LOCATION, CONTENT_TYPE_APPLICATION_JSON, HashMap.class, 200, SAST_SCAN, false);
             return swaggerResponse.toString().contains("/sast/scanWithSettings");
         } catch (Exception e) {
             return false;

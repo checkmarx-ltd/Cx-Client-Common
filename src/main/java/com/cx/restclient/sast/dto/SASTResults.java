@@ -45,6 +45,7 @@ public class SASTResults extends Results implements Serializable {
     private int medium = 0;
     private int low = 0;
     private int information = 0;
+    private static final String log_Mesaage="Selected language for SAST is: ";
 
     private int newHigh = 0;
     private int newMedium = 0;
@@ -61,8 +62,8 @@ public class SASTResults extends Results implements Serializable {
     private String scanEndTime = "";
     private String language="";
     private Locale locale;
-    private Map languageMap;
-    private Logger log;
+    private transient Map languageMap;
+    private transient Logger log;
     
     public SASTResults(Logger log){
     	this.log=log;
@@ -175,7 +176,7 @@ public class SASTResults extends Results implements Serializable {
      * */ 
 	private void fillLanguageEquivalent(String locale) {
 		//Setting sast language equivalent for HTML Report 
-		locale=locale.replace("-", "_");
+		locale=locale.replace("-", "");
         Map<String, String> languageMap = new HashMap<String,String>();
         SupportedLanguage lang = SupportedLanguage.valueOf(locale);
         languageMap.put("High", lang.getHigh());
@@ -465,17 +466,17 @@ public class SASTResults extends Results implements Serializable {
 					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT,
 							Locale.SIMPLIFIED_CHINESE);
 				formattedDate = df.parse(scanStart);
-				log.debug("Selected language for SAST is " + this.language);
+				log.debug(log_Mesaage + this.language);
 				//for chinese Taiwan parsing
 				}else if (this.language.equalsIgnoreCase("zh-TW")){
 					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT,
 							Locale.TRADITIONAL_CHINESE);
 				formattedDate = df.parse(scanStart);
-				log.debug("Selected language for SAST is " + this.language);
+				log.debug( log_Mesaage + this.language);
 				}else{
 					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.DEFAULT, new Locale(this.language));
 					formattedDate = df.parse(scanStart);
-					log.debug("Selected language for SAST is " + this.language);
+					log.debug(log_Mesaage + this.language);
 				}
 				
 			} catch (Exception ignored) {
