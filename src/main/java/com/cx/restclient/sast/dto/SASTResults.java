@@ -45,8 +45,7 @@ public class SASTResults extends Results implements Serializable {
     private int medium = 0;
     private int low = 0;
     private int information = 0;
-    private static final String log_Mesaage="User's preferred language from access token is: ";
-
+    
     private int newHigh = 0;
     private int newMedium = 0;
     private int newLow = 0;
