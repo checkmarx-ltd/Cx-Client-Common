@@ -4,15 +4,15 @@ import java.util.Locale;
 
 public enum SupportedLanguage {
 
-	enUS(new Locale("en"),"High","Medium","Low","Information"),
-	jaJP(new Locale("ja"),"高","中","低","情報"),
-    frFR(new Locale("fr"),"Haute","Moyenne","Basse","Informations"),
-    ptBR(new Locale("pt"),"Alto","Médio","Baixo","Em formação"),
-    esES(new Locale("es", "ES"),"Alta","Medio","Baja","Información"),
-    koKR(new Locale("ko"),"높음","중간","낮음","정보"),
-    zhCN(Locale.SIMPLIFIED_CHINESE,"高危","中危","低危","信息"),
-    zhTW(Locale.TRADITIONAL_CHINESE,"高","中","低","信息"),
-    ruRU(new Locale("ru"),"Высокое","Среднее","Низкое","Информация");
+	ENUS(new Locale("en"),"High","Medium","Low","Information"),
+	JAJP(new Locale("ja"),"高","中","低","情報"),
+    FRFR(new Locale("fr"),"Haute","Moyenne","Basse","Informations"),
+    PTBR(new Locale("pt"),"Alto","Médio","Baixo","Em formação"),
+    ESES(new Locale("es", "ES"),"Alta","Medio","Baja","Información"),
+    KOKR(new Locale("ko"),"높음","중간","낮음","정보"),
+    ZHCN(Locale.SIMPLIFIED_CHINESE,"高危","中危","低危","信息"),
+    ZHTW(Locale.TRADITIONAL_CHINESE,"高","中","低","信息"),
+    RURU(new Locale("ru"),"Высокое","Среднее","Низкое","Информация");
     private final Locale locale;
     private final String High;
     private final String Medium;

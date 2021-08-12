@@ -163,7 +163,8 @@ public class SASTResults extends Results implements Serializable {
         String tokenToParse=body.replace("\"", "'");
         JSONObject json = new JSONObject(tokenToParse);  
         locale = json.getString("locale");
-        this.language=locale.replace("-", "");
+        this.locale=new Locale(locale);
+        this.language=locale.replace("-", "").toUpperCase();
 	}
 
     /* 
