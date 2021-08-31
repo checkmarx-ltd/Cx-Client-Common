@@ -61,7 +61,7 @@ public class SASTResults extends Results implements Serializable {
     private String scanEndTime = "";
     private String language="";
     private Locale locale;
-    private transient Map languageMap;
+    private Map languageMap;
   
     public Map getLanguageMap() {
 		return languageMap;
