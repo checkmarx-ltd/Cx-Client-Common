@@ -61,13 +61,15 @@ public class SASTResults extends Results implements Serializable {
     private String scanEndTime = "";
     private String language="";
     private Locale locale;
-    private Map languageMap;
+    private Map<String,String> languageMap;
   
-    public Map getLanguageMap() {
+   
+
+	public Map<String, String> getLanguageMap() {
 		return languageMap;
 	}
 
-	public void setLanguageMap(Map languageMap) {
+	public void setLanguageMap(Map<String, String> languageMap) {
 		this.languageMap = languageMap;
 	}
 
@@ -171,12 +173,11 @@ public class SASTResults extends Results implements Serializable {
      * */ 
 	private void fillLanguageEquivalent(String locale) {
 		//Setting sast language equivalent for HTML Report 
-        Map<String, String> languageMap = new HashMap<String,String>();
+        languageMap = new HashMap<String,String>();
         SupportedLanguage lang = SupportedLanguage.valueOf(locale);
         languageMap.put("High", lang.getHigh());
         languageMap.put("Medium", lang.getMedium());
         languageMap.put("Low", lang.getLow());
-        this.languageMap =languageMap;
 	}
 	
 	private LoginSettings getLoginSettings(CxScanConfig config) throws MalformedURLException {
