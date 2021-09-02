@@ -1,14 +1,33 @@
 package com.cx.restclient.sast.dto;
 
+import com.cx.restclient.ast.dto.common.ScanConfig;
+import com.cx.restclient.common.UrlUtils;
+import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
+import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.Results;
+import com.cx.restclient.dto.TokenLoginResponse;
+import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.httpClient.CxHttpClient;
+import com.cx.restclient.osa.dto.ClientType;
+import com.cx.restclient.sast.dto.CxXMLResults.Query;
+import com.cx.restclient.sast.utils.LegacyClient;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
+import org.apache.commons.codec.binary.Base64;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+
+import static com.cx.restclient.common.CxPARAM.AUTHENTICATION;
 import static com.cx.restclient.cxArm.utils.CxARMUtils.getPolicyList;
 import static com.cx.restclient.sast.utils.SASTParam.PROJECT_LINK_FORMAT;
 import static com.cx.restclient.sast.utils.SASTParam.SCAN_LINK_FORMAT;
@@ -20,13 +39,13 @@ import static com.cx.restclient.sast.utils.SASTParam.SCAN_LINK_FORMAT;
 public class SASTResults extends Results implements Serializable {
 
     private long scanId;
-
+    private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/" + AUTHENTICATION;
     private boolean sastResultsReady = false;
     private int high = 0;
     private int medium = 0;
     private int low = 0;
     private int information = 0;
-
+    
     private int newHigh = 0;
     private int newMedium = 0;
     private int newLow = 0;
@@ -40,8 +59,37 @@ public class SASTResults extends Results implements Serializable {
     private String scanTime = "";
     private String scanStartTime = "";
     private String scanEndTime = "";
+    private String language="";
+    private Locale locale;
+    private Map<String,String> languageMap;
+  
+   
 
-    private String filesScanned;
+	public Map<String, String> getLanguageMap() {
+		return languageMap;
+	}
+
+	public void setLanguageMap(Map<String, String> languageMap) {
+		this.languageMap = languageMap;
+	}
+
+	public Locale getLocale() {
+		return locale;
+	}
+
+	public void setLocale(Locale locale) {
+		this.locale = locale;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+	private String filesScanned;
     private String LOC;
     private List<CxXMLResults.Query> queryList;
 
@@ -56,13 +104,22 @@ public class SASTResults extends Results implements Serializable {
         High, Medium, Low, Information;
     }
 
-    public void setScanDetailedReport(CxXMLResults reportObj) {
-        this.scanStart = reportObj.getScanStart();
+    public void setScanDetailedReport(CxXMLResults reportObj,CxScanConfig config) throws IOException {
+    	
+    	//intiate httpclient for access token
+    	CxHttpClient client = getHttpClient(config);
+    	LoginSettings loginsetting = getLoginSettings(config);
+    	TokenLoginResponse token = client.generateToken(loginsetting);
+    	getLocaleFromAccessToken(token);
+    	fillLanguageEquivalent(this.language);
+    	
+    	this.scanStart = reportObj.getScanStart();
         this.scanTime = reportObj.getScanTime();
         setScanStartEndDates(this.scanStart, this.scanTime);
         this.LOC = reportObj.getLinesOfCodeScanned();
         this.filesScanned = reportObj.getFilesScanned();
-
+        
+        
         for (CxXMLResults.Query q : reportObj.getQuery()) {
             List<CxXMLResults.Query.Result> qResult = q.getResult();
             for (int i = 0; i < qResult.size(); i++) {
@@ -89,6 +146,70 @@ public class SASTResults extends Results implements Serializable {
             }
         }
         this.queryList = reportObj.getQuery();
+    }
+    
+    /* 
+     * This will return string from encoded access token 
+     * which will use to identify which language is used in SAST
+     * 
+     * */ 
+    private void getLocaleFromAccessToken(TokenLoginResponse token) {
+    	String actToken = token.getAccess_token();
+    	String locale="";
+    	String[] split_string = actToken.split("\\.");
+        String base64EncodedBody = split_string[1];
+        String base64EncodedSignature = split_string[2];
+        Base64 base64Url = new Base64(true);
+        String body = new String(base64Url.decode(base64EncodedBody));
+        String tokenToParse=body.replace("\"", "'");
+        JSONObject json = new JSONObject(tokenToParse);  
+        locale = json.getString("locale");
+        this.locale=new Locale(locale);
+        this.language=locale.replace("-", "").toUpperCase();
+	}
+
+    /* 
+     *It will create a map for lanaguage specific severity 
+     * */ 
+	private void fillLanguageEquivalent(String locale) {
+		//Setting sast language equivalent for HTML Report 
+        languageMap = new HashMap<String,String>();
+        SupportedLanguage lang = SupportedLanguage.valueOf(locale);
+        languageMap.put("High", lang.getHigh());
+        languageMap.put("Medium", lang.getMedium());
+        languageMap.put("Low", lang.getLow());
+	}
+	
+	private LoginSettings getLoginSettings(CxScanConfig config) throws MalformedURLException {
+    	String baseUrl = UrlUtils.parseURLToString(config.getUrl(), DEFAULT_AUTH_API_PATH);
+    	LoginSettings loginsetting = LoginSettings.builder()
+                 .accessControlBaseUrl(baseUrl)
+                 .username(config.getUsername())
+                 .password(config.getPassword())
+                 .clientTypeForPasswordAuth(ClientType.RESOURCE_OWNER)
+                 .clientTypeForRefreshToken(ClientType.CLI)
+                 .build();
+    	loginsetting.getSessionCookies().addAll(config.getSessionCookie());
+		return loginsetting;
+	}
+
+	public CxHttpClient getHttpClient(CxScanConfig config) throws  MalformedURLException{
+    	CxHttpClient httpClient=null;
+    	 if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
+    		 httpClient = new CxHttpClient(
+                     UrlUtils.parseURLToString(config.getUrl(), "CxRestAPI/"),
+                     config.getCxOrigin(),
+                     config.getCxOriginUrl(),
+                     config.isDisableCertificateValidation(),
+                     config.isUseSSOLogin(),
+                     config.getRefreshToken(),
+                     config.isProxy(),
+                     config.getProxyConfig(),
+                     null,
+                     config.getNTLM());
+         }
+		return httpClient;
+    	
     }
 
     public void setResults(long scanId, SASTStatisticsResponse statisticsResults, String url, long projectId) {
@@ -323,32 +444,35 @@ public class SASTResults extends Results implements Serializable {
 
     }
 
-    private String formatToDisplayDate(Date date) {
-        //"26/2/17 12:17"
-        String displayDatePattern = "dd/MM/yy HH:mm";
-        Locale locale = Locale.ENGLISH;
-
-        return new SimpleDateFormat(displayDatePattern, locale).format(date);
+    private String formatToDisplayDate(Date date) throws ParseException{
+    	 String displayDatePattern = "dd/MM/yy HH:mm";
+         Locale locale = Locale.ENGLISH;
+         return new SimpleDateFormat(displayDatePattern, locale).format(date);
     }
 
+    
+    
     private Date createStartDate(String scanStart) throws Exception {
-        DateFormat formatter;
-        Date formattedDate = null;
-
-        for (SupportedLanguage lang : SupportedLanguage.values()) {
-            try {
-                formatter = new SimpleDateFormat(lang.getFormat(), lang.getLocale());
-                formattedDate = formatter.parse(scanStart);
-                break;
-            } catch (Exception ignored) {
-            }
-        }
-
-        if(formattedDate == null){
-            throw new Exception(String.format("Failed parsing date [%s]", scanStart));
-        }
+		DateFormat formatter;
+		Date formattedDate = null;
+		SupportedLanguage lang = SupportedLanguage.valueOf(this.language);
+		try {
+			lang.getLocale();
+			DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.DEFAULT, lang.getLocale());
+			formattedDate = df.parse(scanStart);
+		} catch (Exception ignored) {
+			DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT, lang.getLocale());
+			formattedDate = df.parse(scanStart);
+		}
+		if (formattedDate == null) {
+			throw new Exception(String.format("Failed parsing date [%s]", scanStart));
+		}
         return formattedDate;
     }
+
+    
+    
+    
 
     private Date createTimeDate(String scanTime) throws ParseException {
         //"00h:00m:30s"
