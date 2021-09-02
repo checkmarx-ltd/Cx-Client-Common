@@ -24,6 +24,11 @@ import java.net.MalformedURLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
 
 
@@ -106,16 +111,11 @@ public class SASTResults extends Results implements Serializable {
 
     public void setScanDetailedReport(CxXMLResults reportObj,CxScanConfig config) throws IOException {
     	
-    	//intiate httpclient for access token
-    	CxHttpClient client = getHttpClient(config);
-    	LoginSettings loginsetting = getLoginSettings(config);
-    	TokenLoginResponse token = client.generateToken(loginsetting);
-    	getLocaleFromAccessToken(token);
     	fillLanguageEquivalent(this.language);
     	
     	this.scanStart = reportObj.getScanStart();
         this.scanTime = reportObj.getScanTime();
-        setScanStartEndDates(this.scanStart, this.scanTime);
+        setScanStartEndDates(this.scanStart, this.scanTime,this.language);
         this.LOC = reportObj.getLinesOfCodeScanned();
         this.filesScanned = reportObj.getFilesScanned();
         
@@ -147,27 +147,7 @@ public class SASTResults extends Results implements Serializable {
         }
         this.queryList = reportObj.getQuery();
     }
-    
-    /* 
-     * This will return string from encoded access token 
-     * which will use to identify which language is used in SAST
-     * 
-     * */ 
-    private void getLocaleFromAccessToken(TokenLoginResponse token) {
-    	String actToken = token.getAccess_token();
-    	String locale="";
-    	String[] split_string = actToken.split("\\.");
-        String base64EncodedBody = split_string[1];
-        String base64EncodedSignature = split_string[2];
-        Base64 base64Url = new Base64(true);
-        String body = new String(base64Url.decode(base64EncodedBody));
-        String tokenToParse=body.replace("\"", "'");
-        JSONObject json = new JSONObject(tokenToParse);  
-        locale = json.getString("locale");
-        this.locale=new Locale(locale);
-        this.language=locale.replace("-", "").toUpperCase();
-	}
-
+        
     /* 
      *It will create a map for lanaguage specific severity 
      * */ 
@@ -179,39 +159,7 @@ public class SASTResults extends Results implements Serializable {
         languageMap.put("Medium", lang.getMedium());
         languageMap.put("Low", lang.getLow());
 	}
-	
-	private LoginSettings getLoginSettings(CxScanConfig config) throws MalformedURLException {
-    	String baseUrl = UrlUtils.parseURLToString(config.getUrl(), DEFAULT_AUTH_API_PATH);
-    	LoginSettings loginsetting = LoginSettings.builder()
-                 .accessControlBaseUrl(baseUrl)
-                 .username(config.getUsername())
-                 .password(config.getPassword())
-                 .clientTypeForPasswordAuth(ClientType.RESOURCE_OWNER)
-                 .clientTypeForRefreshToken(ClientType.CLI)
-                 .build();
-    	loginsetting.getSessionCookies().addAll(config.getSessionCookie());
-		return loginsetting;
-	}
-
-	public CxHttpClient getHttpClient(CxScanConfig config) throws  MalformedURLException{
-    	CxHttpClient httpClient=null;
-    	 if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
-    		 httpClient = new CxHttpClient(
-                     UrlUtils.parseURLToString(config.getUrl(), "CxRestAPI/"),
-                     config.getCxOrigin(),
-                     config.getCxOriginUrl(),
-                     config.isDisableCertificateValidation(),
-                     config.isUseSSOLogin(),
-                     config.getRefreshToken(),
-                     config.isProxy(),
-                     config.getProxyConfig(),
-                     null,
-                     config.getNTLM());
-         }
-		return httpClient;
-    	
-    }
-
+		
     public void setResults(long scanId, SASTStatisticsResponse statisticsResults, String url, long projectId) {
         setScanId(scanId);
         setHigh(statisticsResults.getHighSeverity());
@@ -422,71 +370,67 @@ public class SASTResults extends Results implements Serializable {
         return newHigh + newMedium + newLow > 0;
     }
 
-    private void setScanStartEndDates(String scanStart, String scanTime) {
+    private void setScanStartEndDates(String scanStart, String scanTime, String lang) {
 
         try {
             //turn strings to date objects
-            Date scanStartDate = createStartDate(scanStart);
-            Date scanTimeDate = createTimeDate(scanTime);
-            Date scanEndDate = createEndDate(scanStartDate, scanTimeDate);
+            LocalDateTime scanStartDate = createStartDate(scanStart, lang);
+            LocalTime scanTimeDate = createTimeDate(scanTime);
+            LocalDateTime scanEndDate = createEndDate(scanStartDate, scanTimeDate);
 
             //turn dates back to strings
             String scanStartDateFormatted = formatToDisplayDate(scanStartDate);
             String scanEndDateFormatted = formatToDisplayDate(scanEndDate);
 
             //set sast scan result object with formatted strings
-            this.scanStartTime = scanStartDateFormatted;
-            this.scanEndTime = scanEndDateFormatted;
+            String scanStartTime = scanStartDateFormatted;
+            String scanEndTime = scanEndDateFormatted;
+            
+            System.out.println("Final:"+scanStartTime+" to "+ scanEndTime);
 
         } catch (Exception ignored) {
             //ignored
+       	 ignored.printStackTrace();
         }
 
     }
 
-    private String formatToDisplayDate(Date date) throws ParseException{
-    	 String displayDatePattern = "dd/MM/yy HH:mm";
-         Locale locale = Locale.ENGLISH;
-         return new SimpleDateFormat(displayDatePattern, locale).format(date);
+    private String formatToDisplayDate(LocalDateTime date) throws ParseException{
+    	 String displayDatePattern = "dd/MM/yy HH:mm:ss";
+    	return date.format(DateTimeFormatter.ofPattern(displayDatePattern));
     }
 
     
-    
-    private Date createStartDate(String scanStart) throws Exception {
-		DateFormat formatter;
-		Date formattedDate = null;
-		SupportedLanguage lang = SupportedLanguage.valueOf(this.language);
+    /*
+     * Convert localized date to english date
+     */
+    private LocalDateTime createStartDate(String scanStart, String langTag) throws Exception {
+    	LocalDateTime startDate = LocalDateTime.now();
+    	
+		Locale l = Locale.forLanguageTag(langTag);
 		try {
-			lang.getLocale();
-			DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.DEFAULT, lang.getLocale());
-			formattedDate = df.parse(scanStart);
-		} catch (Exception ignored) {
-			DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.DEFAULT, lang.getLocale());
-			formattedDate = df.parse(scanStart);
-		}
-		if (formattedDate == null) {
-			throw new Exception(String.format("Failed parsing date [%s]", scanStart));
-		}
-        return formattedDate;
+	   	   	  final String languageTag = l.getLanguage()+"_" + l.getCountry();
+	    	  final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+	    	             .parseCaseInsensitive()
+	    	             .appendPattern(SupportedLanguage.valueOf(languageTag).getDatePattern())
+	    	             .toFormatter(l);
+				
+	    	  		
+	    	 startDate = LocalDateTime.parse(scanStart, formatter);
+			} catch (Exception ignored) {
+
+		    }
+		
+        return startDate;
     }
 
-    
-    
-    
-
-    private Date createTimeDate(String scanTime) throws ParseException {
-        //"00h:00m:30s"
-        String oldPattern = "HH'h':mm'm':ss's'";
-
-        DateFormat oldTimeFormat = new SimpleDateFormat(oldPattern);
-        oldTimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-        return oldTimeFormat.parse(scanTime);
+    private LocalTime createTimeDate(String hhmmss) throws ParseException {
+    	LocalTime scanTime = LocalTime.parse(hhmmss);
+    	return scanTime;
     }
 
-    private Date createEndDate(Date scanStartDate, Date scanTimeDate) {
-        long time = scanStartDate.getTime() + scanTimeDate.getTime();
-        return new Date(time);
+    private LocalDateTime createEndDate(LocalDateTime scanStartDate, LocalTime scanTime) {
+        return  scanStartDate.plusHours(scanTime.getHour()).plusMinutes(scanTime.getMinute()).plusSeconds(scanTime.getSecond());
     }
 
     public List<Policy> getSastPolicies() {
