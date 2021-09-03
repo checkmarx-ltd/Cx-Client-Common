@@ -64,7 +64,7 @@ public class SASTResults extends Results implements Serializable {
     private String scanTime = "";
     private String scanStartTime = "";
     private String scanEndTime = "";
-    private String sastLanguage="";
+    private String sastLanguage="en-US";
   
     private Map<String,String> languageMap;
   

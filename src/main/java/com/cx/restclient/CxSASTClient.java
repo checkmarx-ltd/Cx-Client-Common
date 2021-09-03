@@ -59,6 +59,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     private static final String SWAGGER_LOCATION = "help/swagger/docs/v1.1";
     private static final String ZIPPED_SOURCE = "zippedSource";
     private static final String SAST_SCAN= "SAST scan status";
+    
+    private String language = "en-US";
+    
     private Waiter<ReportStatus> reportWaiter = new Waiter<ReportStatus>("Scan report", 10, 3) {
         @Override
         public ReportStatus getStatus(String id) throws IOException {
@@ -203,6 +206,8 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         SASTResults initSastResults = new SASTResults();
         try {
             initiate();
+            language = httpClient.getLanguageFromAccessToken();
+            initSastResults.setSastLanguage(language);
         } catch (CxClientException e) {
             log.error(e.getMessage());
             setState(State.FAILED);
@@ -225,7 +230,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             } else {
                 scanId = createRemoteSourceScan(projectId);
             }
-            sastResults.setSastLanguage(httpClient.getLanguageFromAccessToken());
+            sastResults.setSastLanguage(language);
             sastResults.setScanId(scanId);
             log.info("SAST scan created successfully: Scan ID is " + scanId);
             sastResults.setSastScanLink(config.getUrl(), scanId, projectId);
@@ -418,6 +423,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     @Override
     public SASTResults getLatestScanResults() {
         sastResults = new SASTResults();
+        sastResults.setSastLanguage(language);
         try {
             log.info("---------------------------------Get Last CxSAST Results:--------------------------------");
             List<LastScanResponse> scanList = getLatestSASTStatus(projectId);
@@ -607,6 +613,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     @Override
     public Results initiateScan() {
         sastResults = new SASTResults();
+        sastResults.setSastLanguage(language);
         createSASTScan(projectId);
         return sastResults;
     }
