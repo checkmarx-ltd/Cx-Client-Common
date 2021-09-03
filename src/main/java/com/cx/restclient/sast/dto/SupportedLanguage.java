@@ -4,15 +4,15 @@ import java.util.Locale;
 
 public enum SupportedLanguage {
 
-    en_US(new Locale("en-US"),"High","Medium","Low","Information", "EEEE, MMMM dd, yyyy hh:mm:ss a"),
-	ja_JP(new Locale("ja-JP"),"高","中","低","情報","yyyy年M月d日 H:mm:ss"),
-    fr_FR(new Locale("fr-FR"),"Haute","Moyenne","Basse","Informations","EEEE dd MMMM yyyy HH:mm:ss"),
-    pt_BR(new Locale("pt-BR"),"Alto","Médio","Baixo","Em formação", "EEEE, d 'de' MMMM 'de' yyyy HH:mm:ss"),
-    es_ES(new Locale("es-ES"),"Altas","Medias","Bajas","Información","EEEE, d 'de' MMMM 'de' yyyy HH:mm:ss"),
-    ko_KR(new Locale("ko-KR"),"높음","중간","낮음","정보", "yyyy년 M월 d일 EEEE a h:mm:ss"),
-    zh_CN(new Locale("zh-CN"),"高危","中危","低危","信息", "yyyy年M月d日 HH:mm:ss"),
-    zh_TW(new Locale("zh-TW"),"高","中","低","信息", "yyyy年M月d日 a hh:mm:ss"),
-    ru_RU(new Locale("ru-RU"),"Высокое","Среднее","Низкое","Информация","d MMMM yyyy 'г'. H:mm:ss");
+    ENUS(new Locale("en-US"),"High","Medium","Low","Information", "EEEE, MMMM dd, yyyy hh:mm:ss a"),
+	JAJP(new Locale("ja-JP"),"高","中","低","情報","yyyy年M月d日 H:mm:ss"),
+    FRFR(new Locale("fr-FR"),"Haute","Moyenne","Basse","Informations","EEEE dd MMMM yyyy HH:mm:ss"),
+    PTBR(new Locale("pt-BR"),"Alto","Médio","Baixo","Em formação", "EEEE, d 'de' MMMM 'de' yyyy HH:mm:ss"),
+    ESES(new Locale("es-ES"),"Altas","Medias","Bajas","Información","EEEE, d 'de' MMMM 'de' yyyy HH:mm:ss"),
+    KOKR(new Locale("ko-KR"),"높음","중간","낮음","정보", "yyyy년 M월 d일 EEEE a h:mm:ss"),
+    ZHCN(new Locale("zh-CN"),"高危","中危","低危","信息", "yyyy年M月d日 HH:mm:ss"),
+    ZHTW(new Locale("zh-TW"),"高","中","低","信息", "yyyy年M月d日 a hh:mm:ss"),
+    RURU(new Locale("ru-RU"),"Высокое","Среднее","Низкое","Информация","d MMMM yyyy 'г'. H:mm:ss");
 	
     private final Locale locale;
     private final String High;

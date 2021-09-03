@@ -15,6 +15,7 @@ import com.cx.restclient.sast.utils.LegacyClient;
 
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 
 
@@ -145,7 +146,8 @@ public class SASTResults extends Results implements Serializable {
 		//Setting sast language equivalent for HTML Report 
 		if(sastLanguage!=null){
 		Locale l = Locale.forLanguageTag(sastLanguage);
-		final String languageTag = l.getLanguage()+"_" + l.getCountry();
+		final String languageTag = StringUtils.upperCase(l.getLanguage()+ l.getCountry());
+		
         languageMap = new HashMap<String,String>();
         SupportedLanguage lang = SupportedLanguage.valueOf(languageTag);
         languageMap.put("High", lang.getHigh());
@@ -399,7 +401,7 @@ public class SASTResults extends Results implements Serializable {
     	
 		Locale l = Locale.forLanguageTag(langTag);
 		try {
-	   	   	  final String languageTag = l.getLanguage()+"_" + l.getCountry();
+	   	   	  final String languageTag =  StringUtils.upperCase(l.getLanguage() + l.getCountry());
 	    	  final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
 	    	             .parseCaseInsensitive()
 	    	             .appendPattern(SupportedLanguage.valueOf(languageTag).getDatePattern())
