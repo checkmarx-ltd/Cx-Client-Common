@@ -12,11 +12,11 @@ import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.osa.dto.ClientType;
 import com.cx.restclient.sast.dto.CxXMLResults.Query;
 import com.cx.restclient.sast.utils.LegacyClient;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+
 
 import org.apache.commons.codec.binary.Base64;
 import org.json.JSONObject;
+
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -64,12 +64,10 @@ public class SASTResults extends Results implements Serializable {
     private String scanTime = "";
     private String scanStartTime = "";
     private String scanEndTime = "";
-    private String language="";
-    private Locale locale;
+    private String sastLanguage="";
+  
     private Map<String,String> languageMap;
   
-   
-
 	public Map<String, String> getLanguageMap() {
 		return languageMap;
 	}
@@ -77,21 +75,13 @@ public class SASTResults extends Results implements Serializable {
 	public void setLanguageMap(Map<String, String> languageMap) {
 		this.languageMap = languageMap;
 	}
-
-	public Locale getLocale() {
-		return locale;
+	
+	public String getSastLanguage() {
+		return sastLanguage;
 	}
 
-	public void setLocale(Locale locale) {
-		this.locale = locale;
-	}
-
-	public String getLanguage() {
-		return language;
-	}
-
-	public void setLanguage(String language) {
-		this.language = language;
+	public void setSastLanguage(String sastLanguage) {
+		this.sastLanguage = sastLanguage;
 	}
 
 	private String filesScanned;
@@ -104,18 +94,18 @@ public class SASTResults extends Results implements Serializable {
 
     private List<Policy> sastPolicies = new ArrayList<>();
 
-
     public enum Severity {
         High, Medium, Low, Information;
     }
+    
 
     public void setScanDetailedReport(CxXMLResults reportObj,CxScanConfig config) throws IOException {
     	
-    	fillLanguageEquivalent(this.language);
+    	setLanguageEquivalent(sastLanguage);
     	
     	this.scanStart = reportObj.getScanStart();
         this.scanTime = reportObj.getScanTime();
-        setScanStartEndDates(this.scanStart, this.scanTime,this.language);
+        setScanStartEndDates(this.scanStart, this.scanTime,sastLanguage);
         this.LOC = reportObj.getLinesOfCodeScanned();
         this.filesScanned = reportObj.getFilesScanned();
         
@@ -151,13 +141,17 @@ public class SASTResults extends Results implements Serializable {
     /* 
      *It will create a map for lanaguage specific severity 
      * */ 
-	private void fillLanguageEquivalent(String locale) {
+	private void setLanguageEquivalent(String sastLanguage) {
 		//Setting sast language equivalent for HTML Report 
+		if(sastLanguage!=null){
+		Locale l = Locale.forLanguageTag(sastLanguage);
+		final String languageTag = l.getLanguage()+"_" + l.getCountry();
         languageMap = new HashMap<String,String>();
-        SupportedLanguage lang = SupportedLanguage.valueOf(locale);
+        SupportedLanguage lang = SupportedLanguage.valueOf(languageTag);
         languageMap.put("High", lang.getHigh());
         languageMap.put("Medium", lang.getMedium());
         languageMap.put("Low", lang.getLow());
+		}
 	}
 		
     public void setResults(long scanId, SASTStatisticsResponse statisticsResults, String url, long projectId) {
@@ -377,17 +371,13 @@ public class SASTResults extends Results implements Serializable {
             LocalDateTime scanStartDate = createStartDate(scanStart, lang);
             LocalTime scanTimeDate = createTimeDate(scanTime);
             LocalDateTime scanEndDate = createEndDate(scanStartDate, scanTimeDate);
-
             //turn dates back to strings
             String scanStartDateFormatted = formatToDisplayDate(scanStartDate);
             String scanEndDateFormatted = formatToDisplayDate(scanEndDate);
 
             //set sast scan result object with formatted strings
-            String scanStartTime = scanStartDateFormatted;
-            String scanEndTime = scanEndDateFormatted;
-            
-            System.out.println("Final:"+scanStartTime+" to "+ scanEndTime);
-
+            this.scanStartTime = scanStartDateFormatted;
+            this.scanEndTime = scanEndDateFormatted;
         } catch (Exception ignored) {
             //ignored
        	 ignored.printStackTrace();
@@ -425,7 +415,7 @@ public class SASTResults extends Results implements Serializable {
     }
 
     private LocalTime createTimeDate(String hhmmss) throws ParseException {
-    	LocalTime scanTime = LocalTime.parse(hhmmss);
+    	LocalTime scanTime = LocalTime.parse(hhmmss,DateTimeFormatter.ofPattern("HH'h':mm'm':ss's'"));
     	return scanTime;
     }
 
