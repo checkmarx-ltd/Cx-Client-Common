@@ -6,6 +6,7 @@ import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.sast.dto.*;
 import com.cx.restclient.sast.utils.LegacyClient;
 import com.cx.restclient.sast.utils.SASTUtils;
@@ -174,7 +175,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 ResponseQueueScanStatus statusResponse = null;
                 try {
                     statusResponse = getSASTScanStatus(id);
-                } catch (MalformedURLException e) {
+                } catch (CxHTTPClientException e) {
                     try {
                         ResponseSastScanStatus statusResponseTemp = getSASTScanOutOfQueueStatus(id);
                         statusResponse = statusResponseTemp.convertResponseSastScanStatusToResponseQueueScanStatus(statusResponseTemp);
@@ -566,7 +567,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     //Check SAST scan status via sast/scans/{scanId} API
     public ResponseSastScanStatus getSASTScanOutOfQueueStatus(String scanId) throws IOException {
-        ResponseSastScanStatus scanStatus = httpClient.getRequest(SAST_SCAN.replace(SCAN_ID_PATH_PARAM, scanId), CONTENT_TYPE_APPLICATION_JSON_V1, ResponseSastScanStatus.class, 200, SAST_SCAN, false);
+        ResponseSastScanStatus scanStatus = httpClient.getRequest(SAST_SCAN_STATUS.replace(SCAN_ID_PATH_PARAM, scanId), CONTENT_TYPE_APPLICATION_JSON_V1, ResponseSastScanStatus.class, 200, SAST_SCAN, false);
         String currentStatus = scanStatus.getStatus().getName();
 
         if (CurrentStatus.FAILED.value().equals(currentStatus) || CurrentStatus.CANCELED.value().equals(currentStatus) ||

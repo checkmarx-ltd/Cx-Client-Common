@@ -9,7 +9,7 @@ public class SASTParam {
     public static final String SAST_UPDATE_SCAN_SETTINGS = "sast/pluginsScanSettings"; //Update preset and configuration
     public static final String SAST_GET_SCAN_SETTINGS = "/sast/scanSettings/{projectId}"; //Update preset and configuration
     public static final String SAST_CREATE_SCAN = "sast/scans"; //Run a new Scan
-    public static final String SAST_SCAN = "sast/scans/{scanId}"; //Get Scan status (by scan ID)
+    public static final String SAST_SCAN_STATUS = "sast/scans/{scanId}"; //Get Scan status (by scan ID)
     public static final String SAST_QUEUE_SCAN_STATUS = "sast/scansQueue/{scanId}";
     public static final String SAST_GET_PROJECT_BY_ID = "projects/{projectId}";
     public static final String SAST_GET_PROJECT = "projects?projectname={name}&teamid={teamId}";// Get  project)
