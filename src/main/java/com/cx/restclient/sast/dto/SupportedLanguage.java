@@ -8,7 +8,7 @@ public enum SupportedLanguage {
 	ja_JP(new Locale("ja-JP"),"高","中","低","情報","yyyy年M月d日 H:mm:ss"),
     fr_FR(new Locale("fr-FR"),"Haute","Moyenne","Basse","Informations","EEEE dd MMMM yyyy HH:mm:ss"),
     pt_BR(new Locale("pt-BR"),"Alto","Médio","Baixo","Em formação", "EEEE, d 'de' MMMM 'de' yyyy HH:mm:ss"),
-    es_ES(new Locale("es-ES"),"Alta","Medio","Baja","Información","EEEE, d 'de' MMMM 'de' yyyy HH:mm:ss"),
+    es_ES(new Locale("es-ES"),"Altas","Medias","Bajas","Información","EEEE, d 'de' MMMM 'de' yyyy HH:mm:ss"),
     ko_KR(new Locale("ko-KR"),"높음","중간","낮음","정보", "yyyy년 M월 d일 EEEE a h:mm:ss"),
     zh_CN(new Locale("zh-CN"),"高危","中危","低危","信息", "yyyy年M月d日 HH:mm:ss"),
     zh_TW(new Locale("zh-TW"),"高","中","低","信息", "yyyy年M月d日 a hh:mm:ss"),

@@ -11,6 +11,7 @@ import com.cx.restclient.osa.dto.ClientType;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.*;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
@@ -52,6 +53,7 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
@@ -721,6 +723,33 @@ public class CxHttpClient implements Closeable {
         log.warn(message);
 
         log.info("Possible reason: access token has expired. Trying to request a new token...");
+    }
+    
+    /* 
+     * This will return string from encoded access token 
+     * which will use to identify which language is used in SAST
+     * 
+     * */ 
+    public String getLanguageFromAccessToken() throws CxHTTPClientException{
+		String languageForSAST = "en-US";
+		try {
+			
+			String actToken = token.getAccess_token();
+			String[] split_string = actToken.split("\\.");
+			if(split_string != null && split_string.length>0){
+			String base64EncodedBody = split_string[1];
+			Base64 base64Url = new Base64(true);
+			String body = new String(base64Url.decode(base64EncodedBody));
+			String tokenToParse = body.replace("\"", "'");
+			JSONObject json = new JSONObject(tokenToParse);
+			languageForSAST = json.getString("locale");
+			log.info("Locale used in CxSAST is  "+languageForSAST);
+			
+			}
+		} catch (CxHTTPClientException ex) {
+			
+		}
+		return languageForSAST;
     }
 
 }
