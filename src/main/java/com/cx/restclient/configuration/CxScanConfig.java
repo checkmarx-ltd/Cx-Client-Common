@@ -38,6 +38,7 @@ public class CxScanConfig implements Serializable {
     private String teamId;
     private Boolean denyProject = false;
     private Boolean hideResults = false;
+    private Boolean continueBuild = false;
     private Boolean isPublic = true;
     private Boolean forceScan = false;
     private String presetName;
@@ -598,6 +599,14 @@ public class CxScanConfig implements Serializable {
         this.hideResults = hideResults;
     }
 
+    public Boolean getContinueBuild() {
+        return continueBuild;
+    }
+
+    public void setContinueBuild(Boolean continueBuild) {
+        this.continueBuild = continueBuild;
+    }
+    
 
     public Boolean isAvoidDuplicateProjectScans() {
         return avoidDuplicateProjectScans;
