@@ -1,22 +1,40 @@
 package com.cx.restclient.configuration;
 
-import com.cx.restclient.ast.dto.sast.AstSastConfig;
-import com.cx.restclient.ast.dto.sca.AstScaConfig;
-import com.cx.restclient.dto.*;
-import com.cx.restclient.sast.dto.ReportType;
+import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import javax.validation.constraints.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.cookie.Cookie;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.*;
+import com.cx.restclient.ast.dto.sast.AstSastConfig;
+import com.cx.restclient.ast.dto.sca.AstScaConfig;
+import com.cx.restclient.dto.CxVersion;
+import com.cx.restclient.dto.ProxyConfig;
+import com.cx.restclient.dto.RemoteSourceTypes;
+import com.cx.restclient.dto.ScannerType;
+import com.cx.restclient.dto.TokenLoginResponse;
+import com.cx.restclient.sast.dto.ReportType;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Created by galn on 21/12/2016.
  */
 public class CxScanConfig implements Serializable {
 
-    private String cxOrigin;
+	public static final String REGEX_PATTERN_CUSTOM_FIELDS = "^\\{\\\"([a-zA-Z0-9]*)\\\"\\}:{\\\"([a-zA-Z0-9]*)\\\"\\}+(,\\{\\\"([a-zA-Z0-9]*)\\\"\\}:{\\\"([a-zA-Z0-9]*)\\\"\\}+)*$";
+    
+	private String cxOrigin;
     private String cxOriginUrl;
     private CxVersion cxVersion;
 
@@ -115,6 +133,10 @@ public class CxScanConfig implements Serializable {
     private Boolean isProxy = true;
     private ProxyConfig proxyConfig;
     private Boolean useNTLM = false;
+    @Getter
+    @Setter
+    @Pattern(regexp = REGEX_PATTERN_CUSTOM_FIELDS)
+    private String customFields;
 
 
     public CxScanConfig() {
@@ -145,7 +167,7 @@ public class CxScanConfig implements Serializable {
         this.disableCertificateValidation = disableCertificateValidation;
     }
 
-    public boolean isSastEnabled() {
+	public boolean isSastEnabled() {
         return scannerTypes.contains(ScannerType.SAST);
     }
 
