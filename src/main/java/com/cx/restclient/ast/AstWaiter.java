@@ -53,7 +53,7 @@ public class AstWaiter {
                             "reached the user-specified timeout (%d minutes).",
                     scannerDisplayName,
                     timeout.toMinutes());
-            throw new CxClientException(message);
+            throw new ConditionTimeoutException(message);
         } catch (UnsupportedEncodingException e) {
             log.error("Unexpected error.", e);
         }

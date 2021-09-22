@@ -1,10 +1,57 @@
 package com.cx.restclient;
 
+import static com.cx.restclient.cxArm.dto.CxProviders.SAST;
+import static com.cx.restclient.cxArm.utils.CxARMUtils.getProjectViolatedPolicies;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_XML_V1;
+import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
+import static com.cx.restclient.sast.utils.SASTParam.LINK_FORMAT;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REMOTE_SOURCE_SCAN;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REPORT;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_SCAN;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_EXCLUDE_FOLDERS_FILES_PATTERNS;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_PROJECT_SCANS;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_QUEUED_SCANS;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_REPORT;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_SCAN_SETTINGS;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_QUEUE_SCAN_STATUS;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_SCAN_RESULTS_STATISTICS;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_SCAN_STATUS;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_UPDATE_SCAN_SETTINGS;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_ZIP_ATTACHMENTS;
+import static com.cx.restclient.sast.utils.SASTUtils.convertToXMLResult;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.BufferedHttpEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.InputStreamBody;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.*;
+import com.cx.restclient.dto.PathFilter;
+import com.cx.restclient.dto.RemoteSourceRequest;
+import com.cx.restclient.dto.RemoteSourceTypes;
+import com.cx.restclient.dto.Results;
+import com.cx.restclient.dto.Status;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.sast.dto.*;
@@ -38,6 +85,7 @@ import static com.cx.restclient.httpClient.utils.ContentType.*;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 import static com.cx.restclient.sast.utils.SASTParam.*;
 import static com.cx.restclient.sast.utils.SASTUtils.*;
+import org.awaitility.core.ConditionTimeoutException;
 
 
 /**
@@ -237,7 +285,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         } catch (Exception e) {
             log.error(e.getMessage());
             setState(State.FAILED);
+            if(!config.getContinueBuild()) {
             sastResults.setException(new CxClientException(e));
+            }
         }
     }
 
@@ -347,14 +397,30 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             log.info("------------------------------------Get CxSAST Results:-----------------------------------");
             //wait for SAST scan to finish
             log.info("Waiting for CxSAST scan to finish.");
-            sastWaiter.waitForTaskToFinish(Long.toString(scanId), config.getSastScanTimeoutInMinutes() * 60, log);
-            log.info("Retrieving SAST scan results");
-
-            //retrieve SAST scan results
-            sastResults = retrieveSASTResults(scanId, projectId);
+            try {
+            	 
+				sastWaiter.waitForTaskToFinish(Long.toString(scanId), config.getSastScanTimeoutInMinutes() * 60, log);
+				log.info("Retrieving SAST scan results");
+				//retrieve SAST scan results
+				sastResults = retrieveSASTResults(scanId, projectId);
+			} catch (ConditionTimeoutException e) {
+				if (config.getContinueBuild()) {
+					sastResults = getLatestScanResults();
+					if (super.isIsNewProject() && sastResults.getSastScanLink() == null) {
+						String message = String
+								.format("Continue with timed out option is enabled. The project %s is a new project. "
+										+ "Hence there is no last scan report to be shown.", config.getProjectName());
+						log.info(message);
+					}
+				} else {
+					// throw the exception so that caught by outer catch
+					throw new Exception(e.getMessage());
+				}
+			}
             if (config.getEnablePolicyViolations()) {
                 resolveSASTViolation(sastResults, projectId);
             }
+            if(sastResults.getSastScanLink() != null)
             SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
 
             //PDF report
