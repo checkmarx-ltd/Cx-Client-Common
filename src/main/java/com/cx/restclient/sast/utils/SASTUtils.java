@@ -53,6 +53,7 @@ public abstract class SASTUtils {
         log.info("Low severity results: " + sastResults.getLow() + lowNew);
         log.info("Information severity results: " + sastResults.getInformation() + infoNew);
         log.info("");
+        if(sastResults.getSastScanLink() != null)
         log.info("Scan results location: " + sastResults.getSastScanLink());
         log.info("------------------------------------------------------------------------------------------\n");
     }
