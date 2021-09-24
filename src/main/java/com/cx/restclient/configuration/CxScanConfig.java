@@ -116,7 +116,7 @@ public class CxScanConfig implements Serializable {
     private Boolean isProxy = true;
     private ProxyConfig proxyConfig;
     private Boolean useNTLM = false;
-
+    private String customFields;
 
     public CxScanConfig() {
     }
@@ -214,7 +214,15 @@ public class CxScanConfig implements Serializable {
         this.sourceDir = sourceDir;
     }
 
-    public String getOsaLocationPath() {
+    public String getCustomFields() {
+		return customFields;
+	}
+
+	public void setCustomFields(String customFields) {
+		this.customFields = customFields;
+	}
+
+	public String getOsaLocationPath() {
         return osaLocationPath;
     }
 
