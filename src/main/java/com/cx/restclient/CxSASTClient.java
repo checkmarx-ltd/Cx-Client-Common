@@ -285,9 +285,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         } catch (Exception e) {
             log.error(e.getMessage());
             setState(State.FAILED);
-            if(!config.getContinueBuild()) {
             sastResults.setException(new CxClientException(e));
-            }
         }
     }
 
