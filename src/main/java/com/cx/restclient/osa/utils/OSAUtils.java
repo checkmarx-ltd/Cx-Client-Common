@@ -26,7 +26,7 @@ public abstract class OSAUtils {
     private static final String INCLUDE_ALL_EXTENSIONS = "**/**";
     private static final String JSON_EXTENSION = ".json";
 
-    public static final String DEFAULT_ARCHIVE_INCLUDES = "**/.*jar,**/*.war,**/*.ear,**/*.sca,**/*.gem,**/*.whl,**/*.egg,**/*.tar,**/*.tar.gz,**/*.tgz,**/*.zip,**/*.rar";
+    public static final String DEFAULT_ARCHIVE_INCLUDES = "**/*.jar,**/*.war,**/*.ear,**/*.sca,**/*.gem,**/*.whl,**/*.egg,**/*.tar,**/*.tar.gz,**/*.tgz,**/*.zip,**/*.rar";
 
 
     public static void writeToOsaListToFile(File dir, String osaDependenciesJson, Logger log) {
