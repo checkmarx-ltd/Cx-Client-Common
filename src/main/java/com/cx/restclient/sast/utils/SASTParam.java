@@ -17,7 +17,7 @@ public class SASTParam {
     public static final String SAST_ZIP_ATTACHMENTS = "projects/{projectId}/sourceCode/attachments";//Attach ZIP file
     public static final String SAST_GET_PROJECT_SCANS = "sast/scans?projectId={projectId}";
     public static final String SAST_GET_QUEUED_SCANS = "sast/scansQueue?projectId={projectId}";
-
+    public static final String SAST_CUSTOM_TASKS = "customTasks";
 
     public static final String SAST_CREATE_REMOTE_SOURCE_SCAN = "projects/%s/sourceCode/remoteSettings/%s/%s";
     public static final String SAST_EXCLUDE_FOLDERS_FILES_PATTERNS = "projects/%s/sourceCode/excludeSettings";
