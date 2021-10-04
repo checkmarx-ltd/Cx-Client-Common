@@ -285,7 +285,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         } catch (Exception e) {
             log.error(e.getMessage());
             setState(State.FAILED);
+            if(!config.getContinueBuild()) {
             sastResults.setException(new CxClientException(e));
+            }
         }
     }
 
@@ -709,10 +711,14 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         builder.addTextBody("presetId", config.getPresetId().toString(), ContentType.APPLICATION_JSON);
         builder.addTextBody("comment", config.getScanComment() == null ? "" : config.getScanComment(), ContentType.APPLICATION_JSON);
         builder.addTextBody("engineConfigurationId", config.getEngineConfigurationId() != null ? config.getEngineConfigurationId().toString() : ENGINE_CONFIGURATION_ID_DEFAULT, ContentType.APPLICATION_JSON);
+
         builder.addTextBody("postScanActionId",
         		config.getPostScanActionId() != null?
         				config.getPostScanActionId().toString() : "",
         				ContentType.APPLICATION_JSON);
+
+        builder.addTextBody("customFields", config.getCustomFields(), ContentType.APPLICATION_JSON);
+
         HttpEntity entity = builder.build();
         return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
     }
