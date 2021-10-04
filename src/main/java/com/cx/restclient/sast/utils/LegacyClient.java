@@ -11,6 +11,7 @@ import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.osa.dto.ClientType;
 import com.cx.restclient.sast.dto.CreateProjectRequest;
 import com.cx.restclient.sast.dto.CxNameObj;
+import com.cx.restclient.sast.dto.PostAction;
 import com.cx.restclient.sast.dto.Preset;
 import com.cx.restclient.sast.dto.Project;
 import org.apache.commons.lang.StringUtils;
@@ -372,6 +373,11 @@ public abstract class LegacyClient {
         return httpClient.getRequest(CXPRESETS + "/" + presetId, CONTENT_TYPE_APPLICATION_JSON_V1, Preset.class, 200, "preset by id", false);
     }
 
+    public List<PostAction> getPostScanActionList() throws IOException, CxClientException {
+        configureTeamPath();
+        return (List<PostAction>) httpClient.getRequest(SAST_CUSTOM_TASKS, CONTENT_TYPE_APPLICATION_JSON_V1, PostAction.class, 200, "post scan action list", true);
+    }
+    
     private void printTeamPath() {
         try {
             this.teamPath = config.getTeamPath();

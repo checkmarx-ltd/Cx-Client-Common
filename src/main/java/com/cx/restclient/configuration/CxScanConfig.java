@@ -116,7 +116,11 @@ public class CxScanConfig implements Serializable {
     private Boolean isProxy = true;
     private ProxyConfig proxyConfig;
     private Boolean useNTLM = false;
+
+    private Integer postScanActionId;
+
     private String customFields;
+
 
     public CxScanConfig() {
     }
@@ -860,4 +864,13 @@ public class CxScanConfig implements Serializable {
     public void setNTLM(Boolean ntlm) {
         useNTLM = ntlm;
     }
+
+	public Integer getPostScanActionId() {
+		return postScanActionId;
+	}
+
+	public void setPostScanActionId(Integer postScanActionId) {
+		this.postScanActionId = postScanActionId;
+	}
+    
 }
