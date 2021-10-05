@@ -53,6 +53,7 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
@@ -748,6 +749,9 @@ public class CxHttpClient implements Closeable {
 			}
 		} catch (CxHTTPClientException ex) {
 			
+		} catch (JSONException jex) {
+			// In case the SAST used will not have token, set to default English language
+			languageForSAST = "en-US";
 		}
 		return languageForSAST;
     }
