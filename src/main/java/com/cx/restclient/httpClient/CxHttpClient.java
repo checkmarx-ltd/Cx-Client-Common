@@ -731,7 +731,7 @@ public class CxHttpClient implements Closeable {
      * which will use to identify which language is used in SAST
      * 
      * */ 
-    public String getLanguageFromAccessToken() throws CxHTTPClientException{
+    public String getLanguageFromAccessToken(){
 		String languageForSAST = "en-US";
 		try {
 			
@@ -747,9 +747,7 @@ public class CxHttpClient implements Closeable {
 			log.info("Locale used in CxSAST is  "+languageForSAST);
 			
 			}
-		} catch (CxHTTPClientException ex) {
-			
-		} catch (JSONException jex) {
+		} catch (Exception ex) {
 			// In case the SAST used will not have token, set to default English language
 			languageForSAST = "en-US";
 		}
