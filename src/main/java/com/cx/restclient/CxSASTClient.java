@@ -420,8 +420,8 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             if (config.getEnablePolicyViolations()) {
                 resolveSASTViolation(sastResults, projectId);
             }
-            if(sastResults.getSastScanLink() != null)
-            SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
+			if (sastResults.getSastScanLink() != null)
+				SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
 
             //PDF report
             if (config.getGeneratePDFReport()) {
