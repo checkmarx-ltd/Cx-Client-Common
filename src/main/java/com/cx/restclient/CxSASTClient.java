@@ -717,8 +717,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         				config.getPostScanActionId().toString() : "",
         				ContentType.APPLICATION_JSON);
 
-        builder.addTextBody("customFields", config.getCustomFields() != null?
-                config.getCustomFields() : "", ContentType.APPLICATION_JSON);
+        builder.addTextBody("customFields", config.getCustomFields(), ContentType.APPLICATION_JSON);
 
         HttpEntity entity = builder.build();
         return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
