@@ -46,6 +46,7 @@ public class CxScanConfig implements Serializable {
     private String sastFolderExclusions;
     private String sastFilterPattern;
     private Integer sastScanTimeoutInMinutes;
+    private Integer scaScanTimeoutInMinutes;
     private Integer osaScanTimeoutInMinutes;
     private String scanComment;
     private Boolean isIncremental = false;
@@ -376,6 +377,15 @@ public class CxScanConfig implements Serializable {
     public Integer getSastScanTimeoutInMinutes() {
         return sastScanTimeoutInMinutes == null ? -1 : sastScanTimeoutInMinutes;
     }
+    
+    public Integer getSCAScanTimeoutInMinutes() {
+        return scaScanTimeoutInMinutes == null ? -1 : scaScanTimeoutInMinutes;
+    }
+    
+    public void setSCAScanTimeoutInMinutes(Integer scaScanTimeoutInMinutes) {
+        this.scaScanTimeoutInMinutes = scaScanTimeoutInMinutes;
+    }
+
 
     public void setSastScanTimeoutInMinutes(Integer sastScanTimeoutInMinutes) {
         this.sastScanTimeoutInMinutes = sastScanTimeoutInMinutes;
