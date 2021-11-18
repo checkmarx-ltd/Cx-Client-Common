@@ -3,9 +3,9 @@ package com.cx.restclient.common;
 import com.cx.restclient.dto.BaseStatus;
 import com.cx.restclient.dto.Status;
 import com.cx.restclient.exception.CxClientException;
+import org.awaitility.core.ConditionTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.awaitility.core.ConditionTimeoutException;
 
 import java.io.IOException;
 import java.util.Date;
@@ -35,13 +35,15 @@ public abstract class Waiter<T extends BaseStatus> {
         startTimeSec = System.currentTimeMillis() / 1000;
         long elapsedTimeSec = 0L;
         T statusResponse = null;
+        final int initialReset = this.retry;
 
         try {
             do {
                 try {
                     Thread.sleep((long) sleepIntervalSec * 1000);
                     statusResponse = getStatus(taskId);
-                } catch (IOException e) {
+                    retry = initialReset;
+                } catch (Exception e) {
                     log.debug(FAILED_MSG + scanType + ". retrying (" + (retry - 1) + " tries left). Error message: " + e.getMessage());
                     retry--;
                     if (retry <= 0) {
@@ -51,9 +53,7 @@ public abstract class Waiter<T extends BaseStatus> {
                         statusResponse = (T) new BaseStatus(Status.IN_PROGRESS);
                     }
                     continue;
-                } catch (InterruptedException e) {
-					throw new CxClientException(e.getMessage());
-				}
+                }
                 elapsedTimeSec = (new Date()).getTime() / 1000 - startTimeSec;
                 printProgress(statusResponse);
             } while (isTaskInProgress(statusResponse) && (scanTimeoutSec <= 0 || elapsedTimeSec < scanTimeoutSec));
