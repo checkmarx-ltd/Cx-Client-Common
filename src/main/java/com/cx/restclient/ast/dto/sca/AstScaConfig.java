@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.cx.restclient.ast.dto.common.ASTConfig;
 
 import lombok.Getter;
@@ -39,5 +41,15 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String sastPassword;
     private Map<String,String> envVariables;
     private List<String> configFilePaths;
-
+    
+    public void setTeamPath(String teamPath) {
+        //Make teampath always in the form /CxServer/Team1. User might have used '\' in the path.
+        if (!StringUtils.isEmpty(teamPath) && !teamPath.startsWith("\\") && !teamPath.startsWith(("/"))) {
+            teamPath = "/" + teamPath;
+        }
+        if (!StringUtils.isEmpty(teamPath) && teamPath != null) {
+            teamPath = teamPath.replace("\\", "/");
+        }
+        this.teamPath = teamPath;
+    }
 }
