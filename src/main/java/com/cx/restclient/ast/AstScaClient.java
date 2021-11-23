@@ -597,7 +597,10 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
-        String assignedTeam = config.getTeamPath();
+        String assignedTeam = config.getAstScaConfig().getTeamPath();
+        if(StringUtils.isEmpty(assignedTeam)){
+        	assignedTeam = config.getTeamPath();
+        }
         log.info("Getting project by name: '{}'", projectName);
         String resolvedProjectId = getRiskManagementProjectId(projectName);
         if (resolvedProjectId == null) {
