@@ -36,14 +36,14 @@ public abstract class Waiter<T extends BaseStatus> {
         long elapsedTimeSec = 0L;
         T statusResponse = null;
         final int initialReset = this.retry;
-
         try {
             do {
                 try {
                     Thread.sleep((long) sleepIntervalSec * 1000);
                     statusResponse = getStatus(taskId);
                     retry = initialReset;
-                } catch (Exception e) {
+
+                } catch (IOException e) {
                     log.debug(FAILED_MSG + scanType + ". retrying (" + (retry - 1) + " tries left). Error message: " + e.getMessage());
                     retry--;
                     if (retry <= 0) {
