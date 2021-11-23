@@ -281,7 +281,9 @@ public class AstScaClient extends AstClient implements Scanner {
             } else {
                 if (scaConfig.isIncludeSources()) {
                     response = submitAllSourcesFromLocalDir(projectId, astScaConfig.getZipFilePath());
-                } else {
+                } else if(scaConfig.isEnableScaResolver()) {	
+                	response = submitScaResolverEvidenceFile(scaConfig); //calling function to handle numerous steps
+                }else {
                     response = submitManifestsAndFingerprintsFromLocalDir(projectId);
                 }
             }
@@ -309,6 +311,48 @@ public class AstScaClient extends AstClient implements Scanner {
         FileUtils.deleteDirectory(configFileDestination.toFile());
 
         return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig());
+    }
+	
+	
+	/*
+     Code to launch sca resolver and zip evidence file
+     */
+    private HttpResponse submitScaResolverEvidenceFile(AstScaConfig scaConfig) throws IOException {
+    	log.info("\nSca Resolver Enabled.");
+    	log.info("USing Sca Resolver flow.");
+    	String pathToResultDir = "";
+    	File zipFile = new File("");
+    	
+    	int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(), true);
+    	if (exitCode == 0) {
+    		pathToResultDir = SpawnScaResolver.getScaResolverResultDir(scaConfig.getScaResolverAddParameters());
+    		
+    		if(pathToResultDir.contains(".json")) { 
+    			File filePath = new File(pathToResultDir);
+    			zipFile = zipEvidenceFile(filePath);
+    		}
+    		
+    	}
+    	    	
+    	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
+    }
+    
+    private File getLatestModifiedFile(String dirPath)
+    {
+    	File directory = new File(dirPath);
+		File[] files = directory.listFiles(); 
+		if (files == null || files.length == 0) {
+			return  null;
+	    }
+		
+		File lastModifiedFile = files[0];
+	    for (int i = 1; i < files.length; i++) {
+	       if (lastModifiedFile.lastModified() < files[i].lastModified()) {
+	           lastModifiedFile = files[i];
+	       }
+	    }
+	    
+	    return lastModifiedFile;
     }
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
@@ -351,11 +395,31 @@ public class AstScaClient extends AstClient implements Scanner {
 
         return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig);
     }
+	
+	private File zipEvidenceFile(File filePath) throws IOException {
+        
+        log.debug("Collecting files to zip archive: {}", filePath.getAbsolutePath());
+        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
+
+        try  {
+        	NewCxZipFile zipper = new NewCxZipFile(filePath, maxZipSizeBytes, log);    
+        
+            log.debug("The sources were zipped to {}", filePath.getAbsolutePath());
+            return filePath;
+        } catch (Zipper.MaxZipSizeReached e) {
+            throw handleFileDeletion(filePath, new IOException("Reached maximum upload size limit of " + FileUtils.byteCountToDisplaySize(maxZipSizeBytes)));
+        } catch (IOException ioException) {
+            throw handleFileDeletion(filePath, ioException);
+        }
+    }	
+	
     /**
      * 
      * This method gets the additional config file(from different package manager) manifest filters 
      * e.g. returns "settings.xml,npmrc"/"
      **/
+	 
+	 
     
 	private String getAdditionalManifestFilters(Path configFileDestination) {
 		List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();

@@ -30,6 +30,7 @@ public class AstScaConfig extends ASTConfig implements Serializable {
      * code to be uploaded into the cloud.
      */
     private boolean includeSources;
+    private boolean enableScaResolver;
     
     private String fingerprintsIncludePattern;
     private String manifestsIncludePattern;
@@ -39,6 +40,10 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String sastServerUrl;
     private String sastUsername;
     private String sastPassword;
+	
+	private String pathToScaResolver;
+    private String scaResolverAddParameters;
+	
     private Map<String,String> envVariables;
     private List<String> configFilePaths;
     
