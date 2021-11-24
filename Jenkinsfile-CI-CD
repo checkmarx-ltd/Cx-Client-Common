@@ -37,6 +37,7 @@ pipeline {
         timestamps()
         timeout(time: 2, unit: 'HOURS')
         //skipDefaultCheckout()
+        //test
     }
     stages {
 
