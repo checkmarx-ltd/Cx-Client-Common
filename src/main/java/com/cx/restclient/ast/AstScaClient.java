@@ -403,9 +403,10 @@ public class AstScaClient extends AstClient implements Scanner {
 	
 	private File zipEvidenceFile(File filePath) throws IOException {
 		
-		File tempFile = getZipFile();
-		String sourceDir = filePath.getParent();
+		//File tempFile = File.createTempFile(TEMP_FILE_NAME_TO_ZIP, ".json");
 		
+		String sourceDir = filePath.getParent();
+		File tempFile = new File(sourceDir + "\\scaResolverOutput.zip");
 		log.info("Source Directory: " + sourceDir);
         log.info("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
         
