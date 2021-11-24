@@ -57,6 +57,8 @@ import java.util.stream.Collectors;
 
 import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
+import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP;
+import static com.cx.restclient.sast.utils.SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
 
 /**
  * SCA - Software Composition Analysis - is the successor of OSA.
@@ -282,7 +284,7 @@ public class AstScaClient extends AstClient implements Scanner {
                 if (scaConfig.isIncludeSources()) {
                     response = submitAllSourcesFromLocalDir(projectId, astScaConfig.getZipFilePath());
                 } else if(scaConfig.isEnableScaResolver()) {	
-                	response = submitScaResolverEvidenceFile(scaConfig); //calling function to handle numerous steps
+                	response = submitScaResolverEvidenceFile(scaConfig);
                 }else {
                     response = submitManifestsAndFingerprintsFromLocalDir(projectId);
                 }
@@ -312,54 +314,61 @@ public class AstScaClient extends AstClient implements Scanner {
 
         return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig());
     }
-	
-	
-	/*
-     Code to launch sca resolver and zip evidence file
+
+
+    /**
+     * This method
+     *  1) executes sca resolver to generate result json file.
+     *  2) create ScaResolverResultsxxxx.zip file with sca resolver result json file to be uploaded for scan
+     *  3) Execute initiateScan method to generate SCA scan.
+     * @param scaConfig - AST Sca config object
+     * @return - Returns the response
+     * @throws IOException
      */
-    private HttpResponse submitScaResolverEvidenceFile(AstScaConfig scaConfig) throws IOException {
-    	log.info("Sca Resolver Enabled.");
-    	log.info("USing Sca Resolver flow.");
+    private HttpResponse submitScaResolverEvidenceFile(AstScaConfig scaConfig) throws IOException,CxClientException {
+        log.info("Executing SCA Resolver flow.");
     	log.info("Path to Sca Resolver: " + scaConfig.getPathToScaResolver());
     	log.info("Sca Resolver Additional Parameters: " + scaConfig.getScaResolverAddParameters());
-    	String pathToResultDir = "";
+    	String pathToResultJSONFile = "";
     	File zipFile = new File("");
-    	
-    	int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(), true);
-    	log.info("Sca Resolver Evidence File Generated.");
+        pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
+
+        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),log,pathToResultJSONFile);
     	if (exitCode == 0) {
-    		pathToResultDir = SpawnScaResolver.getScaResolverResultDir(scaConfig.getScaResolverAddParameters());
-    		log.info("Path to Evidence File" + pathToResultDir);
-    		
-    		if(pathToResultDir.contains(".json")) { 
-    			File filePath = new File(pathToResultDir);
-    			log.info("Path to Zip File" + filePath.getAbsolutePath());
-    			astScaConfig.setZipFilePath(pathToResultDir);
-    			
-    			zipFile = zipEvidenceFile(filePath);		
-    		}	
-    	}
+            log.info("Sca Resolver Evidence File Generated.");
+            log.info("Path of Evidence File" + pathToResultJSONFile);
+            File resultFilePath = new File(pathToResultJSONFile);
+            zipFile = zipEvidenceFile(resultFilePath);
+
+        }else{
+            throw new CxClientException("Error while running sca resolver executable.");
+        }
     	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
     }
-    
-    private File getLatestModifiedFile(String dirPath)
-    {
-    	File directory = new File(dirPath);
-		File[] files = directory.listFiles(); 
-		if (files == null || files.length == 0) {
-			return  null;
-	    }
-		
-		File lastModifiedFile = files[0];
-	    for (int i = 1; i < files.length; i++) {
-	       if (lastModifiedFile.lastModified() < files[i].lastModified()) {
-	           lastModifiedFile = files[i];
-	       }
-	    }
-	    
-	    return lastModifiedFile;
-    }
 
+    /**
+     * This method returns SCA Resolver execution result file path. SCA Resolver additional
+     * parameter has result file location. Appending result directory path with file name
+     * .cxsca-results.json
+     * @param scaResolverAddParams - SCA resolver additional parameters
+     * @return - SCA resolver execution result file path.
+     */
+    private  String getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams)
+    {
+        String pathToEvidenceDir ="";
+        String[] arguments = {};
+		/*
+		 Convert path and parameters into a single CMD command
+		 */
+        arguments = scaResolverAddParams.split(" ");
+
+        for (int i = 0; i <  arguments.length ; i++) {
+            if (arguments[i].equals("-r") )
+                pathToEvidenceDir =  arguments[i+1];
+        }
+        String pathToEvidenceFile = pathToEvidenceDir + File.separator + SCA_RESOLVER_RESULT_FILE_NAME;
+        return pathToEvidenceFile;
+    }
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
@@ -400,14 +409,18 @@ public class AstScaClient extends AstClient implements Scanner {
 
         return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig);
     }
-	
+
+    /**
+     * This file create zip file to
+     * @param filePath - SCA Resolver evidence/result file path
+     * @return - Zipped file
+     * @throws IOException
+     */
 	private File zipEvidenceFile(File filePath) throws IOException {
 		
-		//File tempFile = File.createTempFile(TEMP_FILE_NAME_TO_ZIP, ".json");
-		
+		File tempFile = File.createTempFile(TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP, ".zip");
 		String sourceDir = filePath.getParent();
-		File tempFile = new File(sourceDir + "\\scaResolverOutput.zip");
-		log.info("Source Directory: " + sourceDir);
+
         log.info("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
         
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
@@ -418,9 +431,8 @@ public class AstScaClient extends AstClient implements Scanner {
         
 
         try (NewCxZipFile zipper = new NewCxZipFile(tempFile, maxZipSizeBytes, log)) {
-        	log.info("Zipper count" + zipper.getFileCount());
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
-            
+            log.info("Added " + zipper.getFileCount() + " files to zip.");
             log.info("The sources were zipped to {}", tempFile.getAbsolutePath());
             return tempFile;
         } catch (Zipper.MaxZipSizeReached e) {
