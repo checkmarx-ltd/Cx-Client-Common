@@ -1,6 +1,8 @@
 package com.cx.restclient.ast;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class SpawnScaResolver {
 	
@@ -10,11 +12,11 @@ public class SpawnScaResolver {
 		String[] scaResolverCommand;
 		
 		/*
-		 Convert path and additional parameters into a singe cmd command
+		 Convert path and additional parameters into a single CMD command
 		 */
 		arguments = scaResolverAddParams.split(" ");
 		scaResolverCommand = new String[arguments.length + 2];
-		scaResolverCommand[0] = pathToScaResolver;
+		scaResolverCommand[0] = pathToScaResolver + "\\ScaResolver.exe"; //might be different for Linux Machine
 		scaResolverCommand[1] = "offline";
 		for  (int i = 0 ; i < arguments.length ; i++){
 			scaResolverCommand[i+2] = arguments[i];
@@ -23,6 +25,11 @@ public class SpawnScaResolver {
 		ProcessBuilder processBuilder = new ProcessBuilder(scaResolverCommand);
 		try {
             Process process = processBuilder.start();
+            
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) { }
+
 
             exitCode = process.waitFor();            
             

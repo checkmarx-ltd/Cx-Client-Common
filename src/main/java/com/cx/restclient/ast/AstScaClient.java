@@ -318,22 +318,27 @@ public class AstScaClient extends AstClient implements Scanner {
      Code to launch sca resolver and zip evidence file
      */
     private HttpResponse submitScaResolverEvidenceFile(AstScaConfig scaConfig) throws IOException {
-    	log.info("\nSca Resolver Enabled.");
+    	log.info("Sca Resolver Enabled.");
     	log.info("USing Sca Resolver flow.");
+    	log.info("Path to Sca Resolver: " + scaConfig.getPathToScaResolver());
+    	log.info("Sca Resolver Additional Parameters: " + scaConfig.getScaResolverAddParameters());
     	String pathToResultDir = "";
     	File zipFile = new File("");
     	
     	int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(), true);
+    	log.info("Sca Resolver Evidence File Generated.");
     	if (exitCode == 0) {
     		pathToResultDir = SpawnScaResolver.getScaResolverResultDir(scaConfig.getScaResolverAddParameters());
+    		log.info("Path to Evidence File" + pathToResultDir);
     		
     		if(pathToResultDir.contains(".json")) { 
     			File filePath = new File(pathToResultDir);
-    			zipFile = zipEvidenceFile(filePath);
-    		}
-    		
+    			log.info("Path to Zip File" + filePath.getAbsolutePath());
+    			astScaConfig.setZipFilePath(pathToResultDir);
+    			
+    			zipFile = zipEvidenceFile(filePath);		
+    		}	
     	}
-    	    	
     	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
     }
     
@@ -397,15 +402,26 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 	
 	private File zipEvidenceFile(File filePath) throws IOException {
+		
+		File tempFile = getZipFile();
+		String sourceDir = filePath.getParent();
+		
+		log.info("Source Directory: " + sourceDir);
+        log.info("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
         
-        log.debug("Collecting files to zip archive: {}", filePath.getAbsolutePath());
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
-
-        try  {
-        	NewCxZipFile zipper = new NewCxZipFile(filePath, maxZipSizeBytes, log);    
         
-            log.debug("The sources were zipped to {}", filePath.getAbsolutePath());
-            return filePath;
+        List<String> paths = new ArrayList <String>();
+        paths.add(filePath.getName());
+        log.info("Paths Variable: " + paths.get(0));
+        
+
+        try (NewCxZipFile zipper = new NewCxZipFile(tempFile, maxZipSizeBytes, log)) {
+        	log.info("Zipper count" + zipper.getFileCount());
+            zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
+            
+            log.info("The sources were zipped to {}", tempFile.getAbsolutePath());
+            return tempFile;
         } catch (Zipper.MaxZipSizeReached e) {
             throw handleFileDeletion(filePath, new IOException("Reached maximum upload size limit of " + FileUtils.byteCountToDisplaySize(maxZipSizeBytes)));
         } catch (IOException ioException) {
@@ -474,11 +490,14 @@ public class AstScaClient extends AstClient implements Scanner {
     private File zipDirectoryAndFingerprints(String sourceDir, List<String> paths, CxSCAScanFingerprints fingerprints) throws IOException {
         File result = config.getZipFile();
         if (result != null) {
+        	log.info("Config Zip File" + result.getAbsolutePath());
             return result;
+            
         }
         File tempFile = getZipFile();
-        log.debug("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
+        log.info("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
+        
 
         try (NewCxZipFile zipper = new NewCxZipFile(tempFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
