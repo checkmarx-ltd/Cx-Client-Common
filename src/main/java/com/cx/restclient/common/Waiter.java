@@ -53,7 +53,9 @@ public abstract class Waiter<T extends BaseStatus> {
                         statusResponse = (T) new BaseStatus(Status.IN_PROGRESS);
                     }
                     continue;
-                }
+                } catch (InterruptedException e) {
+					throw new CxClientException(e.getMessage());
+				}
                 elapsedTimeSec = (new Date()).getTime() / 1000 - startTimeSec;
                 printProgress(statusResponse);
             } while (isTaskInProgress(statusResponse) && (scanTimeoutSec <= 0 || elapsedTimeSec < scanTimeoutSec));
