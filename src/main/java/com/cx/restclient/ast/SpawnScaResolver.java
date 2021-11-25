@@ -23,8 +23,8 @@ public class SpawnScaResolver {
 	 * @param scaResolverAddParams - Additional parameters for SCA resolver
 	 * @return
 	 */
-	protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams,Logger log,String pathToResultJSONFile)
-			throws IOException,CxClientException {
+	protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams,String pathToResultJSONFile)
+			throws CxClientException {
 		int exitCode = -100;
 		String[] arguments = {};
 		String[] scaResolverCommand;
@@ -39,11 +39,11 @@ public class SpawnScaResolver {
 		for  (int i = 0 ; i < arguments.length ; i++){
 
 			String arg = arguments[i];
-			if(arg.equals("debug"))
+			if(arg.equalsIgnoreCase("debug"))
 			{
 				arg = "Debug";
 			}
-			if(arg.equals("error"))
+			if(arg.equalsIgnoreCase("error"))
 			{
 				arg = "Error";
 			}
@@ -59,10 +59,8 @@ public class SpawnScaResolver {
 		ProcessBuilder processBuilder = new ProcessBuilder(scaResolverCommand);
 		try {
             Process process = processBuilder.start();
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-				log.info(line);
+			reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            while (reader.readLine() != null) {
 			}
             exitCode = process.waitFor();
             

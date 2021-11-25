@@ -333,7 +333,7 @@ public class AstScaClient extends AstClient implements Scanner {
     	File zipFile = new File("");
         pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
 
-        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),log,pathToResultJSONFile);
+        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFile);
     	if (exitCode == 0) {
             log.info("Sca Resolver Evidence File Generated.");
             log.info("Path of Evidence File" + pathToResultJSONFile);
