@@ -512,12 +512,11 @@ public class AstScaClient extends AstClient implements Scanner {
     private File zipDirectoryAndFingerprints(String sourceDir, List<String> paths, CxSCAScanFingerprints fingerprints) throws IOException {
         File result = config.getZipFile();
         if (result != null) {
-        	log.info("Config Zip File" + result.getAbsolutePath());
             return result;
             
         }
         File tempFile = getZipFile();
-        log.info("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
+        log.debug("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
         
 
