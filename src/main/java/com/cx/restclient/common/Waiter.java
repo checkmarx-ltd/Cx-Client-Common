@@ -39,7 +39,7 @@ public abstract class Waiter<T extends BaseStatus> {
         try {
             do {
                 try {
-                    //Thread.sleep((long) sleepIntervalSec * 1000);
+                    Thread.sleep((long) sleepIntervalSec * 1000);
                     statusResponse = getStatus(taskId);
                     retry = initialReset;
 
