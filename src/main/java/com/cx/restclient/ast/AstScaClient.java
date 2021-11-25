@@ -97,6 +97,7 @@ public class AstScaClient extends AstClient implements Scanner {
     private String projectId;
     private String scanId;
     private String reportId;
+    private File tempUploadFile;
     private final FingerprintCollector fingerprintCollector;
     private CxSCAResolvingConfiguration resolvingConfiguration;
     private static final String FINGERPRINT_FILE_NAME = ".cxsca.sig";
@@ -291,6 +292,14 @@ public class AstScaClient extends AstClient implements Scanner {
             }
             this.scanId = extractScanIdFrom(response);
             scaResults.setScanId(scanId);
+
+            if(scaConfig.isEnableScaResolver() && tempUploadFile != null){
+                log.info("Deleting uploaded file for scan " + tempUploadFile.getAbsolutePath());
+                if(!tempUploadFile.delete())
+                {
+                    log.error("Error while deleting uploaded file for scan "+ tempUploadFile.getAbsolutePath());
+                }
+            }
         } catch (Exception e) {
             log.error("Error occurred while initiating scan.", e);
             setState(State.FAILED);
@@ -417,11 +426,11 @@ public class AstScaClient extends AstClient implements Scanner {
      * @throws IOException
      */
 	private File zipEvidenceFile(File filePath) throws IOException {
-		
-		File tempFile = File.createTempFile(TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP, ".zip");
+
+        tempUploadFile = File.createTempFile(TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP, ".zip");
 		String sourceDir = filePath.getParent();
 
-        log.info("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
+        log.info("Collecting files to zip archive: {}", tempUploadFile.getAbsolutePath());
         
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
         
@@ -430,11 +439,11 @@ public class AstScaClient extends AstClient implements Scanner {
         log.info("Paths Variable: " + paths.get(0));
         
 
-        try (NewCxZipFile zipper = new NewCxZipFile(tempFile, maxZipSizeBytes, log)) {
+        try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
             log.info("Added " + zipper.getFileCount() + " files to zip.");
-            log.info("The sources were zipped to {}", tempFile.getAbsolutePath());
-            return tempFile;
+            log.info("The sources were zipped to {}", tempUploadFile.getAbsolutePath());
+            return tempUploadFile;
         } catch (Zipper.MaxZipSizeReached e) {
             throw handleFileDeletion(filePath, new IOException("Reached maximum upload size limit of " + FileUtils.byteCountToDisplaySize(maxZipSizeBytes)));
         } catch (IOException ioException) {
