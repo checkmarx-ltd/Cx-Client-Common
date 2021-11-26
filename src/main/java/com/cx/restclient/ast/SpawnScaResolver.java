@@ -55,28 +55,25 @@ public class SpawnScaResolver {
 			}
 		}
 
-		BufferedReader reader = null;
-		ProcessBuilder processBuilder = new ProcessBuilder(scaResolverCommand);
-		try {
-            Process process = processBuilder.start();
-			reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            while (reader.readLine() != null) {
-			}
-            exitCode = process.waitFor();
-            
-        }catch (IOException e) {
+		try 
+		{
+			ProcessBuilder processBuilder = new ProcessBuilder(scaResolverCommand);
+			Process process = processBuilder.start();
+			
+			try(BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));) 
+			{ 
+	            while (reader.readLine() != null) {
+				}
+			}catch (IOException e) {
+				throw new CxClientException(e);
+	        }
+	        exitCode = process.waitFor();
+	            
+		}catch (IOException e) {
 			throw new CxClientException(e);
         }catch (InterruptedException e) {
 			throw new CxClientException(e);
-        }finally{
-			if(reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
+        }
 		
 		return exitCode;
     }
