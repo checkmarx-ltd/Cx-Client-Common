@@ -35,6 +35,8 @@ public class SASTParam {
     //ZIP PARAMS
     public static final long MAX_ZIP_SIZE_BYTES = 2147483648L;
     public static final String TEMP_FILE_NAME_TO_ZIP = "zippedSource";
+    public static final String TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP = "ScaResolverResults";
+    public static final String SCA_RESOLVER_RESULT_FILE_NAME = ".cxsca-results.json";
 
     //Links formats
     public static final String LINK_FORMAT = "/CxWebClient/portal#/projectState/%d/Summary";
