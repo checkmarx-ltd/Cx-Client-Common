@@ -65,7 +65,7 @@ public class AstWaiter {
         if(config.isAstScaEnabled()) {
         	rawTimeout = config.getSCAScanTimeoutInMinutes();
         }
-        final int DEFAULT_TIMEOUT = 30;
+        final int DEFAULT_TIMEOUT = 60;
         rawTimeout = rawTimeout != null && rawTimeout > 0 ? rawTimeout : DEFAULT_TIMEOUT;
         return Duration.ofMinutes(rawTimeout);
     }
