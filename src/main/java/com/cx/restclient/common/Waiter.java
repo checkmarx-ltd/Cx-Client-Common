@@ -64,7 +64,7 @@ public abstract class Waiter<T extends BaseStatus> {
         } catch (CxClientException e) {
             throw new CxClientException(FAILED_MSG + scanType + ". Error message: " + e.getMessage(), e);
         }
-		//When no exception returns success status
+		//When no exception
         return resolveStatus(statusResponse);
     }
 
