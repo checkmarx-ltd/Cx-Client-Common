@@ -513,8 +513,9 @@ public class CxHttpClient implements Closeable {
             }
             ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
             settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
-            requestEntity = getAuthRequest(settings);
-            return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
+            UrlEncodedFormEntity requestEntityForSecondLoginRetry = getAuthRequest(settings);
+            HttpPost post_1 = new HttpPost(settings.getAccessControlBaseUrl());
+            return request(post_1, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntityForSecondLoginRetry,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         }
     }
