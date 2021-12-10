@@ -6,6 +6,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 
 /**
@@ -14,7 +16,7 @@ import org.slf4j.Logger;
 
 public class SpawnScaResolver {
 
-	public static final String SCA_RESOLVER_EXE = "ScaResolver.exe";
+	public static final String SCA_RESOLVER_EXE = "ScaResolver";
 	public static final String OFFLINE = "offline";
 
 	/**
@@ -34,7 +36,12 @@ public class SpawnScaResolver {
 		 */
 		arguments = scaResolverAddParams.split(" ");
 		scaResolverCommand = new String[arguments.length + 2];
-		scaResolverCommand[0] = pathToScaResolver + File.separator + SCA_RESOLVER_EXE;
+		
+		pathToScaResolver = pathToScaResolver + File.separator + SCA_RESOLVER_EXE;
+		if(!SystemUtils.IS_OS_UNIX)
+			pathToScaResolver = pathToScaResolver + ".exe";
+		
+		scaResolverCommand[0] = pathToScaResolver;
 		scaResolverCommand[1] = OFFLINE;
 		for  (int i = 0 ; i < arguments.length ; i++){
 

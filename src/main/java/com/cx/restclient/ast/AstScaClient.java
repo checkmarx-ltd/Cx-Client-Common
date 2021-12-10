@@ -341,16 +341,15 @@ public class AstScaClient extends AstClient implements Scanner {
     	String pathToResultJSONFile = "";
     	File zipFile = new File("");
         pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
-
+        log.info("Path to the evidence file" + pathToResultJSONFile);
         int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFile);
     	if (exitCode == 0) {
-            log.info("Sca Resolver Evidence File Generated.");
-            log.info("Path of Evidence File" + pathToResultJSONFile);
+            log.info("SCA resolution completed successfully.");            
             File resultFilePath = new File(pathToResultJSONFile);
             zipFile = zipEvidenceFile(resultFilePath);
 
         }else{
-            throw new CxClientException("Error while running sca resolver executable.");
+            throw new CxClientException("Error while running sca resolver executable. Exit code:"+exitCode);
         }
     	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
     }
@@ -435,9 +434,7 @@ public class AstScaClient extends AstClient implements Scanner {
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
         
         List<String> paths = new ArrayList <String>();
-        paths.add(filePath.getName());
-        log.info("Paths Variable: " + paths.get(0));
-        
+        paths.add(filePath.getName());               
 
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
