@@ -10,9 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Date;
 
-/**
- * Created by Galn on 13/02/2018.
- */
 public abstract class Waiter<T extends BaseStatus> {
 
     public static final Logger log = LoggerFactory.getLogger(Waiter.class);
@@ -39,12 +36,10 @@ public abstract class Waiter<T extends BaseStatus> {
         try {
             do {
                 try {
-                	// Putting the thread to sleep
+                    // Putting the thread to sleep
                     Thread.sleep((long) sleepIntervalSec * 1000);
-                    
                     statusResponse = getStatus(taskId);
                     retry = initialReset;
-
                 } catch (IOException e) {
                     log.debug(FAILED_MSG + scanType + ". retrying (" + (retry - 1) + " tries left). Error message: " + e.getMessage());
                     retry--;
@@ -56,8 +51,8 @@ public abstract class Waiter<T extends BaseStatus> {
                     }
                     continue;
                 } catch (InterruptedException e) {
-					throw new CxClientException(e.getMessage());
-				}
+                    throw new CxClientException(e.getMessage());
+                }
                 elapsedTimeSec = (new Date()).getTime() / 1000 - startTimeSec;
                 printProgress(statusResponse);
             } while (isTaskInProgress(statusResponse) && (scanTimeoutSec <= 0 || elapsedTimeSec < scanTimeoutSec));
