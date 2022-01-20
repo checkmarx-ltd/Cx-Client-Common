@@ -713,7 +713,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         builder.addTextBody("engineConfigurationId", config.getEngineConfigurationId() != null ? config.getEngineConfigurationId().toString() : ENGINE_CONFIGURATION_ID_DEFAULT, ContentType.APPLICATION_JSON);
 
         builder.addTextBody("postScanActionId",
-        		config.getPostScanActionId() != null?
+        		config.getPostScanActionId() != null && config.getPostScanActionId() != 0 ?
         				config.getPostScanActionId().toString() : "",
         				ContentType.APPLICATION_JSON);
 
