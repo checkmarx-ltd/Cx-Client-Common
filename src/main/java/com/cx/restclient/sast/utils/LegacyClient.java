@@ -105,7 +105,7 @@ public abstract class LegacyClient {
 			teamPath = config.getTeamPath();
 		}
         httpClient.setTeamPathHeader(teamPath);
-        log.debug(String.format(" setTeamPathHeader %s", teamPath));
+        log.debug(String.format("setTeamPathHeader %s", teamPath));
         return teamPath;
     }
 
@@ -270,7 +270,7 @@ public abstract class LegacyClient {
     }
 
     public List<EngineConfiguration> getEngineConfiguration() throws IOException {
-        configureTeamPath();
+        this.teamPath = configureTeamPath();
         httpClient.setTeamPathHeader(this.teamPath);
         return (List<EngineConfiguration>) httpClient.getRequest(SAST_ENGINE_CONFIG, CONTENT_TYPE_APPLICATION_JSON_V1, EngineConfiguration.class, 200, "engine configurations", true);
     }
@@ -290,7 +290,7 @@ public abstract class LegacyClient {
 
     private void resolveTeam() throws CxClientException, IOException {
 
-        configureTeamPath();
+        config.setTeamPath(configureTeamPath());
 
         if (config.getTeamId() == null) {
             config.setTeamId(getTeamIdByName(config.getTeamPath()));
