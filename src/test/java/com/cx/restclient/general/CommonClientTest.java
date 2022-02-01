@@ -34,6 +34,13 @@ public abstract class CommonClientTest {
         config.setProxyConfig(proxyConfig);
     }
 
+    protected void setScaProxy(CxScanConfig config) {
+        ProxyConfig proxyConfig = new ProxyConfig();
+        proxyConfig.setHost(prop("proxy.host"));
+        proxyConfig.setPort(Integer.parseInt(prop("proxy.port")));
+        config.setScaProxyConfig(proxyConfig);
+    }
+
     void failOnException(Exception e) {
         log.error("Unexpected exception during test.", e);
         Assert.fail(e.getMessage());
