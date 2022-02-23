@@ -93,8 +93,8 @@ public class ClientTypeResolver {
                     config.isDisableCertificateValidation(),
                     config.isUseSSOLogin(),
                     config.getRefreshToken(),
-                    config.isProxy(),
-                    config.getProxyConfig(),
+                    config.isScaProxy(),
+                    config.getScaProxyConfig(),
                     log,
                     config.getNTLM());
         }
