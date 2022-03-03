@@ -654,7 +654,7 @@ public class CxHttpClient implements Closeable {
             //extract response as object and return the link
             return convertToObject(response, responseType, isCollection);
         } catch (UnknownHostException e) {
-        	e.printStackTrace();
+        	log.error(e.getMessage());
             throw new CxHTTPClientException(ErrorMessage.CHECKMARX_SERVER_CONNECTION_FAILED.getErrorMessage(), e);
         } catch (CxTokenExpiredException ex) {
             if (retry) {
