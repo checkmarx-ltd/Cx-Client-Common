@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.checkmarx</groupId>
     <artifactId>cx-client-common</artifactId>
-    <version>${cxcommon.version}</version>
+    <version>2021.4.9-SEG</version>
     <packaging>jar</packaging>
     <name>Checkmarx Client</name>
     <description>Web client for interaction with Checkmarx SAST, SCA and OSA products</description>
@@ -27,7 +27,7 @@
         <javax.activation.version>1.2.0</javax.activation.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <lombok.version>1.18.6</lombok.version>
-        <cx.ws.fs.agent.version>21.0.1</cx.ws.fs.agent.version>
+        <cx.ws.fs.agent.version>21.0.5</cx.ws.fs.agent.version>
 
         <!--SonarCloud scan -->
         <sonar.projectKey>checkmarx-ltd_Cx-Client-Common</sonar.projectKey>

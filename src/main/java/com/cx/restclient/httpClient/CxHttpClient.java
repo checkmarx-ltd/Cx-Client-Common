@@ -620,6 +620,15 @@ public class CxHttpClient implements Closeable {
         customHeaders.put(name, value);
     }
 
+    public HttpResponse getRequest(HttpRequestBase httpMethod) {
+        try {
+            return apacheClient.execute(httpMethod);
+        } catch (IOException e) {
+            log.error("Fail to execute http method", e);
+            return null;
+        }
+    }
+
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
         if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
