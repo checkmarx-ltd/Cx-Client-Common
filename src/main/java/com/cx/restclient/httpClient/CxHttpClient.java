@@ -9,9 +9,9 @@ import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.exception.CxTokenExpiredException;
 import com.cx.restclient.osa.dto.ClientType;
 import com.google.gson.Gson;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.*;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
@@ -53,7 +53,6 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
@@ -660,6 +659,7 @@ public class CxHttpClient implements Closeable {
                 logTokenError(httpMethod, statusCode, ex);
                 if (lastLoginSettings != null) {
                     login(lastLoginSettings);
+                    removeHeaders(httpMethod);
                     return request(httpMethod, contentType, entity, responseType, expectStatus, failedMsg, isCollection, false);
                 }
             }
@@ -668,6 +668,14 @@ public class CxHttpClient implements Closeable {
             httpMethod.releaseConnection();
             HttpClientUtils.closeQuietly(response);
         }
+    }
+
+    private void removeHeaders(HttpRequestBase httpMethod){
+        httpMethod.removeHeaders("Content-type");
+        httpMethod.removeHeaders(ORIGIN_HEADER);
+        httpMethod.removeHeaders(ORIGIN_URL_HEADER);
+        httpMethod.removeHeaders(TEAM_PATH);
+        httpMethod.removeHeaders(HttpHeaders.AUTHORIZATION);
     }
 
     public void close() {
@@ -726,33 +734,33 @@ public class CxHttpClient implements Closeable {
 
         log.info("Possible reason: access token has expired. Trying to request a new token...");
     }
-    
-    /* 
-     * This will return string from encoded access token 
+
+    /*
+     * This will return string from encoded access token
      * which will use to identify which language is used in SAST
-     * 
-     * */ 
-    public String getLanguageFromAccessToken(){
-		String languageForSAST = "en-US";
-		try {
-			
-			String actToken = token.getAccess_token();
-			String[] split_string = actToken.split("\\.");
-			if(split_string != null && split_string.length>0){
-			String base64EncodedBody = split_string[1];
-			Base64 base64Url = new Base64(true);
-			String body = new String(base64Url.decode(base64EncodedBody));
-			String tokenToParse = body.replace("\"", "'");
-			JSONObject json = new JSONObject(tokenToParse);
-			languageForSAST = json.getString("locale");
-			log.info("Locale used in CxSAST is  "+languageForSAST);
-			
-			}
-		} catch (Exception ex) {
-			// In case the SAST used will not have token, set to default English language
-			languageForSAST = "en-US";
-		}
-		return languageForSAST;
+     *
+     * */
+    public String getLanguageFromAccessToken() {
+        String languageForSAST = "en-US";
+        try {
+
+            String actToken = token.getAccess_token();
+            String[] split_string = actToken.split("\\.");
+            if (split_string != null && split_string.length > 0) {
+                String base64EncodedBody = split_string[1];
+                Base64 base64Url = new Base64(true);
+                String body = new String(base64Url.decode(base64EncodedBody));
+                String tokenToParse = body.replace("\"", "'");
+                JSONObject json = new JSONObject(tokenToParse);
+                languageForSAST = json.getString("locale");
+                log.info("Locale used in CxSAST is  " + languageForSAST);
+
+            }
+        } catch (Exception ex) {
+            // In case the SAST used will not have token, set to default English language
+            languageForSAST = "en-US";
+        }
+        return languageForSAST;
     }
 
 }
