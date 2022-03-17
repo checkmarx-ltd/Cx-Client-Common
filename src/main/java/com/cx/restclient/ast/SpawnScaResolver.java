@@ -99,7 +99,10 @@ public class SpawnScaResolver {
 
         } catch (IOException | InterruptedException e) {
             log.error("Failed to execute next command : " + scaResolverCommand, e.getMessage(), e.getStackTrace());
-            throw new CxClientException(e);
+            Thread.currentThread().interrupt();
+            if (Thread.interrupted()) {
+            	throw new CxClientException(e);
+            }
         }
         return exitCode;
     }
