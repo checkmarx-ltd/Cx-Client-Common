@@ -102,6 +102,7 @@ public class SpawnScaResolver {
             Thread.currentThread().interrupt();
             if (Thread.interrupted()) {
             	throw new CxClientException(e);
+            	
             }
         }
         return exitCode;
