@@ -117,7 +117,7 @@ pipeline {
                                 sonarTaskStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
                             }
                             if (sonarTaskStatus == "FAILED" || sonarTaskStatus == "CANCELED") {
-                                Error_Msg("Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
+                                kit.Error_Msg("Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
                                 error "Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common"
                             }
                             def sonarAnalysisId = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.analysisId'").trim()

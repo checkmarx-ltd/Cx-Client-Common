@@ -56,8 +56,10 @@ public abstract class Waiter<T extends BaseStatus> {
                     }
                     continue;
                 } catch (InterruptedException e) {
+                	Thread.currentThread().interrupt();
+                    if (Thread.interrupted()) {
                     	throw new CxClientException(e.getMessage());
-                    	
+                    }
 				}
                 elapsedTimeSec = (new Date()).getTime() / 1000 - startTimeSec;
                 printProgress(statusResponse);
