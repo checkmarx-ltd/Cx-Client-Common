@@ -704,7 +704,11 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             }
         }
         builder.addTextBody("projectId", Long.toString(projectId), ContentType.APPLICATION_JSON);
-        builder.addTextBody("overrideProjectSetting", super.isIsNewProject() ? "true" : "false", ContentType.APPLICATION_JSON);
+        if(config.getIsOverrideProjectSetting()){
+        	builder.addTextBody("overrideProjectSetting",config.getIsOverrideProjectSetting().toString(), ContentType.APPLICATION_JSON);
+        }else{
+        	builder.addTextBody("overrideProjectSetting", super.isIsNewProject() ? "true" : "false", ContentType.APPLICATION_JSON);
+        }
         builder.addTextBody("isIncremental", config.getIncremental().toString(), ContentType.APPLICATION_JSON);
         builder.addTextBody("isPublic", config.getPublic().toString(), ContentType.APPLICATION_JSON);
         builder.addTextBody("forceScan", config.getForceScan().toString(), ContentType.APPLICATION_JSON);

@@ -121,6 +121,8 @@ public class CxScanConfig implements Serializable {
     private Integer postScanActionId;
 
     private String customFields;
+    
+    private Boolean isOverrideProjectSetting = false;
 
 
     public CxScanConfig() {
@@ -875,6 +877,14 @@ public class CxScanConfig implements Serializable {
         useNTLM = ntlm;
     }
 
+	public Boolean getIsOverrideProjectSetting() {
+		return isOverrideProjectSetting;
+	}
+
+	public void setIsOverrideProjectSetting(Boolean isOverrideProjectSetting) {
+		this.isOverrideProjectSetting = isOverrideProjectSetting;
+	}
+
 	public Integer getPostScanActionId() {
 		return postScanActionId;
 	}
@@ -882,5 +892,6 @@ public class CxScanConfig implements Serializable {
 	public void setPostScanActionId(Integer postScanActionId) {
 		this.postScanActionId = postScanActionId;
 	}
-    
+
+	
 }
