@@ -705,7 +705,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         }
         builder.addTextBody("projectId", Long.toString(projectId), ContentType.APPLICATION_JSON);
         if(config.getIsOverrideProjectSetting()){
-        	builder.addTextBody("overrideProjectSetting",config.getIsOverrideProjectSetting().toString(), ContentType.APPLICATION_JSON);
+        	builder.addTextBody("overrideProjectSetting",config.getIsOverrideProjectSetting()+"", ContentType.APPLICATION_JSON);
         }else{
         	builder.addTextBody("overrideProjectSetting", super.isIsNewProject() ? "true" : "false", ContentType.APPLICATION_JSON);
         }

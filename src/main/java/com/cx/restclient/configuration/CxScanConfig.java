@@ -122,7 +122,7 @@ public class CxScanConfig implements Serializable {
 
     private String customFields;
     
-    private Boolean isOverrideProjectSetting = false;
+    private boolean isOverrideProjectSetting = false;
 
 
     public CxScanConfig() {
@@ -877,11 +877,11 @@ public class CxScanConfig implements Serializable {
         useNTLM = ntlm;
     }
 
-	public Boolean getIsOverrideProjectSetting() {
+	public boolean getIsOverrideProjectSetting() {
 		return isOverrideProjectSetting;
 	}
 
-	public void setIsOverrideProjectSetting(Boolean isOverrideProjectSetting) {
+	public void setIsOverrideProjectSetting(boolean isOverrideProjectSetting) {
 		this.isOverrideProjectSetting = isOverrideProjectSetting;
 	}
 
