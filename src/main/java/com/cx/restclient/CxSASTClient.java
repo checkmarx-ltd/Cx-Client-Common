@@ -268,9 +268,11 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     //CREATE SAST scan
     private void createSASTScan(long projectId) {
+    	boolean dupScanFound = false;
         try {
             log.info("-----------------------------------Create CxSAST Scan:------------------------------------");
             if (config.isAvoidDuplicateProjectScans() != null && config.isAvoidDuplicateProjectScans() && projectHasQueuedScans(projectId)) {
+            	dupScanFound = true;
                 throw new CxClientException("\nAvoid duplicate project scans in queue\n");
             }
             if (config.getRemoteType() == null) { //scan is local
@@ -285,7 +287,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         } catch (Exception e) {
             log.error(e.getMessage());
             setState(State.FAILED);
-            if(!config.getContinueBuild()) {
+            if(!config.getContinueBuild() && (!dupScanFound)) {
             sastResults.setException(new CxClientException(e));
             }
         }
@@ -713,7 +715,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         builder.addTextBody("engineConfigurationId", config.getEngineConfigurationId() != null ? config.getEngineConfigurationId().toString() : ENGINE_CONFIGURATION_ID_DEFAULT, ContentType.APPLICATION_JSON);
 
         builder.addTextBody("postScanActionId",
-        		config.getPostScanActionId() != null?
+        		config.getPostScanActionId() != null && config.getPostScanActionId() != 0 ?
         				config.getPostScanActionId().toString() : "",
         				ContentType.APPLICATION_JSON);
 

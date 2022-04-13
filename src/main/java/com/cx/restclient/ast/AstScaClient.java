@@ -53,6 +53,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.file.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
@@ -341,15 +343,15 @@ public class AstScaClient extends AstClient implements Scanner {
     	String pathToResultJSONFile = "";
     	File zipFile = new File("");
         pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
-        log.info("Path to the evidence file" + pathToResultJSONFile);
-        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFile);
+        log.info("Path to the evidence file: " + pathToResultJSONFile);
+        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFile, log);
     	if (exitCode == 0) {
-            log.info("SCA resolution completed successfully.");            
+            log.info("SCA resolution completed successfully.");
             File resultFilePath = new File(pathToResultJSONFile);
             zipFile = zipEvidenceFile(resultFilePath);
 
         }else{
-            throw new CxClientException("Error while running sca resolver executable. Exit code:"+exitCode);
+            throw new CxClientException("Error while running sca resolver executable. Exit code: "+exitCode);
         }
     	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
     }
@@ -364,19 +366,24 @@ public class AstScaClient extends AstClient implements Scanner {
     private  String getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams)
     {
         String pathToEvidenceDir ="";
-        String[] arguments = {};
 		/*
 		 Convert path and parameters into a single CMD command
 		 */
-        arguments = scaResolverAddParams.split(" ");
+        List<String> arguments = new ArrayList<String>();
+        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(scaResolverAddParams);
+        while (m.find())
+            arguments.add(m.group(1));
 
-        for (int i = 0; i <  arguments.length ; i++) {
-            if (arguments[i].equals("-r") )
-                pathToEvidenceDir =  arguments[i+1];
+        for (int i = 0; i <  arguments.size() ; i++) {
+            if (arguments.get(i).equals("-r") )
+                pathToEvidenceDir =  arguments.get(i+1);
         }
+        while (pathToEvidenceDir.contains("\""))
+            pathToEvidenceDir = pathToEvidenceDir.replace("\"", "");
         String pathToEvidenceFile = pathToEvidenceDir + File.separator + SCA_RESOLVER_RESULT_FILE_NAME;
         return pathToEvidenceFile;
     }
+
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
@@ -412,7 +419,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         optionallyWriteFingerprintsToFile(fingerprints);
 
-        
+
         FileUtils.deleteDirectory(configFileDestination.toFile());
 
         return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig);
@@ -430,11 +437,11 @@ public class AstScaClient extends AstClient implements Scanner {
 		String sourceDir = filePath.getParent();
 
         log.info("Collecting files to zip archive: {}", tempUploadFile.getAbsolutePath());
-        
+
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
-        
+
         List<String> paths = new ArrayList <String>();
-        paths.add(filePath.getName());               
+        paths.add(filePath.getName());
 
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
@@ -446,8 +453,8 @@ public class AstScaClient extends AstClient implements Scanner {
         } catch (IOException ioException) {
             throw handleFileDeletion(filePath, ioException);
         }
-    }	
-	
+    }
+
     /**
      * 
      * This method gets the additional config file(from different package manager) manifest filters 
