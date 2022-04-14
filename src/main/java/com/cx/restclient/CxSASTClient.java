@@ -391,7 +391,6 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         //Define createSASTScan settings
         defineScanSetting(scanSettingRequest);
     }
-
     
     //GET SAST results + reports
     @Override
