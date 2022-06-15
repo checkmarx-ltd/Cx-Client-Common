@@ -80,6 +80,7 @@ public class ClientTypeResolver {
             String res = getHttpClient(accessControlServerBaseUrl).getRequest(WELL_KNOWN_CONFIG_PATH, CONTENT_TYPE_APPLICATION_JSON_V1, String.class, 200, "Get openId configuration", false);
             return objectMapper.readTree(res);
         } catch (Exception e) {
+        	log.error(e.getMessage());
             throw new CxClientException("Error getting OpenID config response.", e);
         }
     }
@@ -93,8 +94,8 @@ public class ClientTypeResolver {
                     config.isDisableCertificateValidation(),
                     config.isUseSSOLogin(),
                     config.getRefreshToken(),
-                    config.isProxy(),
-                    config.getProxyConfig(),
+                    config.isScaProxy(),
+                    config.getScaProxyConfig(),
                     log,
                     config.getNTLM());
         }

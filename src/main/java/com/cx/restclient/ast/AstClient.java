@@ -83,8 +83,8 @@ public abstract class AstClient {
                 config.isDisableCertificateValidation(),
                 false,      // AST clients don't support SSO.
                 null,
-                config.isProxy(),
-                config.getProxyConfig(),
+                config.isScaProxy(),
+                config.getScaProxyConfig(),
                 log,
                 config.getNTLM());
         //initializing Team Path to prevent null pointer in login when called from automation

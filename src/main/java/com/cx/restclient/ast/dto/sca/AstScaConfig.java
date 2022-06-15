@@ -40,7 +40,8 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String sastServerUrl;
     private String sastUsername;
     private String sastPassword;
-	
+    private Boolean isScaProxy;
+
 	private String pathToScaResolver;
     private String scaResolverAddParameters;
 	
@@ -57,4 +58,7 @@ public class AstScaConfig extends ASTConfig implements Serializable {
         }
         this.teamPath = teamPath;
     }
+    public Boolean getScaProxy() {return isScaProxy;}
+
+    public void isScaProxy(Boolean scaProxy) {isScaProxy = scaProxy;}
 }

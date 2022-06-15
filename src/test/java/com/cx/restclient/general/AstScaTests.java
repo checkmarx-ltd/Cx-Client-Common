@@ -101,7 +101,7 @@ public class AstScaTests extends ScaTestsBase {
     @Ignore("Needs specific network configuration with a proxy.")
     public void runScaScanWithProxy() throws MalformedURLException, CxClientException {
         CxScanConfig config = initScaConfig(false);
-        setProxy(config);
+        setScaProxy(config);
         ScanResults scanResults = runScan(config);
         verifyScanResults(scanResults);
     }

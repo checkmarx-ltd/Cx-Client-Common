@@ -115,7 +115,9 @@ public class CxScanConfig implements Serializable {
     private final Set<ScannerType> scannerTypes = new HashSet<>();
     private final List<Cookie> sessionCookies = new ArrayList<>();
     private Boolean isProxy = true;
+    private Boolean isScaProxy = false;
     private ProxyConfig proxyConfig;
+    private ProxyConfig proxyScaConfig;
     private Boolean useNTLM = false;
 
     private Integer postScanActionId;
@@ -843,12 +845,24 @@ public class CxScanConfig implements Serializable {
         isProxy = proxy;
     }
 
+    public Boolean isScaProxy() {return isScaProxy;}
+
+    public void setScaProxy(Boolean scaProxy) {isScaProxy = scaProxy;}
+
     public ProxyConfig getProxyConfig() {
         return proxyConfig;
     }
 
     public void setProxyConfig(ProxyConfig proxyConfig) {
         this.proxyConfig = proxyConfig;
+    }
+
+    public ProxyConfig getScaProxyConfig() {
+        return proxyScaConfig;
+    }
+
+    public void setScaProxyConfig(ProxyConfig proxyScaConfig) {
+        this.proxyScaConfig = proxyScaConfig;
     }
 
     public void addCookie(Cookie cookie) {
