@@ -35,11 +35,20 @@ public abstract class ShragaUtils {
         return convertPatternsToLists(combinedPatterns);
     }
 
-    public static String removeSpaceAndNewLine(String string){
-        if(string!=null){
-            string = string.replace("\\s","").replace("\n", "").replace("\r", "").replace(" ","").replace("\t","");
+    public static String removeSpaceAndNewLine(String str) {
+        if (str != null) {
+            str = str.replace("\\s","").replace("\n", "").replace("\r", "").replace("\t","");
+            StringBuilder sb = new StringBuilder();
+            String[] strings = str.split(",");
+            for(String s : strings){
+                sb.append(s.trim());
+                sb.append(",");
+            }
+
+            str = sb.toString();
+            str = StringUtils.removeEnd(str, ",");
         }
-        return string;
+        return str;
     }
 
     public static String processExcludeFolders(String folderExclusions, Logger log) {
