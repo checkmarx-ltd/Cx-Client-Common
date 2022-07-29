@@ -40,6 +40,7 @@ public abstract class Waiter<T extends BaseStatus> {
                     statusResponse = getStatus(taskId);
                     retry = initialReset;
                 } catch (IOException e) {
+
                     log.debug(FAILED_MSG + scanType + ". retrying (" + (retry - 1) + " tries left). Error message: " + e.getMessage());
                     retry--;
                     if (retry <= 0) {
