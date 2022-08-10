@@ -359,8 +359,12 @@ public abstract class LegacyClient {
     private void printPresetName() {
         try {
             String presetName = config.getPresetName();
-            if (presetName == null) {
+            if(config.getPresetId()!=0) {
+            	if (presetName == null) {
                 presetName = getPresetById(config.getPresetId()).getName();
+            }}
+            else {
+            	presetName="Project Default";
             }
             log.info(String.format("preset name: %s", presetName));
         } catch (Exception e) {
