@@ -411,10 +411,14 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 				setState(State.SUCCESS);
 				return true;
 			}
-		} else if (error.getMessage().contains("source folder is empty,")) {
-			sastResults = new SASTResults();
+		} else if (error.getMessage().contains("source folder is empty,") || (sastResults.getException() != null && sastResults.getException().getMessage().contains("No files to zip"))) {
+			sastResults.setException(null);
 			setState(State.SUCCESS);
 			return true;
+		} else if (error.getMessage().contains("No files to zip")) { 
+			sastResults = new SASTResults();
+			sastResults.setException(new CxClientException(error));
+			setState(State.SUCCESS);
 		} else if (error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
 			setState(State.SUCCESS);
 			return true;
@@ -433,8 +437,6 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             log.info("Waiting for CxSAST scan to finish.");
             try {
             	
-            	log.info(config.getSastScanTimeoutInMinutes() + "////////////////////////SastScanTimeoutInMinutes" + config.getSastScanTimeoutInMinutes() * 60);
-				
 				sastWaiter.waitForTaskToFinish(Long.toString(scanId), config.getSastScanTimeoutInMinutes() * 60, log);
 				log.info("Retrieving SAST scan results");
 				//retrieve SAST scan results
@@ -445,7 +447,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 					// throw the exception so that caught by outer catch
 					throw new Exception(e.getMessage());
 				}
-			} catch (CxClientException e) {
+			} catch (CxClientException | IOException  e) {
 				errorToBeSuppressed(e);
 			}
             if (config.getEnablePolicyViolations()) {
@@ -483,6 +485,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             }
         } catch (Exception e) {
             log.error(e.getMessage());
+            errorToBeSuppressed(e);
             sastResults.setException(new CxClientException(e));
         }
 
