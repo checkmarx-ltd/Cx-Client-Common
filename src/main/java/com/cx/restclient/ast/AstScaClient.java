@@ -21,6 +21,7 @@ import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
 import com.cx.restclient.osa.utils.OSAUtils;
+import com.cx.restclient.sast.utils.LegacyClient;
 import com.cx.restclient.sast.utils.State;
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.cx.restclient.sast.utils.zip.NewCxZipFile;
@@ -34,6 +35,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,14 +51,19 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.cx.restclient.common.CxPARAM.CXTEAMS;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
 import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP;
@@ -703,12 +710,47 @@ public class AstScaClient extends AstClient implements Scanner {
         }
     }
 
+    static LegacyClient getInstance(CxScanConfig config, Logger log)
+            throws MalformedURLException, CxClientException {
+        return new LegacyClient(config, log) {
+        };
+    }
+    
+    private List<Team> getTeamList() throws IOException {
+    	
+    	LegacyClient legacy = getInstance(config, log);
+    	legacy.login();
+    	return legacy.getTeamList();
+    }
+    
+    private void fillTeamData(Predicate<Team> predicate) throws IOException {
+    	Optional.ofNullable(getTeamList())
+		.ifPresent(teamList -> teamList.stream().filter(predicate)
+				.findAny().ifPresent(team -> {
+							
+					config.getAstScaConfig().setTeamId(team.getId());
+					config.getAstScaConfig().setTeamPath(team.fullName);		
+				}));
+    }
+    
     private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
         String assignedTeam = config.getAstScaConfig().getTeamPath();
-        if(StringUtils.isEmpty(assignedTeam)){
-        	assignedTeam = config.getTeamPath();
+        String assignedTeamId = config.getAstScaConfig().getTeamId();
+        
+        Predicate<Team> pred = null;
+        
+		if (!StringUtils.isEmpty(assignedTeamId)) {
+			pred = team -> {return team.getId().equals(assignedTeamId);};
+			
+		} else if(StringUtils.isEmpty(assignedTeam)){
+			
+        	pred = team -> {return team.getFullName().equals(config.getTeamPath());};
         }
+		
+		fillTeamData(pred);
+		assignedTeam = config.getAstScaConfig().getTeamPath();
+		
         log.info("Getting project by name: '{}'", projectName);
         String resolvedProjectId = getRiskManagementProjectId(projectName);
         if (resolvedProjectId == null) {
