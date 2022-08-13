@@ -303,10 +303,10 @@ public class AstScaClient extends AstClient implements Scanner {
             scaResults.setScanId(scanId);
 
             if(scaConfig.isEnableScaResolver() && tempUploadFile != null){
-                log.info("Deleting uploaded file for scan " + tempUploadFile.getAbsolutePath());
+                log.info("Deleting uploaded file for scan {}", tempUploadFile.getAbsolutePath());
                 if(!tempUploadFile.delete())
                 {
-                    log.error("Error while deleting uploaded file for scan "+ tempUploadFile.getAbsolutePath());
+                    log.error("Error while deleting uploaded file for scan {}", tempUploadFile.getAbsolutePath());
                 }
             }
         } catch (Exception e) {
@@ -345,12 +345,12 @@ public class AstScaClient extends AstClient implements Scanner {
      */
     private HttpResponse submitScaResolverEvidenceFile(AstScaConfig scaConfig) throws IOException,CxClientException {
         log.info("Executing SCA Resolver flow.");
-    	log.info("Path to Sca Resolver: " + scaConfig.getPathToScaResolver());
-    	log.info("Sca Resolver Additional Parameters: " + scaConfig.getScaResolverAddParameters());
+    	log.info("Path to Sca Resolver: {}", scaConfig.getPathToScaResolver());
+    	log.info("Sca Resolver Additional Parameters: {}", scaConfig.getScaResolverAddParameters());
     	String pathToResultJSONFile = "";
     	File zipFile = new File("");
         pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
-        log.info("Path to the evidence file: " + pathToResultJSONFile);
+        log.info("Path to the evidence file: {}", pathToResultJSONFile);
         int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFile, log);
     	if (exitCode == 0) {
             log.info("SCA resolution completed successfully.");
@@ -452,7 +452,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
-            log.info("Added " + zipper.getFileCount() + " files to zip.");
+            log.info("Added {} files to zip.",  zipper.getFileCount());
             log.info("The sources were zipped to {}", tempUploadFile.getAbsolutePath());
             return tempUploadFile;
         } catch (Zipper.MaxZipSizeReached e) {
@@ -488,7 +488,7 @@ public class AstScaClient extends AstClient implements Scanner {
     private Path copyConfigFileToSourceDir(String sourceDir) throws IOException {
 
         Path configFileDestination = Paths.get("");
-        log.info("Source Directory : " + sourceDir);
+        log.info("Source Directory : {}", sourceDir);
         List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
 
         if(configFilePaths != null) {
@@ -504,13 +504,13 @@ public class AstScaClient extends AstClient implements Scanner {
                     if (Files.notExists(configFileDestination)) {
                         Path destDir = Files.createDirectory(configFileDestination);
                         Files.copy(configFilePath, destDir.resolve(configFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-                        log.info("Config file (" + configFilePath + ") copied to directory: " + configFileDestination);
-
+                        
                     } else {
                         Path r = configFileDestination.resolve(configFilePath.getFileName());
                         Files.copy(configFilePath,r , StandardCopyOption.REPLACE_EXISTING);
-                        log.info("Config file (" + configFilePath + ") copied to directory: " + configFileDestination);
+                        
                     }
+                    log.info("Config file ({0}) copied to directory: {1}", configFilePath, configFileDestination);
                 }
             }
         }
@@ -741,11 +741,11 @@ public class AstScaClient extends AstClient implements Scanner {
         Predicate<Team> pred = null;
         
 		if (!StringUtils.isEmpty(assignedTeamId)) {
-			pred = team -> {return team.getId().equals(assignedTeamId);};
+			pred = team -> team.getId().equals(assignedTeamId);
 			
 		} else if(StringUtils.isEmpty(assignedTeam)){
 			
-        	pred = team -> {return team.getFullName().equals(config.getTeamPath());};
+        	pred = team -> team.getFullName().equals(config.getTeamPath());
         }
 		
 		fillTeamData(pred);
@@ -816,7 +816,7 @@ public class AstScaClient extends AstClient implements Scanner {
         request.setName(name);
         if(!StringUtils.isEmpty(assignedTeam)) {
         	request.addAssignedTeams(assignedTeam);        
-        	log.info("Team name: "+assignedTeam);
+        	log.info("Team name: {}", assignedTeam);
         }
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);

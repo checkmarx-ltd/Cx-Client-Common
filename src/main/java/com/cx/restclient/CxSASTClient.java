@@ -283,7 +283,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             }
             sastResults.setSastLanguage(language);
             sastResults.setScanId(scanId);
-            log.info("SAST scan created successfully: Scan ID is " + scanId);
+            log.info("SAST scan created successfully: Scan ID is {0}", scanId);
             sastResults.setSastScanLink(config.getUrl(), scanId, projectId);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -396,11 +396,6 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
 	private boolean errorToBeSuppressed(Exception error) {
 
-		/*
-		 * If timeoutcondfition elseif avoiddupscan elseif sourceempty elseif any future
-		 * requirement else return false;
-		 */
-		
 		if (error instanceof ConditionTimeoutException && config.getContinueBuild()) {
 			sastResults = getLatestScanResults();
 			if (super.isIsNewProject() && sastResults.getSastScanLink() == null) {
