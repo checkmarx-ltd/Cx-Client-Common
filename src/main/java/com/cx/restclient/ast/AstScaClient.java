@@ -348,7 +348,7 @@ public class AstScaClient extends AstClient implements Scanner {
     	log.info("Path to Sca Resolver: {}", scaConfig.getPathToScaResolver());
     	log.info("Sca Resolver Additional Parameters: {}", scaConfig.getScaResolverAddParameters());
     	String pathToResultJSONFile = "";
-    	File zipFile = new File("");
+    	File zipFile;
         pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
         log.info("Path to the evidence file: {}", pathToResultJSONFile);
         int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFile, log);
@@ -387,15 +387,14 @@ public class AstScaClient extends AstClient implements Scanner {
         }
         while (pathToEvidenceDir.contains("\""))
             pathToEvidenceDir = pathToEvidenceDir.replace("\"", "");
-        String pathToEvidenceFile = pathToEvidenceDir + File.separator + SCA_RESOLVER_RESULT_FILE_NAME;
-        return pathToEvidenceFile;
+        return pathToEvidenceDir + File.separator + SCA_RESOLVER_RESULT_FILE_NAME;
     }
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
-        String additinalFilters = getAdditionalManifestFilters(configFileDestination);
+        String additinalFilters = getAdditionalManifestFilters();
         String finalFilters =  additinalFilters + getManifestsIncludePattern();
         PathFilter userFilter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
         if (ArrayUtils.isNotEmpty(userFilter.getIncludes()) && !ArrayUtils.contains(userFilter.getIncludes(), "**")) {
@@ -447,7 +446,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
 
-        List<String> paths = new ArrayList <String>();
+        List<String> paths = new ArrayList <>();
         paths.add(filePath.getName());
 
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
@@ -470,7 +469,7 @@ public class AstScaClient extends AstClient implements Scanner {
 	 
 	 
     
-	private String getAdditionalManifestFilters(Path configFileDestination) {
+	private String getAdditionalManifestFilters() {
 		List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
 		String additionalFilters = "";
 		if (configFilePaths != null) {
@@ -510,7 +509,7 @@ public class AstScaClient extends AstClient implements Scanner {
                         Files.copy(configFilePath,r , StandardCopyOption.REPLACE_EXISTING);
                         
                     }
-                    log.info("Config file ({0}) copied to directory: {1}", configFilePath, configFileDestination);
+                    log.info("Config file ({}) copied to directory: {}", configFilePath, configFileDestination);
                 }
             }
         }
@@ -934,7 +933,7 @@ public class AstScaClient extends AstClient implements Scanner {
     }
     
     public List<PolicyEvaluation> getPolicyEvaluation(String reportId) throws IOException {
-        log.debug("Getting policy evaluation for the scan report id " + reportId + ".");
+        log.debug("Getting policy evaluation for the scan report id {}.", reportId);
 
         String path = String.format(POLICY_MANAGEMENT_EVALUATION_API, URLEncoder.encode(reportId, ENCODING));
 
@@ -948,7 +947,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private void determinePolicyViolations(AstScaResults result) {
     
-    	result.getPolicyEvaluations().forEach((p)-> { 
+    	result.getPolicyEvaluations().forEach(p-> { 
 	    		if(p.getIsViolated()) {
 	    			//its enough even one policy is violated
 	    			result.setPolicyViolated(true);
@@ -977,17 +976,17 @@ public class AstScaClient extends AstClient implements Scanner {
     private void printPolicyEvaluations(List<PolicyEvaluation> policyEvaulations) {
         if (log.isInfoEnabled()) {
             log.info("----CxSCA Policy Evaluation Results----");            
-            policyEvaulations.forEach((p)-> printPolicyEvaluation(p));
+            policyEvaulations.forEach(p-> printPolicyEvaluation(p));
             log.info("---------------------------------------");
         }
     }
     
     private void printPolicyEvaluation(PolicyEvaluation p) {
     	if (log.isInfoEnabled()) {
-            log.info("  Policy name: " + p.getName() + " | Violated:" + p.getIsViolated() + " | Policy Description: " + p.getDescription());
+            log.info("  Policy name: {} | Violated:{} | Policy Description: {}", p.getName(), p.getIsViolated(), p.getDescription());
         
-        	p.getRules().forEach((r)->
-            log.info("    Rule name: " + r.getName() + " | Violated:" + r.getIsViolated())
+        	p.getRules().forEach(r->
+            log.info("    Rule name: {} | Violated: {}", r.getName(), r.getIsViolated())
             );
         
     	}
