@@ -1,40 +1,31 @@
 package com.cx.restclient.ast;
 
-import com.cx.restclient.ast.dto.common.HandlerRef;
-import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
-import com.cx.restclient.ast.dto.common.ScanConfig;
-import com.cx.restclient.ast.dto.common.ScanConfigValue;
-import com.cx.restclient.ast.dto.sca.*;
-import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
-import com.cx.restclient.ast.dto.sca.report.Finding;
-import com.cx.restclient.ast.dto.sca.report.Package;
-import com.cx.restclient.ast.dto.sca.report.PolicyEvaluation;
-import com.cx.restclient.common.CxPARAM;
-import com.cx.restclient.common.Scanner;
-import com.cx.restclient.common.UrlUtils;
-import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.*;
-import com.cx.restclient.exception.CxClientException;
-import com.cx.restclient.exception.CxHTTPClientException;
-import com.cx.restclient.httpClient.CxHttpClient;
-import com.cx.restclient.httpClient.utils.ContentType;
-import com.cx.restclient.httpClient.utils.HttpClientHelper;
-import com.cx.restclient.osa.dto.ClientType;
-import com.cx.restclient.osa.utils.OSAUtils;
-import com.cx.restclient.sast.utils.LegacyClient;
-import com.cx.restclient.sast.utils.State;
-import com.cx.restclient.sast.utils.zip.CxZipUtils;
-import com.cx.restclient.sast.utils.zip.NewCxZipFile;
-import com.cx.restclient.sast.utils.zip.Zipper;
-import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
-import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
-import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
-import com.cx.restclient.sca.utils.fingerprints.FingerprintCollector;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
+import static com.cx.restclient.sast.utils.SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
+import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP;
+import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -48,26 +39,49 @@ import org.apache.http.entity.StringEntity;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.file.*;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static com.cx.restclient.common.CxPARAM.CXTEAMS;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
-import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
-import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
-import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP;
-import static com.cx.restclient.sast.utils.SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
+import com.cx.restclient.ast.dto.common.HandlerRef;
+import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
+import com.cx.restclient.ast.dto.common.ScanConfig;
+import com.cx.restclient.ast.dto.common.ScanConfigValue;
+import com.cx.restclient.ast.dto.sca.AstScaConfig;
+import com.cx.restclient.ast.dto.sca.AstScaResults;
+import com.cx.restclient.ast.dto.sca.CreateProjectRequest;
+import com.cx.restclient.ast.dto.sca.Project;
+import com.cx.restclient.ast.dto.sca.ScaScanConfigValue;
+import com.cx.restclient.ast.dto.sca.Team;
+import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
+import com.cx.restclient.ast.dto.sca.report.Finding;
+import com.cx.restclient.ast.dto.sca.report.Package;
+import com.cx.restclient.ast.dto.sca.report.PolicyEvaluation;
+import com.cx.restclient.common.CxPARAM;
+import com.cx.restclient.common.Scanner;
+import com.cx.restclient.common.UrlUtils;
+import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.LoginSettings;
+import com.cx.restclient.dto.PathFilter;
+import com.cx.restclient.dto.Results;
+import com.cx.restclient.dto.ScannerType;
+import com.cx.restclient.dto.SourceLocationType;
+import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.exception.CxHTTPClientException;
+import com.cx.restclient.httpClient.CxHttpClient;
+import com.cx.restclient.httpClient.utils.ContentType;
+import com.cx.restclient.httpClient.utils.HttpClientHelper;
+import com.cx.restclient.osa.dto.ClientType;
+import com.cx.restclient.osa.utils.OSAUtils;
+import com.cx.restclient.sast.utils.State;
+import com.cx.restclient.sast.utils.zip.CxZipUtils;
+import com.cx.restclient.sast.utils.zip.NewCxZipFile;
+import com.cx.restclient.sast.utils.zip.Zipper;
+import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
+import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
+import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
+import com.cx.restclient.sca.utils.fingerprints.FingerprintCollector;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * SCA - Software Composition Analysis - is the successor of OSA.
@@ -84,6 +98,7 @@ public class AstScaClient extends AstClient implements Scanner {
     private static final String REPORTID_API = RISK_MANAGEMENT_API + properties.get("astSca.reportId");
     private static final String POLICY_MANAGEMENT_API = properties.get("astSca.policyManagementApi");
     private static final String POLICY_MANAGEMENT_EVALUATION_API = POLICY_MANAGEMENT_API + properties.get("astSca.policyManagementEvaliation");
+    private static final String TEAMBYID = properties.get("astSca.teamById");
 
     private static final String REPORT_SCA_PACKAGES = "cxSCAPackages";
     private static final String REPORT_SCA_FINDINGS = "cxSCAVulnerabilities";
@@ -670,7 +685,7 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     public void login() throws IOException {
-        log.info("Logging into {}", getScannerDisplayName());
+        log.info("Logging into {}", getScannerDisplayName());        
         AstScaConfig scaConfig = config.getAstScaConfig();
 
         String acUrl = scaConfig.getAccessControlUrl();
@@ -684,10 +699,10 @@ public class AstScaClient extends AstClient implements Scanner {
         ClientTypeResolver resolver = new ClientTypeResolver(config);
         ClientType clientType = resolver.determineClientType(acUrl);
         settings.setClientTypeForPasswordAuth(clientType);
-
-        httpClient.login(settings);
+        
+        httpClient.login(settings);        
     }
-
+    
     public void close() {
         if (httpClient != null) {
             httpClient.close();
@@ -708,47 +723,19 @@ public class AstScaClient extends AstClient implements Scanner {
             throw new CxClientException(e);
         }
     }
-
-    static LegacyClient getInstance(CxScanConfig config, Logger log)
-            throws MalformedURLException, CxClientException {
-        return new LegacyClient(config, log) {
-        };
-    }
-    
-    private List<Team> getTeamList() throws IOException {
-    	
-    	LegacyClient legacy = getInstance(config, log);
-    	legacy.login();
-    	return legacy.getTeamList();
-    }
-    
-    private void fillTeamData(Predicate<Team> predicate) throws IOException {
-    	Optional.ofNullable(getTeamList())
-		.ifPresent(teamList -> teamList.stream().filter(predicate)
-				.findAny().ifPresent(team -> {
-							
-					config.getAstScaConfig().setTeamId(team.getId());
-					config.getAstScaConfig().setTeamPath(team.fullName);		
-				}));
-    }
     
     private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
         String assignedTeam = config.getAstScaConfig().getTeamPath();
         String assignedTeamId = config.getAstScaConfig().getTeamId();
-        
-        Predicate<Team> pred = null;
-        
+                        
 		if (!StringUtils.isEmpty(assignedTeamId)) {
-			pred = team -> team.getId().equals(assignedTeamId);
+			assignedTeam = getTeamById(assignedTeamId);
 			
 		} else if(StringUtils.isEmpty(assignedTeam)){
 			
-        	pred = team -> team.getFullName().equals(config.getTeamPath());
+        	assignedTeam = config.getTeamPath();
         }
-		
-		fillTeamData(pred);
-		assignedTeam = config.getAstScaConfig().getTeamPath();
 		
         log.info("Getting project by name: '{}'", projectName);
         String resolvedProjectId = getRiskManagementProjectId(projectName);
@@ -781,6 +768,25 @@ public class AstScaClient extends AstClient implements Scanner {
         return result;
     }
 
+    private String getTeamById(String teamId) throws IOException {
+        log.info("Getting Team name by ID : '{}'", teamId);
+
+        if (StringUtils.isEmpty(teamId)) {
+            throw new CxClientException("Team Id provided is empty.");
+        }
+
+        Team team = sendGetTeamById(teamId);
+
+        String result = Optional.ofNullable(team)
+                .map(Team::getFullName)
+                .orElse(null);
+
+        String message = (result == null ? "Team not found" : String.format("Team  name: %s", result));
+        log.info(message);
+
+        return result;
+    }
+    
     private Project sendGetProjectRequest(String projectName) throws IOException {
         Project result;
         try {
@@ -790,6 +796,26 @@ public class AstScaClient extends AstClient implements Scanner {
                     Project.class,
                     HttpStatus.SC_OK,
                     "CxSCA project ID by name",
+                    false);
+        } catch (CxHTTPClientException e) {
+            if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+                result = null;
+            } else {
+                throw e;
+            }
+        }
+        return result;
+    }
+    
+    private Team sendGetTeamById(String teamId) throws IOException {
+        Team result;
+        try {        	
+            String teamNameAPI = String.format("%s/%s", TEAMBYID, teamId);
+            result = httpClient.getRequest(this.astScaConfig.getAccessControlUrl()+"/",teamNameAPI,ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                    ContentType.CONTENT_TYPE_APPLICATION_JSON,
+                    Team.class,
+                    HttpStatus.SC_OK,
+                    "CxSCA team ID by name",
                     false);
         } catch (CxHTTPClientException e) {
             if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
