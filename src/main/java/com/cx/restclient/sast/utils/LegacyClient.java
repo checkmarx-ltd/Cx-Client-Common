@@ -37,6 +37,9 @@ import static com.cx.restclient.sast.utils.SASTParam.*;
 public abstract class LegacyClient {
 
     private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/" + AUTHENTICATION;
+    public static final String PRESETNAME_PROJET_SETTING_DEFAULT = "Project Default";
+    public static final String PRESETID_PROJET_SETTING_DEFAULT = "0";
+    
     protected CxHttpClient httpClient;
     protected CxScanConfig config;
     protected Logger log;
@@ -332,11 +335,23 @@ public abstract class LegacyClient {
         }
     }
 
+    //Some plugins share preset name while others share presetId in CxScanConfig
+    //If is given preference.
+    //presetId=0 is a special case, which does not exist in SAST but SAST has a special meaning for it,
+    // which is to use whatever preset available on the project settings.
     private void resolvePreset() throws CxClientException, IOException {
-        if (config.getPresetId() == null) {
-            config.setPresetId(getPresetIdByName(config.getPresetName()));
+        if (config.getPresetId() == null && !StringUtils.isEmpty(config.getPresetName())) {
+            if(PRESETNAME_PROJET_SETTING_DEFAULT.equalsIgnoreCase(config.getPresetName()))
+            		config.setPresetId(Integer.parseInt(PRESETID_PROJET_SETTING_DEFAULT));
+            else
+            	config.setPresetId(getPresetIdByName(config.getPresetName()));
+            
+        }else if(config.getPresetId().equals(PRESETID_PROJET_SETTING_DEFAULT)) {
+        	config.setPresetName(PRESETNAME_PROJET_SETTING_DEFAULT);
+        }else {
+        	config.setPresetName(getPresetById(config.getPresetId()).getName());
         }
-        printPresetName();
+        log.info(String.format("preset name: %s preset id: %s", config.getPresetName(), config.getPresetId()));
     }
 
     public int getPresetIdByName(String presetName) throws CxClientException, IOException {
@@ -353,23 +368,6 @@ public abstract class LegacyClient {
     public List<Preset> getPresetList() throws IOException, CxClientException {
         configureTeamPath();
         return (List<Preset>) httpClient.getRequest(CXPRESETS, CONTENT_TYPE_APPLICATION_JSON_V1, Preset.class, 200, "preset list", true);
-    }
-
-
-    private void printPresetName() {
-        try {
-            String presetName = config.getPresetName();
-            if(config.getPresetId()!=0) {
-            	if (presetName == null) {
-                presetName = getPresetById(config.getPresetId()).getName();
-            }}
-            else {
-            	presetName="Project Default";
-            }
-            log.info(String.format("preset name: %s", presetName));
-        } catch (Exception e) {
-            log.warn("Error getting preset name.");
-        }
     }
 
     public Preset getPresetById(int presetId) throws IOException, CxClientException {

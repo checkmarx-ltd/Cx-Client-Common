@@ -283,7 +283,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             }
             sastResults.setSastLanguage(language);
             sastResults.setScanId(scanId);
-            log.info("SAST scan created successfully: Scan ID is {0}", scanId);
+            log.info("SAST scan created successfully: Scan ID is {}", scanId);
             sastResults.setSastScanLink(config.getUrl(), scanId, projectId);
         } catch (Exception e) {
             log.error(e.getMessage());
