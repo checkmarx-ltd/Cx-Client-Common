@@ -346,7 +346,7 @@ public abstract class LegacyClient {
             else
             	config.setPresetId(getPresetIdByName(config.getPresetName()));
             
-        }else if(config.getPresetId().equals(PRESETID_PROJET_SETTING_DEFAULT)) {
+        }else if(config.getPresetId() == Integer.parseInt(PRESETID_PROJET_SETTING_DEFAULT)) {
         	config.setPresetName(PRESETNAME_PROJET_SETTING_DEFAULT);
         }else {
         	config.setPresetName(getPresetById(config.getPresetId()).getName());
