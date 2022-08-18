@@ -20,3 +20,4 @@ bin/
 #Jenkins specific out
 *.hpi
 classes/
+*.dummy
