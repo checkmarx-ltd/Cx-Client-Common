@@ -62,6 +62,7 @@ public class CxScanConfig implements Serializable {
     private File zipFile;
     private Integer engineConfigurationId;
     private String engineConfigurationName;
+    private boolean ignoreBenignErrors = false;
 
     private String osaFolderExclusions;
 
@@ -915,6 +916,15 @@ public class CxScanConfig implements Serializable {
 	public void setPostScanActionId(Integer postScanActionId) {
 		this.postScanActionId = postScanActionId;
 	}
+
+	public final boolean isIgnoreBenignErrors() {
+		return ignoreBenignErrors;
+	}
+
+	public final void setIgnoreBenignErrors(boolean ignoreBenignErrors) {
+		this.ignoreBenignErrors = ignoreBenignErrors;
+	}
+
 
 	
 }

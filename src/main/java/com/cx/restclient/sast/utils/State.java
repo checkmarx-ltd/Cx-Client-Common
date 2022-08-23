@@ -2,5 +2,6 @@ package com.cx.restclient.sast.utils;
 
 public enum State {
     SUCCESS,
-    FAILED
+    FAILED,
+    SKIPPED
 }
