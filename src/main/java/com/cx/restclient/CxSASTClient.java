@@ -469,9 +469,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 					// throw the exception so that caught by outer catch
 					throw new Exception(e.getMessage());
 				}
-			} catch (CxClientException | IOException  e) {
-				errorToBeSuppressed(e);
-			}
+			} 
             if (config.getEnablePolicyViolations()) {
                 resolveSASTViolation(sastResults, projectId);
             }
