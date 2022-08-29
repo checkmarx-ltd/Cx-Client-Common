@@ -9,13 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by: dorg.
- * Date: 4/12/2018.
- */
 public abstract class ShragaUtils {
-    public static Map<String, List<String>> generateIncludesExcludesPatternLists(String folderExclusions, String filterPattern, Logger log) {
 
+    public static Map<String, List<String>> generateIncludesExcludesPatternLists(String folderExclusions, String filterPattern, Logger log) {
         folderExclusions = removeSpaceAndNewLine(folderExclusions);
         filterPattern = removeSpaceAndNewLine(filterPattern);
 
@@ -35,11 +31,20 @@ public abstract class ShragaUtils {
         return convertPatternsToLists(combinedPatterns);
     }
 
-    public static String removeSpaceAndNewLine(String string){
-        if(string!=null){
-            string = string.replace("\\s","").replace("\n", "").replace("\r", "").replace(" ","").replace("\t","");
+    public static String removeSpaceAndNewLine(String str) {
+        if (str != null) {
+            str = str.replace("\\s", "").replace("\n", "").replace("\r", "").replace("\t", "");
+            StringBuilder sb = new StringBuilder();
+            String[] strings = str.split(",");
+            for (String s : strings) {
+                sb.append(s.trim());
+                sb.append(",");
+            }
+
+            str = sb.toString();
+            str = StringUtils.removeEnd(str, ",");
         }
-        return string;
+        return str;
     }
 
     public static String processExcludeFolders(String folderExclusions, Logger log) {
@@ -110,4 +115,5 @@ public abstract class ShragaUtils {
         String secondsStr = (seconds < 10) ? ("0" + seconds) : (Long.toString(seconds));
         return String.format("%s:%s:%s", hoursStr, minutesStr, secondsStr);
     }
+
 }

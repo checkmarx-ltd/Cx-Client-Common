@@ -62,6 +62,7 @@ public class CxScanConfig implements Serializable {
     private File zipFile;
     private Integer engineConfigurationId;
     private String engineConfigurationName;
+    private boolean ignoreBenignErrors = false;
 
     private String osaFolderExclusions;
 
@@ -78,6 +79,7 @@ public class CxScanConfig implements Serializable {
     private Boolean osaGenerateJsonReport = true;
     private Boolean osaRunInstall = false;
     private Boolean osaThresholdsEnabled = false;
+    private Boolean osaFailOnError = false;
     private Integer osaHighThreshold;
     private Integer osaMediumThreshold;
     private Integer osaLowThreshold;
@@ -123,6 +125,8 @@ public class CxScanConfig implements Serializable {
     private Integer postScanActionId;
 
     private String customFields;
+    
+    private boolean isOverrideProjectSetting = false;
 
 
     public CxScanConfig() {
@@ -537,6 +541,14 @@ public class CxScanConfig implements Serializable {
         this.osaThresholdsEnabled = osaThresholdsEnabled;
     }
 
+    public Boolean isOsaFailOnError() {
+        return osaFailOnError;
+    }
+
+    public void setOsaFailOnError(Boolean osaFailOnError) {
+        this.osaFailOnError = osaFailOnError;
+    }
+
     public Integer getOsaHighThreshold() {
         return osaHighThreshold;
     }
@@ -889,6 +901,14 @@ public class CxScanConfig implements Serializable {
         useNTLM = ntlm;
     }
 
+	public boolean getIsOverrideProjectSetting() {
+		return isOverrideProjectSetting;
+	}
+
+	public void setIsOverrideProjectSetting(boolean isOverrideProjectSetting) {
+		this.isOverrideProjectSetting = isOverrideProjectSetting;
+	}
+
 	public Integer getPostScanActionId() {
 		return postScanActionId;
 	}
@@ -896,5 +916,15 @@ public class CxScanConfig implements Serializable {
 	public void setPostScanActionId(Integer postScanActionId) {
 		this.postScanActionId = postScanActionId;
 	}
-    
+
+	public final boolean isIgnoreBenignErrors() {
+		return ignoreBenignErrors;
+	}
+
+	public final void setIgnoreBenignErrors(boolean ignoreBenignErrors) {
+		this.ignoreBenignErrors = ignoreBenignErrors;
+	}
+
+
+	
 }

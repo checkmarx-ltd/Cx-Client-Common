@@ -207,7 +207,6 @@
                 </exclusion>
                 
                 <!--causing vulnerabilities in the osa scan of the project, excluded and newer dependencies imported instead -->
-                <!-- TODO: remove these excludes once its solved in the fsa-->
                 <exclusion>
                     <groupId>com.beust</groupId>
                     <artifactId>jcommander</artifactId>

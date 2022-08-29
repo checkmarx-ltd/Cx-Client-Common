@@ -22,6 +22,7 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String password;
     private String tenant;
     private String teamPath;
+    private String teamId;
 
     /**
      * true: upload all sources for scan

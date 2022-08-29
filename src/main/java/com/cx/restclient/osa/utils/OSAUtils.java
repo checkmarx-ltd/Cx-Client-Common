@@ -15,9 +15,6 @@ import java.util.*;
 
 import static com.cx.restclient.common.CxPARAM.CX_REPORT_LOCATION;
 
-/**
- * Created by Galn on 07/02/2018.
- */
 public abstract class OSAUtils {
 
     private static final String[] SUPPORTED_EXTENSIONS = {"jar", "war", "ear", "aar", "dll", "exe", "msi", "nupkg", "egg", "whl", "tar.gz", "gem", "deb", "udeb",
@@ -26,7 +23,7 @@ public abstract class OSAUtils {
     private static final String INCLUDE_ALL_EXTENSIONS = "**/**";
     private static final String JSON_EXTENSION = ".json";
 
-    public static final String DEFAULT_ARCHIVE_INCLUDES = "**/.*jar,**/*.war,**/*.ear,**/*.sca,**/*.gem,**/*.whl,**/*.egg,**/*.tar,**/*.tar.gz,**/*.tgz,**/*.zip,**/*.rar";
+    public static final String DEFAULT_ARCHIVE_INCLUDES = "**/*.jar,**/*.war,**/*.ear,**/*.sca,**/*.gem,**/*.whl,**/*.egg,**/*.tar,**/*.tar.gz,**/*.tgz,**/*.zip,**/*.rar";
 
 
     public static void writeToOsaListToFile(File dir, String osaDependenciesJson, Logger log) {
@@ -87,29 +84,24 @@ public abstract class OSAUtils {
         ret.put("npm.ignoreNpmLsErrors", "true");
 
         if (installBeforeScan) {
-            ret.put("npm.runPreStep", "true");
-            ret.put("bower.runPreStep", "false");
+            setPreInstallDependencies(ret, "true");
             ret.put("npm.ignoreScripts", "true");
-            ret.put("php.runPreStep", "true");
-            ret.put("sbt.runPreStep", "true");
-            setResolveDependencies(ret, "true");
             ret.put("sbt.targetFolder", getSbtTargetFolder(sourceDir));
         } else {
-            setResolveDependencies(ret, "false");
+            setPreInstallDependencies(ret, "false");
         }
 
         ret.put("d", sourceDir);
         return ret;
     }
 
-    private static void setResolveDependencies(Properties ret, String resolveDependencies) {
+    private static void setPreInstallDependencies(Properties ret, String resolveDependencies) {
+        ret.put("npm.runPreStep", resolveDependencies);
+        ret.put("php.runPreStep", resolveDependencies);
+        ret.put("sbt.runPreStep", resolveDependencies);
         ret.put("gradle.runAssembleCommand", resolveDependencies);
-        ret.put("nuget.resolveDependencies", resolveDependencies);
         ret.put("nuget.restoreDependencies", resolveDependencies);
-        ret.put("python.resolveDependencies", resolveDependencies);
         ret.put("python.ignorePipInstallErrors", resolveDependencies);
-        ret.put("php.resolveDependencies", resolveDependencies);
-        ret.put("sbt.resolveDependencies", resolveDependencies);
     }
 
     private static String getSbtTargetFolder(String sourceFolder) {
