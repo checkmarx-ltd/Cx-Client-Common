@@ -191,7 +191,9 @@ public abstract class SummaryUtils {
                         Collectors.toMap(Policy::getPolicyName, Policy::getRuleName,
                                 (left, right) -> left)));
             }
-
+            if(scanSummary.isPolicyViolated()) {
+            	buildFailed = true;
+            }
             policyViolatedCount = policies.size();
             String policyLabel = policyViolatedCount == 1 ? "Policy" : "Policies";
             templateData.put("policyLabel", policyLabel);
