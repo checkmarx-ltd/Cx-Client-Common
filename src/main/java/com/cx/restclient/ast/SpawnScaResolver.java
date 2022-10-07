@@ -5,6 +5,7 @@ import com.cx.restclient.exception.CxClientException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,6 +52,12 @@ public class SpawnScaResolver {
         } else {
             //Add "/ScaResolver" command on Linux machines
             pathToScaResolver = pathToScaResolver + SCA_RESOLVER_FOR_LINUX;
+        }
+        
+        if(pathToResultJSONFile!=null && !pathToResultJSONFile.isEmpty()) {
+        	String pathWithOnlyFolder = pathToResultJSONFile.substring(0, pathToResultJSONFile.lastIndexOf("\\"));
+        	String pathWithOnlyFileName = pathToResultJSONFile.substring(pathToResultJSONFile.lastIndexOf("\\"));
+        	pathToResultJSONFile = pathWithOnlyFolder+"\\"+getUniqueTimestamp()+pathWithOnlyFileName;
         }
 
         log.debug("Starting build CMD command");
@@ -121,6 +128,13 @@ public class SpawnScaResolver {
         } catch (Exception ex) {
             log.debug("Failed to run execute [%s] command ");
         }
+    }
+    
+private static String getUniqueTimestamp() {
+    	
+    	Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+    	
+    	return timestamp.getTime()+"";
     }
 }
 

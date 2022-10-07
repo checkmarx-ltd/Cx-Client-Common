@@ -402,7 +402,10 @@ public class AstScaClient extends AstClient implements Scanner {
         }
         while (pathToEvidenceDir.contains("\""))
             pathToEvidenceDir = pathToEvidenceDir.replace("\"", "");
-        return pathToEvidenceDir + File.separator + SCA_RESOLVER_RESULT_FILE_NAME;
+        if(pathToEvidenceDir.indexOf(".")==-1) {
+        	pathToEvidenceDir = pathToEvidenceDir + File.separator + SCA_RESOLVER_RESULT_FILE_NAME;
+        }
+        return pathToEvidenceDir;
     }
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
