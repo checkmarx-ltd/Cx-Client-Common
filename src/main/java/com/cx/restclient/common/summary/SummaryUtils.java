@@ -7,6 +7,8 @@ import com.cx.restclient.dto.scansummary.ScanSummary;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
 import com.cx.restclient.ast.dto.sca.AstScaResults;
+import com.cx.restclient.ast.dto.sca.report.PolicyEvaluation;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -191,8 +193,32 @@ public abstract class SummaryUtils {
                         Collectors.toMap(Policy::getPolicyName, Policy::getRuleName,
                                 (left, right) -> left)));
             }
+            
+//            if(Boolean.TRUE.equals(config.isAstScaEnabled())
+//                    && scaResults != null)
+//            {
+//            	for(PolicyEvaluation policyEvaluation:scaResults.getPolicyEvaluations()) {
+//            		policies.put(policyEvaluation.getName(), policyEvaluation.getId());
+//            	}
+//            }
+            
+            if(Boolean.TRUE.equals(config.isAstScaEnabled())
+                    && scaResults != null && scaResults.getPolicyEvaluations() != null
+                            && !scaResults.getPolicyEvaluations().isEmpty())
+            {
+            	policyViolated = true;
+            	if(config.getCxARMUrl()==null) {
+            	config.setCxARMUrl("");
+            	}
+            	policies.putAll(scaResults.getPolicyEvaluations().stream().collect(
+                        Collectors.toMap(PolicyEvaluation::getName, PolicyEvaluation::getId,
+                                (left, right) -> left)));
+            }
+            
+            
             if(scanSummary.isPolicyViolated()) {
             	buildFailed = true;
+            	policyViolated = true;
             }
             policyViolatedCount = policies.size();
             String policyLabel = policyViolatedCount == 1 ? "Policy" : "Policies";
