@@ -46,7 +46,27 @@ public class CxScanConfig implements Serializable {
     private String sastFolderExclusions;
     private String sastFilterPattern;
     private Integer sastScanTimeoutInMinutes;
-    private Integer scaScanTimeoutInMinutes;
+    private String AstFolderExclusions;
+    private String astFilterPattern;
+    
+    public String getAstFilterPattern() {
+		return astFilterPattern;
+	}
+
+	public void setAstFilterPattern(String astFilterPattern) {
+		this.astFilterPattern = astFilterPattern;
+	}
+
+	public String getAstFolderExclusions() {
+		return AstFolderExclusions;
+	}
+
+	public void setAstFolderExclusions(String astFolderExclusions) {
+		AstFolderExclusions = astFolderExclusions;
+	}
+
+	private Integer scaScanTimeoutInMinutes;
+    private Integer astScanTimeoutInMinutes;
     private Integer osaScanTimeoutInMinutes;
     private String scanComment;
     private Boolean isIncremental = false;
@@ -386,6 +406,10 @@ public class CxScanConfig implements Serializable {
     
     public Integer getSCAScanTimeoutInMinutes() {
         return scaScanTimeoutInMinutes == null ? -1 : scaScanTimeoutInMinutes;
+    }
+    
+    public Integer getAstScanTimeoutInMinutes() {
+        return astScanTimeoutInMinutes == null ? -1 : astScanTimeoutInMinutes;
     }
     
     public void setSCAScanTimeoutInMinutes(Integer scaScanTimeoutInMinutes) {

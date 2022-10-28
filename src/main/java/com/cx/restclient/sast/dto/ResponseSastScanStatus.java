@@ -177,6 +177,7 @@ public class ResponseSastScanStatus extends BaseStatus {
     public void setFinishedScanStatus(CxValueObj finishedScanStatus) {
         this.finishedScanStatus = finishedScanStatus;
     }
+    
     public ResponseQueueScanStatus convertResponseSastScanStatusToResponseQueueScanStatus(ResponseSastScanStatus responseSastScanStatus){
         ResponseQueueScanStatus tempResponseQueueScanStatus =  new ResponseQueueScanStatus();
 

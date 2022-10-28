@@ -6,7 +6,7 @@ import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLIC
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_XML_V1;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
-import static com.cx.restclient.sast.utils.SASTParam.LINK_FORMAT;
+
 import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REMOTE_SOURCE_SCAN;
 import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REPORT;
 import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_SCAN;
