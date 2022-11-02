@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.checkmarx</groupId>
     <artifactId>cx-client-common</artifactId>
-    <version>${cxcommon.version}</version>
+    <version>1.0.0.subhadra</version>
     <packaging>jar</packaging>
     <name>Checkmarx Client</name>
     <description>Web client for interaction with Checkmarx SAST, SCA and OSA products</description>
@@ -103,6 +103,11 @@
         </resources>
     </build>
     <dependencies>
+    	<dependency>
+	      <groupId>com.checkmarx.one</groupId>
+	      <artifactId>ast-core</artifactId>
+	      <version>1.0.0-SNAPSHOT</version>
+   		</dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

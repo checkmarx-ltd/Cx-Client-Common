@@ -65,8 +65,65 @@ public class CxScanConfig implements Serializable {
     private boolean ignoreBenignErrors = false;
 
     private String osaFolderExclusions;
+    private boolean submitToAST;
+    private String accessControlBaseUrl;
+    private String apiBaseUrl;
+    private String clientId;
+    private String clientSecret;
+    private String tenant;
+    
+    
+    public String getAccessControlBaseUrl() {
+		return accessControlBaseUrl;
+	}
 
-    public String getEngineConfigurationName() {
+	public void setAccessControlBaseUrl(String accessControlBaseUrl) {
+		this.accessControlBaseUrl = accessControlBaseUrl;
+	}
+
+	public String getApiBaseUrl() {
+		return apiBaseUrl;
+	}
+
+	public void setApiBaseUrl(String apiBaseUrl) {
+		this.apiBaseUrl = apiBaseUrl;
+	}
+
+	public String getClientId() {
+		return clientId;
+	}
+
+	public void setClientId(String clientId) {
+		this.clientId = clientId;
+	}
+
+	public String getClientSecret() {
+		return clientSecret;
+	}
+
+	public void setClientSecret(String clientSecret) {
+		this.clientSecret = clientSecret;
+	}
+
+	public String getTenant() {
+		return tenant;
+	}
+
+	public void setTenant(String tenant) {
+		this.tenant = tenant;
+	}
+
+	
+
+    public boolean isSubmitToAST() {
+		return submitToAST;
+	}
+
+	public void setSubmitToAST(boolean submitToAST) {
+		this.submitToAST = submitToAST;
+	}
+
+	public String getEngineConfigurationName() {
         return engineConfigurationName;
     }
 
