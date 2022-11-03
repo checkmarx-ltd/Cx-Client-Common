@@ -65,7 +65,7 @@ public class CxScanConfig implements Serializable {
     private boolean ignoreBenignErrors = false;
 
     private String osaFolderExclusions;
-
+    private Integer periodicFullScan;
     public String getEngineConfigurationName() {
         return engineConfigurationName;
     }
@@ -923,6 +923,14 @@ public class CxScanConfig implements Serializable {
 
 	public final void setIgnoreBenignErrors(boolean ignoreBenignErrors) {
 		this.ignoreBenignErrors = ignoreBenignErrors;
+	}
+
+	public Integer getPeriodicFullScan() {
+		return periodicFullScan;
+	}
+
+	public void setPeriodicFullScan(Integer periodicFullScan) {
+		this.periodicFullScan = periodicFullScan;
 	}
 
 
