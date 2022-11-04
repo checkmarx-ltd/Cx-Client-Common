@@ -72,13 +72,12 @@ public class CxScanConfig implements Serializable {
     private String clientSecret;
     private String tenant;
     
-    
     public String getAccessControlBaseUrl() {
 		return accessControlBaseUrl;
 	}
 
-	public void setAccessControlBaseUrl(String accessControlBaseUrl) {
-		this.accessControlBaseUrl = accessControlBaseUrl;
+	public void setAccessControlBaseUrl(String accessControlBaseUrl2) {
+		this.accessControlBaseUrl = accessControlBaseUrl2;
 	}
 
 	public String getApiBaseUrl() {
