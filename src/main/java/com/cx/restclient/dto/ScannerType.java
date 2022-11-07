@@ -4,7 +4,8 @@ public enum ScannerType {
     // Legacy scanners.
     SAST("CxSAST"),
     OSA("CxOSA"),
-
+    CXONE_SAST("CxOneSAST"),
+    CXONE_SCA("CxOneSCA"),
     // Scan engines of the new CxAST platform.
     AST_SCA("CxAST-SCA"),
     AST_SAST("CxAST-SAST");
