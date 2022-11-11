@@ -83,24 +83,24 @@ pipeline {
             }
         }
 
-        stage('UT-IT & Sonar') {
-            parallel {
+//         stage('UT-IT & Sonar') {
+//             parallel {
 
-                stage('Run Unit & Integration Tests') {
-                    steps {
-                        script {
-                            sh "docker run --rm --name test-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn test -Dcxcommon.version=${env.cxCommonVersion}"
-                        }
-                    }
-                    post {
-                        failure {
-                            script {
-                                env.PIPELINE_STATUS = "Failure"
-                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
-                            }
-                        }
-                    }
-                }
+//                 stage('Run Unit & Integration Tests') {
+//                     steps {
+//                         script {
+//                             sh "docker run --rm --name test-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn test -Dcxcommon.version=${env.cxCommonVersion}"
+//                         }
+//                     }
+//                     post {
+//                         failure {
+//                             script {
+//                                 env.PIPELINE_STATUS = "Failure"
+//                                 env.STAGE_NAME_FAILED="${STAGE_NAME}"
+//                             }
+//                         }
+//                     }
+//                 }
 
 //                 stage('Run Code Quality') {
 //                     environment {
