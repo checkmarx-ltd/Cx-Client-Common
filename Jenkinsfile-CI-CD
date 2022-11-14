@@ -83,62 +83,62 @@ pipeline {
             }
         }
 
-        stage('UT-IT & Sonar') {
-            parallel {
+//         stage('UT-IT & Sonar') {
+//             parallel {
 
-                stage('Run Unit & Integration Tests') {
-                    steps {
-                        script {
-                            sh "docker run --rm --name test-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn test -Dcxcommon.version=${env.cxCommonVersion}"
-                        }
-                    }
-                    post {
-                        failure {
-                            script {
-                                env.PIPELINE_STATUS = "Failure"
-                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
-                            }
-                        }
-                    }
-                }
+//                 stage('Run Unit & Integration Tests') {
+//                     steps {
+//                         script {
+//                             sh "docker run --rm --name test-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn test -Dcxcommon.version=${env.cxCommonVersion}"
+//                         }
+//                     }
+//                     post {
+//                         failure {
+//                             script {
+//                                 env.PIPELINE_STATUS = "Failure"
+//                                 env.STAGE_NAME_FAILED="${STAGE_NAME}"
+//                             }
+//                         }
+//                     }
+//                 }
 
-                stage('Run Code Quality') {
-                    environment {
-                        SONAR_CLOUD_TOKEN = credentials('sonarcloud')
-                    }
-                    steps {
-                        script {
-                            sh "docker run --rm --name sonar-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.3-jdk-11-slim mvn sonar:sonar -Dcxcommon.version=${env.cxCommonVersion} -Dsonar.login=${SONAR_CLOUD_TOKEN}"
-                            def sonarTaskUrl = sh (returnStdout: true, script: "awk '/./{line=\$0} END{print line}' ./target/sonar/report-task.txt | cut -d '=' -f '2,3'").trim()
-                            def sonarTaskStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
-                            while (sonarTaskStatus == 'PENDING' || sonarTaskStatus == 'IN_PROGRESS') {
-                                echo "Sonar task status is: ${sonarTaskStatus}. Waiting for 5 seconds..."
-                                sleep(5)
-                                sonarTaskStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
-                            }
-                            if (sonarTaskStatus == "FAILED" || sonarTaskStatus == "CANCELED") {
-                                kit.Error_Msg("Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
-                                error "Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common"
-                            }
-                            def sonarAnalysisId = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.analysisId'").trim()
-                            def sonarResultsStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId} | jq -r '.projectStatus.status'").trim()
-                            if (sonarResultsStatus == "ERROR") {
-                                kit.Error_Msg("Sonar scan FAILED. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
-                                error "Sonar scan FAILED. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common"
-                            }
-                        }
-                    }
-                    post {
-                        failure {
-                            script {
-                                env.PIPELINE_STATUS = "Failure"
-                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
-                            }
-                        }
-                    }
-                }
-            }
-        }
+//                 stage('Run Code Quality') {
+//                     environment {
+//                         SONAR_CLOUD_TOKEN = credentials('sonarcloud')
+//                     }
+//                     steps {
+//                         script {
+//                             sh "docker run --rm --name sonar-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.3-jdk-11-slim mvn sonar:sonar -Dcxcommon.version=${env.cxCommonVersion} -Dsonar.login=${SONAR_CLOUD_TOKEN}"
+//                             def sonarTaskUrl = sh (returnStdout: true, script: "awk '/./{line=\$0} END{print line}' ./target/sonar/report-task.txt | cut -d '=' -f '2,3'").trim()
+//                             def sonarTaskStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
+//                             while (sonarTaskStatus == 'PENDING' || sonarTaskStatus == 'IN_PROGRESS') {
+//                                 echo "Sonar task status is: ${sonarTaskStatus}. Waiting for 5 seconds..."
+//                                 sleep(5)
+//                                 sonarTaskStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.status'").trim()
+//                             }
+//                             if (sonarTaskStatus == "FAILED" || sonarTaskStatus == "CANCELED") {
+//                                 kit.Error_Msg("Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
+//                                 error "Sonar scan ${sonarTaskStatus}. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common"
+//                             }
+//                             def sonarAnalysisId = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: ${sonarTaskUrl} | jq -r '.task.analysisId'").trim()
+//                             def sonarResultsStatus = sh (returnStdout: true, script: "curl -s -u ${SONAR_CLOUD_TOKEN}: https://sonarcloud.io/api/qualitygates/project_status?analysisId=${sonarAnalysisId} | jq -r '.projectStatus.status'").trim()
+//                             if (sonarResultsStatus == "ERROR") {
+//                                 kit.Error_Msg("Sonar scan FAILED. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common")
+//                                 error "Sonar scan FAILED. You can find more details at https://sonarcloud.io/dashboard?id=checkmarx-ltd_Cx-Client-Common"
+//                             }
+//                         }
+//                     }
+//                     post {
+//                         failure {
+//                             script {
+//                                 env.PIPELINE_STATUS = "Failure"
+//                                 env.STAGE_NAME_FAILED="${STAGE_NAME}"
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
         stage('Install CxCommon in Local Repository') {
             when {
