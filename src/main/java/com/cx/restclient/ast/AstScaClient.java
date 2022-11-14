@@ -362,15 +362,18 @@ public class AstScaClient extends AstClient implements Scanner {
         log.info("Executing SCA Resolver flow.");
     	log.info("Path to Sca Resolver: {}", scaConfig.getPathToScaResolver());
     	log.info("Sca Resolver Additional Parameters: {}", scaConfig.getScaResolverAddParameters());
-    	String pathToResultJSONFile = "";
-    	File zipFile;
+    	String [] pathToResultJSONFile = new String[5];
+    	File zipFile,zipFileSCA;
         pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
         log.info("Path to the evidence file: {}", pathToResultJSONFile);
         int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFile, log);
     	if (exitCode == 0) {
             log.info("SCA resolution completed successfully.");
-            File resultFilePath = new File(pathToResultJSONFile);
+            File resultFilePath = new File(pathToResultJSONFile[0]);
             zipFile = zipEvidenceFile(resultFilePath);
+            
+            File resultFilePathSca = new File(pathToResultJSONFile[1]);
+            zipFileSCA = zipEvidenceFile(resultFilePathSca);
 
         }else{
             throw new CxClientException("Error while running sca resolver executable. Exit code: "+exitCode);
@@ -385,9 +388,12 @@ public class AstScaClient extends AstClient implements Scanner {
      * @param scaResolverAddParams - SCA resolver additional parameters
      * @return - SCA resolver execution result file path.
      */
-    private  String getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams)
+    private  String[] getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams)
     {
         String pathToEvidenceDir ="";
+        String pathToEvidenceDirSca ="";
+        
+        String [] pathToEvidenceDirStrArry=new String[5];
 		/*
 		 Convert path and parameters into a single CMD command
 		 */
@@ -399,13 +405,25 @@ public class AstScaClient extends AstClient implements Scanner {
         for (int i = 0; i <  arguments.size() ; i++) {
             if (arguments.get(i).equals("-r") )
                 pathToEvidenceDir =  arguments.get(i+1);
+            else if(arguments.get(i).equals("--sast-result-path")){
+            	pathToEvidenceDirSca = arguments.get(i+1);
+            }
         }
         while (pathToEvidenceDir.contains("\""))
             pathToEvidenceDir = pathToEvidenceDir.replace("\"", "");
+        
+        while (pathToEvidenceDirSca.contains("\""))
+        	pathToEvidenceDirSca = pathToEvidenceDirSca.replace("\"", "");
         if(pathToEvidenceDir.indexOf(".")==-1) {
         	pathToEvidenceDir = pathToEvidenceDir + File.separator + SCA_RESOLVER_RESULT_FILE_NAME;
         }
-        return pathToEvidenceDir;
+        
+        if(pathToEvidenceDirSca.indexOf(".")==-1) {
+        	pathToEvidenceDirSca = pathToEvidenceDirSca + File.separator + ".cxsca-sast-results.json";
+        }
+        pathToEvidenceDirStrArry[0] = pathToEvidenceDir;
+        pathToEvidenceDirStrArry[1] = pathToEvidenceDirSca;
+        return pathToEvidenceDirStrArry;
     }
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {

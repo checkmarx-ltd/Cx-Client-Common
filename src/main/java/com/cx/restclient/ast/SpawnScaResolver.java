@@ -32,7 +32,7 @@ public class SpawnScaResolver {
      * @param scaResolverAddParams - Additional parameters for SCA resolver
      * @return
      */
-    protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams, String pathToResultJSONFile, Logger log)
+    protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams, String[] pathToResultJSONFile, Logger log)
             throws CxClientException {
         int exitCode = -100;
         String[] scaResolverCommand;
@@ -53,11 +53,17 @@ public class SpawnScaResolver {
             //Add "/ScaResolver" command on Linux machines
             pathToScaResolver = pathToScaResolver + SCA_RESOLVER_FOR_LINUX;
         }
+               
+        if(pathToResultJSONFile!=null && !pathToResultJSONFile[0].isEmpty()) {
+        	String pathWithOnlyFolder = pathToResultJSONFile[0].substring(0, pathToResultJSONFile[0].lastIndexOf("\\"));
+        	String pathWithOnlyFileName = pathToResultJSONFile[0].substring(pathToResultJSONFile[0].lastIndexOf("\\"));
+        	pathToResultJSONFile[0] = pathWithOnlyFolder+"\\"+getUniqueTimestamp()+pathWithOnlyFileName;
+        }
         
-        if(pathToResultJSONFile!=null && !pathToResultJSONFile.isEmpty()) {
-        	String pathWithOnlyFolder = pathToResultJSONFile.substring(0, pathToResultJSONFile.lastIndexOf("\\"));
-        	String pathWithOnlyFileName = pathToResultJSONFile.substring(pathToResultJSONFile.lastIndexOf("\\"));
-        	pathToResultJSONFile = pathWithOnlyFolder+"\\"+getUniqueTimestamp()+pathWithOnlyFileName;
+        if(pathToResultJSONFile!=null && !pathToResultJSONFile[1].isEmpty()) {
+        	String pathWithOnlyFolder = pathToResultJSONFile[1].substring(0, pathToResultJSONFile[1].lastIndexOf("\\"));
+        	String pathWithOnlyFileName = pathToResultJSONFile[1].substring(pathToResultJSONFile[1].lastIndexOf("\\"));
+        	pathToResultJSONFile[1] = pathWithOnlyFolder+"\\"+getUniqueTimestamp()+pathWithOnlyFileName;
         }
 
         log.debug("Starting build CMD command");
@@ -75,9 +81,15 @@ public class SpawnScaResolver {
             }
             scaResolverCommand[i + 2] = arg;
             if (arg.equals("-r")) {
-                while (pathToResultJSONFile.contains("\""))
-                    pathToResultJSONFile = pathToResultJSONFile.replace("\"", "");
-                scaResolverCommand[i + 3] = pathToResultJSONFile;
+                while (pathToResultJSONFile[0].contains("\""))
+                	pathToResultJSONFile[0] = pathToResultJSONFile[0].replace("\"", "");
+                scaResolverCommand[i + 3] = pathToResultJSONFile[0];
+                i++;
+            }
+            else if (arg.equals("--sast-result-path")) {
+                while (pathToResultJSONFile[1].contains("\""))
+                	pathToResultJSONFile[1] = pathToResultJSONFile[1].replace("\"", "");
+                scaResolverCommand[i + 3] = pathToResultJSONFile[1];
                 i++;
             }
         }
