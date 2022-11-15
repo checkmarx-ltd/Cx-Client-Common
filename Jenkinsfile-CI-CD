@@ -103,6 +103,9 @@ pipeline {
                 }
 
                 stage('Run Code Quality') {
+                    when {
+                        expression { false }
+                    }
                     environment {
                         SONAR_CLOUD_TOKEN = credentials('sonarcloud')
                     }
