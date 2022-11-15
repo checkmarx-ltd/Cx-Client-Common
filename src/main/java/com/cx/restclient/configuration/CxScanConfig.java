@@ -128,6 +128,9 @@ public class CxScanConfig implements Serializable {
     
     private boolean isOverrideProjectSetting = false;
 
+    private Boolean enableSastBranching = false;
+    
+    private String masterBranchProjName;
 
     public CxScanConfig() {
     }
@@ -932,7 +935,22 @@ public class CxScanConfig implements Serializable {
 	public void setPeriodicFullScan(Integer periodicFullScan) {
 		this.periodicFullScan = periodicFullScan;
 	}
+	
+	public boolean isEnableSASTBranching() {
+		return enableSastBranching;
+	}
 
+	public void setEnableSASTBranching(boolean enableSASTBranching) {
+		this.enableSastBranching = enableSASTBranching;
+	}
+
+	public String getMasterBranchProjName() {
+		return masterBranchProjName;
+	}
+
+	public void setMasterBranchProjName(String masterBranchProjName) {
+		this.masterBranchProjName = masterBranchProjName;
+	}
 
 	
 }
