@@ -5,5 +5,5 @@ import com.cx.restclient.dto.ScannerType;
 
 public interface TransformerFactory {
 
-	public void create(ScannerType from, ScannerType to, CxScanConfig cxConfig);
+	public TransformerService create(ScannerType from, ScannerType to, CxScanConfig cxConfig);
 }
