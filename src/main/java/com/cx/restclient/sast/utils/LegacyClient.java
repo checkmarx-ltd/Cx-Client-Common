@@ -9,7 +9,6 @@ import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.osa.dto.ClientType;
-import com.cx.restclient.sast.dto.BranchProject;
 import com.cx.restclient.sast.dto.CreateProjectRequest;
 import com.cx.restclient.sast.dto.CxNameObj;
 import com.cx.restclient.sast.dto.PostAction;
@@ -474,10 +473,10 @@ public abstract class LegacyClient {
     public void setState(State state) {
         this.state = state;
     }
-        
+     ///function to create child project from master branch   
     public long createChildProject(long projectId, String childProjectName)throws IOException, CxClientException {
-    	long childProjectId = UNKNOWN_INT;        
-    	BranchProject request = new BranchProject(childProjectName);    	
+    	long childProjectId = UNKNOWN_INT;
+    	CreateProjectRequest request = new CreateProjectRequest(childProjectName);
     	String json = convertToJson(request);
         httpClient.setTeamPathHeader(teamPath);    	
         StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);           	

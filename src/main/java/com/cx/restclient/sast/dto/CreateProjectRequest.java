@@ -16,7 +16,10 @@ public class CreateProjectRequest {
         this.owningTeam = owningTeam;
         this.isPublic = isPublic;
     }
-
+    public CreateProjectRequest(String name) {
+    	this.name = name;
+    }
+    
     public String getName() {
         return name;
     }
