@@ -949,6 +949,9 @@
                     <#if config.isOsaEnabled() && !dependencyResult.resultReady>
                         <li>OSA Scan Failed</li>
                     </#if>
+                    <#if config.isAstScaEnabled() && !dependencyResult.resultReady>
+                        <li>SCA Scan Failed</li>
+                    </#if>
                     <#if policyViolated>
                         <li>${policyViolatedCount} ${policyLabel}  Violated</li>
                     </#if>
@@ -2601,6 +2604,8 @@
                 <div class="detailed-report">
                     <div class="full-downloads osa-downloads">
                         <div class="report-link">
+                      
+                        <#if (config.cxARMUrl)??>                   
                             <a href="${config.cxARMUrl}/cxarm/webclient/" class="html-report" id="arm-html-link">
                                 <div class="link-to-result">
                                     <div class="results-link-icon link-icon">
@@ -2617,6 +2622,7 @@
                                     <div class="link-text">Analyze Results</div>
                                 </div>
                             </a>
+                            </#if>
                         </div>
                     </div>
                 </div>
@@ -2703,6 +2709,24 @@
                                 <td>${osaPolicy.firstDetectionDate}</td>
                             </tr>
                         </#list>
+                    </#if>
+                   
+                    <#if (sca.policyEvaluations)??> 
+	                    <#if sca.policyEvaluations?size gt 0>
+	                        <#list sca.policyEvaluations as scaPolicy>
+	                        	<#if scaPolicy.isViolated>
+		                            <tr>
+		                                <td>${scaPolicy.name}</td>
+		                                <td id="ruleName">
+		                                	<#list scaPolicy.rules as rule>${rule.name}<#sep>,</#list>
+		                                </td>
+		                                <td>SCA</td>
+		                                <td>${scaPolicy.rules?size}</td>
+		                                <td>-</td>
+		                            </tr>
+	                            </#if>
+	                        </#list>
+	                    </#if>
                     </#if>
                 </table>
             </div>
