@@ -84,7 +84,7 @@ public abstract class LegacyClient {
             if (config.getDenyProject()) {
                 throw new CxClientException(DENY_NEW_PROJECT_ERROR.replace("{projectName}", config.getProjectName()));
             }
-            //Create newProject
+            //Create newProject and checking if EnableSASTBranching is enabled then creating branch project 
             if(config.isEnableSASTBranching()) {
             if(StringUtils.isEmpty(config.getMasterBranchProjName())) {
             	throw new CxClientException("Master branch project name not found");
