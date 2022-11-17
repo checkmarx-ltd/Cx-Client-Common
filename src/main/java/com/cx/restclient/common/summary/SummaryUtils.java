@@ -209,9 +209,6 @@ public abstract class SummaryUtils {
                             && !scaResults.getPolicyEvaluations().isEmpty())
             {
             	policyViolated = true;
-//            	if(config.getCxARMUrl()==null) {
-//            	config.setCxARMUrl("");
-//            	}
             	
             	policies.putAll(scaResults.getPolicyEvaluations().stream().filter(policy -> policy.getIsViolated()).collect(
                         Collectors.toMap(PolicyEvaluation::getName, PolicyEvaluation::getId,
