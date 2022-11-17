@@ -46,4 +46,14 @@ public class AstScaResults extends Results implements Serializable {
             }
         }
     }
+
+	public List<PolicyEvaluation> getPolicyEvaluations() {
+		return policyEvaluations;
+	}
+
+	public void setPolicyEvaluations(List<PolicyEvaluation> policyEvaluations) {
+		this.policyEvaluations = policyEvaluations;
+	}
+	
+    
 }

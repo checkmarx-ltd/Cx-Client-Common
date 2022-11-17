@@ -146,7 +146,7 @@ public class CxClientDelegator implements Scanner {
             }
             
             boolean hasScaViolations = false;
-            if (scaResults != null && scaResults.isPolicyViolated()) {
+            if (scaResults != null && scaResults.getPolicyEvaluations() != null && !scaResults.getPolicyEvaluations().isEmpty()) {
             	hasScaViolations = true;
             }            
 
@@ -162,7 +162,7 @@ public class CxClientDelegator implements Scanner {
                     log.info("OSA violated policies names: {}", getPoliciesNames(osaResults.getOsaPolicies()));
                 }
                 if (hasScaViolations) {
-                    log.info("SCA policies are violated.");
+                	log.info("SCA policies are violated.");
                 }
                 log.info(PRINT_LINE);
             }

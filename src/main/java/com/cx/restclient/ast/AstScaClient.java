@@ -99,7 +99,6 @@ public class AstScaClient extends AstClient implements Scanner {
     private static final String POLICY_MANAGEMENT_API = properties.get("astSca.policyManagementApi");
     private static final String POLICY_MANAGEMENT_EVALUATION_API = POLICY_MANAGEMENT_API + properties.get("astSca.policyManagementEvaliation");
     private static final String TEAMBYID = properties.get("astSca.teamById");
-
     private static final String REPORT_SCA_PACKAGES = "cxSCAPackages";
     private static final String REPORT_SCA_FINDINGS = "cxSCAVulnerabilities";
     private static final String REPORT_SCA_SUMMARY = "cxSCASummary";
@@ -347,7 +346,6 @@ public class AstScaClient extends AstClient implements Scanner {
 
         return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig());
     }
-
 
     /**
      * This method
