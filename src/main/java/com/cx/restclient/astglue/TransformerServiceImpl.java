@@ -10,6 +10,7 @@ import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.project.ProjectCreateResponse;
 import com.checkmarx.one.dto.scan.ScanConfig;
 import com.checkmarx.one.sast.CxOneProjectTransformer;
+import com.checkmarx.one.sast.FilterTransformer;
 import com.checkmarx.one.sast.PresetTransformer;
 import com.checkmarx.one.sast.ProjectNameTransformer;
 import com.checkmarx.one.sast.ProxyTransformer;
@@ -64,9 +65,9 @@ public class TransformerServiceImpl implements  TransformerService{
 		String projectId = project.getId();
 		String projectName = project.getName();
 		
-		PathFilter pathFilter = new PathFilter(".git,target,.idea,.settings", "");
-		//TODO : instead of the above string pass the include/exclude pattern to PathFilter
-				
+		FilterTransformer filterTransformer = new FilterTransformer(cxOneClient);
+		PathFilter pathfilter = filterTransformer.getFilterFromSastExclusion(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
+		
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, pathFilter, tags);
 		cxOneConfig.setScanConfig(scanConfig);
