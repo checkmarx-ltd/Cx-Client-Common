@@ -66,7 +66,8 @@ public class CxScanConfig implements Serializable {
 
     private String osaFolderExclusions;
     private boolean submitToAST;
-    private String accessControlBaseUrl;
+    private String branchName;
+	private String accessControlBaseUrl;
     private String apiBaseUrl;
     private String clientId;
     private String clientSecret;
@@ -112,7 +113,13 @@ public class CxScanConfig implements Serializable {
 		this.tenant = tenant;
 	}
 
-	
+	 public String getBranchName() {
+			return branchName;
+		}
+
+		public void setBranchName(String branchName) {
+			this.branchName = branchName;
+		}
 
     public boolean isSubmitToAST() {
 		return submitToAST;

@@ -43,7 +43,7 @@ public class TransformerServiceImpl implements  TransformerService{
 //		cxOneConfig.getScanConfig().getProject().getGroups().add(teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath()));
 		
 		ProjectNameTransformer projectTransformer = new ProjectNameTransformer(cxOneClient);
-		String transformedProjectName = projectTransformer.getProjectName(cxConfig.getProjectName());
+		String transformedProjectName = projectTransformer.getProjectName(cxConfig.getProjectName(), cxConfig.getBranchName());
 		
 		ProxyTransformer proxyTransformer = new ProxyTransformer(cxOneClient);
 		ProxyConfig proxyConfig = cxConfig.getProxyConfig();
@@ -60,7 +60,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		groups.add(groupName);
 		//TODO : Need to check criticality to be set
 		ProjectCreateResponse project = projectCreateTransformer.getProjectObject(groups, cxConfig.getSourceDir(), 
-				1, cxConfig.getRemoteSrcBranch(), cxConfig.getCxOrigin(), tags);
+				1, cxConfig.getBranchName(), cxConfig.getCxOrigin(), tags);
 		String projectId = project.getId();
 		String projectName = project.getName();
 		
