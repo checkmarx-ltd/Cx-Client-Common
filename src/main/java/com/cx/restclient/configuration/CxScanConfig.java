@@ -925,14 +925,6 @@ public class CxScanConfig implements Serializable {
 		this.ignoreBenignErrors = ignoreBenignErrors;
 	}
 
-	public Integer getPeriodicFullScan() {
-		return periodicFullScan;
-	}
-
-	public void setPeriodicFullScan(Integer periodicFullScan) {
-		this.periodicFullScan = periodicFullScan;
-	}
-
 
 	
 }
