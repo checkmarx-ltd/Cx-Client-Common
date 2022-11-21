@@ -1,6 +1,15 @@
 package com.cx.restclient;
 
-import com.cx.restclient.ast.AstSastClient;
+import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_COMPLIANT_STATUS;
+import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_VIOLATED_STATUS;
+import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
+
+import java.net.MalformedURLException;
+import java.util.EnumMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+
 import com.cx.restclient.ast.AstScaClient;
 import com.cx.restclient.ast.dto.sca.AstScaResults;
 import com.cx.restclient.common.Scanner;
@@ -12,16 +21,9 @@ import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
+import com.cx.restclient.sast.utils.ResponseFunction;
+import com.cx.restclient.sast.utils.SASTToASTProjectRoutingMapper;
 import com.cx.restclient.sast.utils.State;
-import org.slf4j.Logger;
-
-import java.net.MalformedURLException;
-import java.util.EnumMap;
-import java.util.Map;
-
-import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_COMPLIANT_STATUS;
-import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_VIOLATED_STATUS;
-import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
 
 /**
  * Created by Galn on 05/02/2018.
@@ -41,7 +43,9 @@ public class CxClientDelegator implements Scanner {
 
         this.config = config;
         this.log = log;
-        if (config.isSubmitToAST()) {
+        //TODO : matchRegex will accept the team name
+        ResponseFunction response = SASTToASTProjectRoutingMapper.matchRegex("");
+        if (config.isSubmitToAST() & response.getIsMigrate().booleanValue()) {
             scannersMap.put(ScannerType.AST_SAST, new CxOneWrapperClient(config, log));
         } else if (config.isSastEnabled()) {
             scannersMap.put(ScannerType.SAST, new CxSASTClient(config, log));

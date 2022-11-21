@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.Map;
 
 import com.checkmarx.one.CxOneClient;
-import com.checkmarx.one.CxOneProjectTransformer;
-import com.checkmarx.one.PresetTransformer;
-import com.checkmarx.one.ProjectNameTransformer;
-import com.checkmarx.one.ProxyTransformer;
-import com.checkmarx.one.ScanConfigTransformer;
-import com.checkmarx.one.TeamsTransformer;
 import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.project.ProjectCreateResponse;
 import com.checkmarx.one.dto.scan.ScanConfig;
+import com.checkmarx.one.sast.CxOneProjectTransformer;
+import com.checkmarx.one.sast.PresetTransformer;
+import com.checkmarx.one.sast.ProjectNameTransformer;
+import com.checkmarx.one.sast.ProxyTransformer;
+import com.checkmarx.one.sast.ScanConfigTransformer;
+import com.checkmarx.one.sast.TeamsTransformer;
 import com.checkmarx.one.util.zip.PathFilter;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ProxyConfig;
@@ -37,13 +37,13 @@ public class TransformerServiceImpl implements  TransformerService{
 		cxOneConfig.setTenant(cxConfig.getTenant());
 		
 		CxOneClient cxOneClient = new CxOneClient(cxOneConfig);
-		
+		cxOneClient.init();
 		TeamsTransformer teamTransformer = new TeamsTransformer(cxOneClient);
+		String groupName = teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath());
 //		cxOneConfig.getScanConfig().getProject().getGroups().add(teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath()));
 		
 		ProjectNameTransformer projectTransformer = new ProjectNameTransformer(cxOneClient);
-		cxOneConfig.getScanConfig().getProject().setName(projectTransformer.getProjectName(cxConfig.getProjectName()));
-		String transformedProjectName = cxOneConfig.getScanConfig().getProject().getName();
+		String transformedProjectName = projectTransformer.getProjectName(cxConfig.getProjectName());
 		
 		ProxyTransformer proxyTransformer = new ProxyTransformer(cxOneClient);
 		ProxyConfig proxyConfig = cxConfig.getProxyConfig();
@@ -57,18 +57,19 @@ public class TransformerServiceImpl implements  TransformerService{
 		CxOneProjectTransformer projectCreateTransformer = new CxOneProjectTransformer(cxOneClient, transformedProjectName);
 		Map<String, String> tags = new HashMap<>();
 		List<String> groups = new ArrayList<String>();
-		groups.add(teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath()));
+		groups.add(groupName);
+		//TODO : Need to check criticality to be set
 		ProjectCreateResponse project = projectCreateTransformer.getProjectObject(groups, cxConfig.getSourceDir(), 
-				1, "master", "Jenkins", tags);
+				1, cxConfig.getRemoteSrcBranch(), cxConfig.getCxOrigin(), tags);
 		String projectId = project.getId();
 		String projectName = project.getName();
 		
 		PathFilter pathFilter = new PathFilter(".git,target,.idea,.settings", "");
 		//TODO : instead of the above string pass the include/exclude pattern to PathFilter
 				
-//		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
-//		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, pathFilter, tags);
-//		cxOneConfig.setScanConfig(scanConfig);
+		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
+		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, pathFilter, tags);
+		cxOneConfig.setScanConfig(scanConfig);
 		
 		return cxOneConfig;
 	}
