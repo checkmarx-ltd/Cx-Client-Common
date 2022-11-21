@@ -936,11 +936,11 @@ public class CxScanConfig implements Serializable {
 		this.periodicFullScan = periodicFullScan;
 	}
 	
-	public boolean isEnableSASTBranching() {
+	public Boolean isEnableSASTBranching() {
 		return enableSastBranching;
 	}
 
-	public void setEnableSASTBranching(boolean enableSASTBranching) {
+	public void setEnableSASTBranching(Boolean enableSASTBranching) {
 		this.enableSastBranching = enableSASTBranching;
 	}
 
