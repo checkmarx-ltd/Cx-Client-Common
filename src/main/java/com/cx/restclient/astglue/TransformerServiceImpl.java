@@ -69,7 +69,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		PathFilter pathfilter = filterTransformer.getFilterFromSastExclusion(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
 		
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
-		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, pathFilter, tags);
+		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, pathfilter, tags);
 		cxOneConfig.setScanConfig(scanConfig);
 		
 		return cxOneConfig;
