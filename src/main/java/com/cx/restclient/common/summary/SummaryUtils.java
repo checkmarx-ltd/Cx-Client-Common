@@ -195,15 +195,7 @@ public abstract class SummaryUtils {
                         Collectors.toMap(Policy::getPolicyName, Policy::getRuleName,
                                 (left, right) -> left)));
             }
-            
-//            if(Boolean.TRUE.equals(config.isAstScaEnabled())
-//                    && scaResults != null)
-//            {
-//            	for(PolicyEvaluation policyEvaluation:scaResults.getPolicyEvaluations()) {
-//            		policies.put(policyEvaluation.getName(), policyEvaluation.getId());
-//            	}
-//            }
-            
+           
             if(Boolean.TRUE.equals(config.isAstScaEnabled())
                     && scaResults != null && scaResults.getPolicyEvaluations() != null
                             && !scaResults.getPolicyEvaluations().isEmpty())
