@@ -2717,9 +2717,9 @@
 	                        <#list sca.policyEvaluations as scaPolicy>
 	                        	<#if scaPolicy.isViolated>
 		                            <tr>
-		                                <td>${scaPolicy.name}</td>
+		                                <td>${sast.encodeXSS(scaPolicy.name)}</td>
 		                                <td id="ruleName">
-		                                	<#list scaPolicy.rules as rule>${rule.name}<#sep>,</#list>
+		                                	<#list scaPolicy.rules as rule>${sast.encodeXSS(rule.name)}<#sep>,</#list>
 		                                </td>
 		                                <td>SCA</td>
 		                                <td>${scaPolicy.rules?size}</td>
