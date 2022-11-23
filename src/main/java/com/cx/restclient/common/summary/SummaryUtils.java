@@ -2,7 +2,7 @@ package com.cx.restclient.common.summary;
 
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
-
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.scansummary.ScanSummary;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
@@ -40,7 +40,15 @@ public abstract class SummaryUtils {
 
         DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults, scaResults);
 
-        templateData.put("dependencyResult", dependencyScanResult != null ? dependencyScanResult : new DependencyScanResult());
+        if(dependencyScanResult == null) {
+        	dependencyScanResult = new DependencyScanResult();
+        	if(config.isAstScaEnabled())
+        		dependencyScanResult.setScannerType(ScannerType.AST_SCA);
+        	else if(config.isOsaEnabled())
+        		dependencyScanResult.setScannerType(ScannerType.OSA);
+        }
+        		
+        templateData.put("dependencyResult", dependencyScanResult);
 
 
         ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
