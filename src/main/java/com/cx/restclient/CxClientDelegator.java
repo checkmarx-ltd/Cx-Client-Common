@@ -44,8 +44,8 @@ public class CxClientDelegator implements Scanner {
         this.config = config;
         this.log = log;
         //TODO : matchRegex will accept the team name
-        ResponseFunction response = SASTToASTProjectRoutingMapper.matchRegex("");
-        if (config.isSubmitToAST() & response.getIsMigrate().booleanValue()) {
+//        ResponseFunction response = SASTToASTProjectRoutingMapper.matchRegex("");
+        if (config.isSubmitToAST() /*& response.getIsMigrate().booleanValue()*/) {
             scannersMap.put(ScannerType.AST_SAST, new CxOneWrapperClient(config, log));
         } else if (config.isSastEnabled()) {
             scannersMap.put(ScannerType.SAST, new CxSASTClient(config, log));

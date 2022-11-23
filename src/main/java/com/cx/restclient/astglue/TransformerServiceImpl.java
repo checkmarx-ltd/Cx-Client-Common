@@ -9,6 +9,7 @@ import com.checkmarx.one.CxOneClient;
 import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.project.ProjectCreateResponse;
 import com.checkmarx.one.dto.scan.ScanConfig;
+import com.checkmarx.one.dto.scan.sast.SastConfig;
 import com.checkmarx.one.sast.CxOneProjectTransformer;
 import com.checkmarx.one.sast.FilterTransformer;
 import com.checkmarx.one.sast.PresetTransformer;
@@ -48,18 +49,20 @@ public class TransformerServiceImpl implements  TransformerService{
 		
 		ProxyTransformer proxyTransformer = new ProxyTransformer(cxOneClient);
 		ProxyConfig proxyConfig = cxConfig.getProxyConfig();
+		if(proxyConfig != null) {
 		cxOneConfig.setProxyConfig(proxyTransformer.getProxyConfiguration(cxConfig.isProxy(), proxyConfig.getHost(), proxyConfig.isUseHttps(),
 				proxyConfig.getUsername(), proxyConfig.getPassword(), proxyConfig.getNoproxyHosts(), proxyConfig.getPort()));
-		
-		PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
-		presetTransformer.getPresetId(cxConfig.getPresetId());
-		cxOneConfig = presetTransformer.getPresetName(cxConfig.getPresetName(), cxOneConfig);
+		}
 		
 		CxOneProjectTransformer projectCreateTransformer = new CxOneProjectTransformer(cxOneClient, transformedProjectName);
 		Map<String, String> tags = new HashMap<>();
 		List<String> groups = new ArrayList<String>();
 		groups.add(groupName);
 		//TODO : Need to check criticality to be set
+		//TODO: Creating the project with assumption that the "transformedProjectName" does not exist. Later we need to have the logic to check if project
+		//with this name exist don't create a new project rather get the existing project's projectId. This will have similar design as in SAST. But in SAST we had 
+		//API to get project by name and teamId (Refer getProjectByName() in LegacyClient.java). But with present implementation , when jenkins pipeline has different
+		//project name which is not present in AST, creating a new project and projectId is giving us the correct value.
 		ProjectCreateResponse project = projectCreateTransformer.getProjectObject(groups, cxConfig.getSourceDir(), 
 				1, cxConfig.getBranchName(), cxConfig.getCxOrigin(), tags);
 		String projectId = project.getId();
@@ -69,8 +72,14 @@ public class TransformerServiceImpl implements  TransformerService{
 		PathFilter pathfilter = filterTransformer.getFilterFromSastExclusion(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
 		
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
-		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, pathfilter, tags);
+		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
+				/*new PathFilter("source", "*.java")*/pathfilter, tags, cxConfig.getSourceDir());
 		cxOneConfig.setScanConfig(scanConfig);
+		
+		PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
+		String astPreset = presetTransformer.getPresetNameById(cxConfig.getPresetId());
+		((SastConfig)(cxOneConfig.getScanConfig().getScanners().get(0))).setPresetName(astPreset);
+//		cxOneConfig = presetTransformer.getPresetName(cxConfig.getPresetName(), cxOneConfig);
 		
 		return cxOneConfig;
 	}

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 
 import com.checkmarx.one.CxOneClient;
 import com.checkmarx.one.dto.CxOneConfig;
+import com.checkmarx.one.dto.scan.ResultsResponse;
 import com.checkmarx.one.sast.TeamsTransformer;
 import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.astglue.CxConfigParamsTransformerServiceFactory;
@@ -18,6 +19,8 @@ import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.Results;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.sast.dto.SASTResults;
+import com.cx.restclient.sast.utils.State;
 
 public class CxOneWrapperClient implements Scanner{
     private CxScanConfig config;
@@ -25,12 +28,13 @@ public class CxOneWrapperClient implements Scanner{
     private CxOneClient cxOneClient;
     private Logger log;
     private List<String> groups;
-//    TeamsTransformer teamTransformer;
+    private State state = State.SUCCESS;
+    private long scanId;
+    private AstSastResults astSastResults = new AstSastResults();
     
 	CxOneWrapperClient(CxScanConfig config, Logger log) throws MalformedURLException {
 		this.config = config;
-//        this.log = log;
-		
+        this.log = log;
 		CxConfigParamsTransformerServiceFactory factory = new CxConfigParamsTransformerServiceFactory();
 		TransformerService service = factory.create(ScannerType.SAST, ScannerType.CXONE_SAST, config);
 		oneConfig = service.getCxOneConfig();
@@ -40,86 +44,42 @@ public class CxOneWrapperClient implements Scanner{
         oneConfig.setClientSecret(config.getClientSecret());
         oneConfig.setTenant(config.getTenant());
         cxOneClient = new CxOneClient(oneConfig);
-//        teamTransformer = new TeamsTransformer(cxOneClient);
 	}
 
 	@Override
 	public Results init() {
 		AstSastResults initAstSastResults = new AstSastResults();
-		CxOneConfig oneConfig = new CxOneConfig();
-		
         try {
             initiate();
         } catch (CxClientException e) {
-//            setState(State.FAILED);
-//            initAstSastResults.setException(e);
+            setState(State.FAILED);
+            initAstSastResults.setException(e);
+        	log.error("error while initializing AST scanner");
+        	log.error(e.getMessage());
         }
         return initAstSastResults;
 	}
 
 	private void initiate() {
 		try {
-			
             if (config.isSubmitToAST()) {
             	// This will invoke init() of CxHttpClient and then generate access token within this call.Login happens in this method
     			cxOneClient.init();
     			String accessToken = cxOneClient.getAccessToken();
-    			System.out.println(" AUTHENTICATED ... " + accessToken);
-                resolveTeam();
-                //httpClient.setTeamPathHeader(this.teamPath);
-//                if (config.isSastEnabled()) {
-//                    resolvePreset();
-//                }
-//                if (config.getEnablePolicyViolations()) {
-//                    resolveCxARMUrl();
-//                }
-//                resolveEngineConfiguration();
-//                resolveProjectId();
+    			// TODO : Remove this AT
+    			log.info("Login successful to AST" + accessToken);
+//                resolveTeam();
             }
         } catch (Exception e) {
             throw new CxClientException(e);
         }		
 	}
-
-	 private void resolveTeam() throws CxClientException, IOException {
-//		 oneConfig.getScanConfig().getProject().setGroups(configureGroup());
-	        printGroup();
-	    }
-
-	 private void printGroup() {
-		 try {
-	            for (Iterator iterator = groups.iterator(); iterator.hasNext();) {
-					String group = (String) iterator.next();
-					log.info(String.format("full team path: %s", group));
-				}	        } catch (Exception e) {
-	            log.warn("Error getting team path.");
-	        }		
-	}
-
-	/*public List<String> configureGroup() throws IOException, CxClientException {
-		String groupName = "";
-			if (oneConfig.getScanConfig().getProject().getGroups().size() == 0) {
-				List<String> groupList = populateGroupsList();
-				// If there is no chosen teamPath, just add first one from the teams
-				// list as default
-				if (groupList != null && !groupList.isEmpty()) {
-					groupName = groupList.get(0).toString();
-				}
-			} else {
-//				groupName = teamTransformer.getGroupNameFromTeam(config.getTeamPath());
-			}
-			groups.add(groupName);
-	        return groups;
-	    }*/
-	 
-	 private List<String> populateGroupsList() throws IOException {
-		 TeamsTransformer teamTransformer = new TeamsTransformer(cxOneClient);
-	        return teamTransformer.getGroups();
-	    }
 	@Override
 	public Results initiateScan() {
-		cxOneClient.syncScan(oneConfig.getScanConfig());
-		return null;
+		astSastResults = new AstSastResults();
+		ResultsResponse results = cxOneClient.syncScan(oneConfig.getScanConfig());
+		
+        return results;
 	}
 
 	@Override
@@ -139,5 +99,12 @@ public class CxOneWrapperClient implements Scanner{
 		// TODO Auto-generated method stub
 		
 	}
+	 public State getState() {
+	        return state;
+	    }
+
+	    public void setState(State state) {
+	        this.state = state;
+	    }
 
 }
