@@ -1,13 +1,9 @@
 package com.cx.restclient.ast;
-
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
-import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
 import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REPORT;
 import static com.cx.restclient.sast.utils.SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP;
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
-//import static com.cx.plugin.cli.constants.Parameters.SCA_JSON_REPORT;
 import static com.cx.restclient.common.CxPARAM.CX_REPORT_LOCATION;
 import static com.cx.restclient.httpClient.utils.ContentType.*;
 import java.io.File;
@@ -16,7 +12,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -262,19 +257,6 @@ public class AstScaClient extends AstClient implements Scanner {
     	
         return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}",scanId).replace("{file_type}",contentType), contentType, byte[].class, 200, " scan report: " + reportId, false);
     }
-    
-	
-	//pdf reports
-	public static String writePDFReport(byte[] scanReport, File workspace, String pdfFileName, Logger log) {
-        try {
-            FileUtils.writeByteArrayToFile(new File(workspace + CX_REPORT_LOCATION, pdfFileName), scanReport);
-            log.info("PDF report location: " + workspace + CX_REPORT_LOCATION + File.separator + pdfFileName);
-        } catch (Exception e) {
-            log.error("Failed to write PDF report to workspace: ", e.getMessage());
-            pdfFileName = "";
-        }
-        return pdfFileName;
-    }
 	//cli reports
 	 public static void writeReport(byte[] scanReport, String reportName, Logger log) {
 	        try {
@@ -329,20 +311,6 @@ public class AstScaClient extends AstClient implements Scanner {
             		log.error("you have not mentioned sca report format");
             	}
 			}
-            // CLI report/s
-            if (!config.getScaReports().isEmpty()) {
-                for (Map.Entry<String, String> report : config.getScaReports().entrySet()) {
-                    if (report != null) {
-                        log.info("Generating " + report.getKey() + " report");
-                        byte[] scanReport = getReport(scaResults.getScanId(), report.getKey());
-                        writeReport(scanReport, report.getValue(), log);
-                        if (report.getKey().equals("pdf")) {
-                            scaResults.setPDFReport(scanReport);
-                            scaResults.setPdfFileName(report.getValue());
-                        }
-                    }
-                }
-            }
             return scaResults;
         } catch (CxClientException e) {
             log.error(e.getMessage());
