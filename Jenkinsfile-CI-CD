@@ -243,6 +243,9 @@ pipeline {
                 }
 
                 stage('9.0') {
+                    when {
+                        expression { false }
+                    }
                     stages {
                         stage('Create VM') {
                             steps {
@@ -317,6 +320,9 @@ pipeline {
                 }
 
                 stage('9.2') {
+                    when {
+                        expression { false }
+                    }
                     stages {
                         stage('Create VM') {
                             steps {
