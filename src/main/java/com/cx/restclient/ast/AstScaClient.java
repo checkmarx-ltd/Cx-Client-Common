@@ -1,10 +1,11 @@
 package com.cx.restclient.ast;
-
 import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
+import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REPORT;
 import static com.cx.restclient.sast.utils.SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP;
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
-
+import static com.cx.restclient.common.CxPARAM.CX_REPORT_LOCATION;
+import static com.cx.restclient.httpClient.utils.ContentType.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -16,8 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -69,11 +72,14 @@ import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
 import com.cx.restclient.osa.utils.OSAUtils;
+import com.cx.restclient.sast.dto.ReportType;
 import com.cx.restclient.sast.utils.State;
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.cx.restclient.sast.utils.zip.NewCxZipFile;
 import com.cx.restclient.sast.utils.zip.Zipper;
+
 import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
+
 import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
 import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
 import com.cx.restclient.sca.utils.fingerprints.FingerprintCollector;
@@ -132,6 +138,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         this.astScaConfig = config.getAstScaConfig();
         validate(astScaConfig);
+        
 
         httpClient = createHttpClient(astScaConfig.getApiUrl());
         this.resolvingConfiguration = null;
@@ -192,8 +199,10 @@ public class AstScaClient extends AstClient implements Scanner {
      */
     @Override
     protected URL getEffectiveRepoUrl(RemoteRepositoryInfo repoInfo) {
+    	
         URL result;
         URL initialUrl = repoInfo.getUrl();
+    
 
         // Otherwise we may get something like "https://mytoken:null@github.com".
         String username = StringUtils.defaultString(repoInfo.getUsername());
@@ -221,6 +230,7 @@ public class AstScaClient extends AstClient implements Scanner {
     public Results init() {
         log.debug("Initializing {} client.", getScannerDisplayName());
         AstScaResults scaResults = new AstScaResults();
+        
         try {
             login();
         } catch (Exception e) {
@@ -241,6 +251,30 @@ public class AstScaClient extends AstClient implements Scanner {
                 false);
     }
 
+    
+    private byte[] getReport(String scanId, String contentType) throws IOException {
+    	String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
+    	
+        return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}",scanId).replace("{file_type}",contentType), contentType, byte[].class, 200, " scan report: " + reportId, false);
+    }
+	//cli reports
+	 public static void writeReport(byte[] scanReport, String reportName, Logger log) {
+	        try {
+	            File reportFile = new File(reportName);
+	            if (!reportFile.isAbsolute()) {
+	                reportFile = new File(System.getProperty("user.dir") + CX_REPORT_LOCATION + File.separator + reportFile);
+	            }
+
+	            if (!reportFile.getParentFile().exists()) {
+	                reportFile.getParentFile().mkdirs();
+	            }
+
+	            FileUtils.writeByteArrayToFile(reportFile, scanReport);
+	            log.info("report location: " + reportFile.getAbsolutePath());
+	        } catch (Exception e) {
+	            log.error("Failed to write report: ", e.getMessage());
+	        }
+	    }
     /**
      * Waits for SCA scan to finish, then gets scan results.
      *
@@ -257,12 +291,37 @@ public class AstScaClient extends AstClient implements Scanner {
                 OSAUtils.writeJsonToFile(REPORT_SCA_PACKAGES + JSON_EXTENSION, scaResults.getPackages(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
                 OSAUtils.writeJsonToFile(REPORT_SCA_SUMMARY + JSON_EXTENSION, scaResults.getSummary(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
             }
+            
+            
+            
+			if (config.isGenerateScaReport()) {
+            	if(config.isHasScaReportFormat()) {
+            	String reportFormat = config.getScaReportFormat();
+                log.info("Generating "+reportFormat+" report");
+                byte[] scanReport = getReport(scaResults.getScanId(), reportFormat);
+                String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
+                String PDF_REPORT_NAME = "AstScaReport";
+				String fileName = PDF_REPORT_NAME  + "_" + now + "." + reportFormat.toLowerCase();
+                writeReport(scanReport, fileName, log);
+                if (reportFormat.toLowerCase().equals("pdf")) {
+                    scaResults.setPDFReport(scanReport);
+                    scaResults.setPdfFileName(fileName);
+                }
+            	}else {
+            		log.error("you have not mentioned sca report format");
+            	}
+			}
+            return scaResults;
         } catch (CxClientException e) {
             log.error(e.getMessage());
             scaResults = new AstScaResults();
             scaResults.setException(e);
         }
-        return scaResults;
+        catch(IOException e) {
+        	log.error(e.getMessage());
+        }
+        return new AstScaResults();
+       // return scaResults;
     }
 
     @Override
