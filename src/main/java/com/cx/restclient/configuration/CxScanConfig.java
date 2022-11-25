@@ -65,8 +65,7 @@ public class CxScanConfig implements Serializable {
     private String engineConfigurationName;
     private boolean ignoreBenignErrors = false;
 
-    private String osaFolderExclusions;
-    private Integer periodicFullScan;
+    private String osaFolderExclusions;    
     public String getEngineConfigurationName() {
         return engineConfigurationName;
     }
