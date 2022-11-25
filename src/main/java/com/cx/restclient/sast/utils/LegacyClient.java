@@ -15,8 +15,11 @@ import com.cx.restclient.sast.dto.PostAction;
 import com.cx.restclient.sast.dto.Preset;
 import com.cx.restclient.sast.dto.Project;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.client.HttpResponseException;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.json.JSONException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -39,6 +42,7 @@ public abstract class LegacyClient {
     private static final String DEFAULT_AUTH_API_PATH = "CxRestApi/auth/" + AUTHENTICATION;
     public static final String PRESETNAME_PROJET_SETTING_DEFAULT = "Project Default";
     public static final String PRESETID_PROJET_SETTING_DEFAULT = "0";
+    private static final Integer UNKNOWN_INT = -1;
     
     protected CxHttpClient httpClient;
     protected CxScanConfig config;
@@ -80,12 +84,28 @@ public abstract class LegacyClient {
             if (config.getDenyProject()) {
                 throw new CxClientException(DENY_NEW_PROJECT_ERROR.replace("{projectName}", config.getProjectName()));
             }
-            //Create newProject
+            //Create newProject and checking if EnableSASTBranching is enabled then creating branch project 
+            if(config.isEnableSASTBranching()) {
+            if(StringUtils.isEmpty(config.getMasterBranchProjName())) {
+            	throw new CxClientException("Master branch project name not found");
+            }
+            else {
+            	Long masterProjectId;
+            	List<Project> masterProject = getProjectByName(config.getMasterBranchProjName(), config.getTeamId(), teamPath);
+            	masterProjectId = masterProject.get(0).getId();
+            	projectId = createChildProject(masterProjectId, config.getProjectName());
+            	if (projectId == UNKNOWN_INT) {
+                    throw new CxClientException("Project was not created successfully: ".concat(config.getProjectName()));
+                }
+            }
+            }
+            else {
             CreateProjectRequest request = new CreateProjectRequest(config.getProjectName(), config.getTeamId(), config.getPublic());
             log.info("Project not found, creating a new one.: '{}' with Team '{}'", config.getProjectName(), teamPath);
             projectId = createNewProject(request, teamPath).getId();
             log.info("Created a project with ID {}", projectId);
             setIsNewProject(true);
+            }
         } else {
             projectId = projects.get(0).getId();
             setIsNewProject(false);
@@ -452,5 +472,33 @@ public abstract class LegacyClient {
 
     public void setState(State state) {
         this.state = state;
+    }
+     ///function to create child project from master branch   
+    public long createChildProject(long projectId, String childProjectName)throws IOException, CxClientException {
+    	long childProjectId = UNKNOWN_INT;
+    	CreateProjectRequest request = new CreateProjectRequest(childProjectName);
+    	String json = convertToJson(request);
+        httpClient.setTeamPathHeader(teamPath);    	
+        StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);           	
+        log.info("Creating branched project with name '{}' from existing project with ID {}", childProjectName, projectId);
+        try { 
+        	Project obj = httpClient.postRequest(PROJECT_BRANCH.replace("{id}", Long.toString(projectId)), CONTENT_TYPE_APPLICATION_JSON_V1, entity, Project.class, 201, "branch project");        	
+            if (obj != null) {
+            	childProjectId = obj.getId();
+            	return childProjectId;
+                
+            } else {
+                log.error("CX Response for branch project request with name '{}' from existing project with ID {} was null", childProjectName, projectId);
+            }            
+        }        
+        catch (CxHTTPClientException e) {
+	        	log.error(e.getMessage());
+	            log.error("HTP error code {} while creating branched project with name '{}' from existing project with ID {}",  e.getStatusCode(), childProjectName, projectId);       
+	    }
+        catch (JSONException e) {
+        log.error("Error processing JSON Response while creating branched project with name '{}' from existing project with ID {}", childProjectName, projectId);
+        log.error(ExceptionUtils.getStackTrace(e));        
+        }         
+        return childProjectId;
     }
 }
