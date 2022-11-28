@@ -2,11 +2,13 @@ package com.cx.restclient.common.summary;
 
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
-
+import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.dto.scansummary.ScanSummary;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
 import com.cx.restclient.ast.dto.sca.AstScaResults;
+import com.cx.restclient.ast.dto.sca.report.PolicyEvaluation;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -38,7 +40,15 @@ public abstract class SummaryUtils {
 
         DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults, scaResults);
 
-        templateData.put("dependencyResult", dependencyScanResult != null ? dependencyScanResult : new DependencyScanResult());
+        if(dependencyScanResult == null) {
+        	dependencyScanResult = new DependencyScanResult();
+        	if(config.isAstScaEnabled())
+        		dependencyScanResult.setScannerType(ScannerType.AST_SCA);
+        	else if(config.isOsaEnabled())
+        		dependencyScanResult.setScannerType(ScannerType.OSA);
+        }
+        		
+        templateData.put("dependencyResult", dependencyScanResult);
 
 
         ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
@@ -173,13 +183,15 @@ public abstract class SummaryUtils {
         if (config.getEnablePolicyViolations()) {
             Map<String, String> policies = new HashMap<>();
 
-            if (config.isSastEnabled() && sastResults != null && !sastResults.getSastPolicies().isEmpty()) {
+
+            if (Boolean.TRUE.equals(config.isSastEnabled())
+                    && sastResults != null
+                    && sastResults.getSastPolicies() != null
+                    && !sastResults.getSastPolicies().isEmpty()) {
                 policyViolated = true;
-                policies = sastResults.getSastPolicies().stream().collect(
-                        Collectors.toMap(Policy::getPolicyName,
-                                Policy::getRuleName,
-                                (left, right) -> left
-                        ));
+                policies.putAll(sastResults.getSastPolicies().stream().collect(
+                        Collectors.toMap(Policy::getPolicyName, Policy::getRuleName,
+                                (left, right) -> left)));
             }
 
             if (Boolean.TRUE.equals(config.isOsaEnabled())
@@ -191,10 +203,31 @@ public abstract class SummaryUtils {
                         Collectors.toMap(Policy::getPolicyName, Policy::getRuleName,
                                 (left, right) -> left)));
             }
-
+           
+            if(Boolean.TRUE.equals(config.isAstScaEnabled())
+                    && scaResults != null && scaResults.getPolicyEvaluations() != null
+                            && !scaResults.getPolicyEvaluations().isEmpty())
+            {
+            	policyViolated = true;
+            	
+            	policies.putAll(scaResults.getPolicyEvaluations().stream().filter(policy -> policy.getIsViolated()).collect(
+                        Collectors.toMap(PolicyEvaluation::getName, PolicyEvaluation::getId,
+                                (left, right) -> left)));
+            	if(policies.size()==0)
+            	{
+            		policyViolated = false;
+            	}
+            }
+            
+            
+            if(scanSummary.isPolicyViolated()) {
+            	buildFailed = true;
+            	policyViolated = true;
+            }
             policyViolatedCount = policies.size();
             String policyLabel = policyViolatedCount == 1 ? "Policy" : "Policies";
             templateData.put("policyLabel", policyLabel);
+          
             templateData.put("policyViolatedCount", policyViolatedCount);
         }
 

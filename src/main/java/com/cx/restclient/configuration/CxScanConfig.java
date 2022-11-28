@@ -902,7 +902,7 @@ public class CxScanConfig implements Serializable {
     public boolean isSastOrOSAEnabled() {
         return isSastEnabled() || isOsaEnabled();
     }
-
+    
     public Boolean isProxy() {
         return isProxy;
     }

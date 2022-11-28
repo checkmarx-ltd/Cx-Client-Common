@@ -284,6 +284,10 @@ public abstract class LegacyClient {
                 if (engineConfiguration.getName().equalsIgnoreCase(config.getEngineConfigurationName())) {
                     config.setEngineConfigurationId(engineConfiguration.getId());
                     log.info(String.format("Engine configuration: \"%s\" was validated in server", config.getEngineConfigurationName()));
+                }else{
+                    if ("Improved Scan Flow".equalsIgnoreCase(config.getEngineConfigurationName())){
+                        config.setEngineConfigurationId(1);
+                    }
                 }
             }
             if (config.getEngineConfigurationId() == null) {
