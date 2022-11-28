@@ -14,6 +14,7 @@ import com.checkmarx.one.sast.CxOneProjectTransformer;
 import com.checkmarx.one.dto.configuration.ProjectConfiguration;
 import com.checkmarx.one.dto.configuration.ProjectConfigurationResults;
 import com.checkmarx.one.dto.configuration.ProjectConfigurationResponse;
+import com.checkmarx.one.sast.EngineConfigurationTransformer;
 import com.checkmarx.one.sast.PresetTransformer;
 import com.checkmarx.one.sast.ProjectNameTransformer;
 import com.checkmarx.one.sast.ProxyTransformer;
