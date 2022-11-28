@@ -1,16 +1,18 @@
 package com.cx.restclient.ast;
 
 import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.sca.utils.CxSCAResolverUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 
@@ -34,16 +36,14 @@ public class SpawnScaResolver {
     protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams, String pathToResultJSONFile, Logger log)
             throws CxClientException {
         int exitCode = -100;
-        String[] scaResolverCommand;
+        List<String> scaResolverCommand = new ArrayList<>();
 
-        List<String> arguments = new ArrayList<String>();
-        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(scaResolverAddParams);
-        while (m.find())
-            arguments.add(m.group(1));
-		/*
-		 Convert path and additional parameters into a single CMD command
-		 */
-        scaResolverCommand = new String[arguments.size() + 2];
+        Map<String, String> arguments;
+        try {
+            arguments = CxSCAResolverUtils.parseArguments(scaResolverAddParams);
+        } catch (ParseException e) {
+            throw new CxClientException(e.getMessage());
+        }
 
         if (!SystemUtils.IS_OS_UNIX) {
             //Add "ScaResolver.exe" to cmd command on Windows
@@ -54,39 +54,50 @@ public class SpawnScaResolver {
         }
 
         log.debug("Starting build CMD command");
-        scaResolverCommand[0] = pathToScaResolver;
-        scaResolverCommand[1] = OFFLINE;
+        log.debug("Command: " + pathToScaResolver);
+        scaResolverCommand.add(pathToScaResolver);
+        log.debug("    " + OFFLINE);
+        scaResolverCommand.add(OFFLINE);
 
-        for (int i = 0; i < arguments.size(); i++) {
+        for (Map.Entry<String, String> entry: arguments.entrySet()) {
+            String arg = entry.getKey();
+            String value = entry.getValue();
 
-            String arg = arguments.get(i);
-            if (arg.equalsIgnoreCase("debug")) {
-                arg = "Debug";
+            if (value == null) {
+                log.debug("    " + arg);
+                scaResolverCommand.add(arg);
+                continue;
             }
-            if (arg.equalsIgnoreCase("error")) {
-                arg = "Error";
+
+            if (arg.equals("--log-level")) {
+                value = StringUtils.capitalize(value);
+            } else if (arg.equals("-r") || arg.equals("--resolver-result-path")) {
+                value = pathToResultJSONFile;
             }
-            scaResolverCommand[i + 2] = arg;
-            if (arg.equals("-r")) {
-                while (pathToResultJSONFile.contains("\""))
-                    pathToResultJSONFile = pathToResultJSONFile.replace("\"", "");
-                scaResolverCommand[i + 3] = pathToResultJSONFile;
-                i++;
+
+            if (arg.equals("-p") || arg.contains("password")) {
+                log.debug("    " + arg + " *************");
+            } else {
+                log.debug("    " + arg + " " + value);
             }
+
+            scaResolverCommand.add(arg);
+            scaResolverCommand.add(value);
         }
         log.debug("Finished created CMD command");
         try {
-            log.info("Executing next command: " + Arrays.toString(scaResolverCommand));
             Process process;
+            String[] command = new String[scaResolverCommand.size()];
+            command = scaResolverCommand.toArray(command);
             if (!SystemUtils.IS_OS_UNIX) {
                 log.debug("Executing cmd command on windows. ");
-                process = Runtime.getRuntime().exec(scaResolverCommand);
+                process = Runtime.getRuntime().exec(command);
             } else {
                 String tempPermissionValidation = "ls " + pathToScaResolver + " -ltr";
                 printExecCommandOutput(tempPermissionValidation, log);
 
                 log.debug("Executing ScaResolver command.");
-                process = Runtime.getRuntime().exec(scaResolverCommand);
+                process = Runtime.getRuntime().exec(command);
             }
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));) {
             	String line = null;

@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -23,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -75,6 +74,7 @@ import com.cx.restclient.sast.utils.zip.NewCxZipFile;
 import com.cx.restclient.sast.utils.zip.Zipper;
 import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
 import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
+import com.cx.restclient.sca.utils.CxSCAResolverUtils;
 import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
 import com.cx.restclient.sca.utils.fingerprints.FingerprintCollector;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -362,7 +362,13 @@ public class AstScaClient extends AstClient implements Scanner {
     	log.info("Sca Resolver Additional Parameters: {}", scaConfig.getScaResolverAddParameters());
     	String pathToResultJSONFile = "";
     	File zipFile;
-        pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
+
+        try {
+            pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters());
+        } catch (ParseException e) {
+            throw new CxClientException(e.getMessage());
+        }
+
         log.info("Path to the evidence file: {}", pathToResultJSONFile);
         int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFile, log);
     	if (exitCode == 0) {
@@ -383,23 +389,15 @@ public class AstScaClient extends AstClient implements Scanner {
      * @param scaResolverAddParams - SCA resolver additional parameters
      * @return - SCA resolver execution result file path.
      */
-    private  String getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams)
+    private  String getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams) throws ParseException
     {
-        String pathToEvidenceDir ="";
-		/*
-		 Convert path and parameters into a single CMD command
-		 */
-        List<String> arguments = new ArrayList<String>();
-        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(scaResolverAddParams);
-        while (m.find())
-            arguments.add(m.group(1));
+        Map<String, String> params = CxSCAResolverUtils.parseArguments(scaResolverAddParams);
 
-        for (int i = 0; i <  arguments.size() ; i++) {
-            if (arguments.get(i).equals("-r") )
-                pathToEvidenceDir =  arguments.get(i+1);
+        String pathToEvidenceDir = params.getOrDefault("-r", params.get("--resolver-result-path"));
+        if (StringUtils.isEmpty(pathToEvidenceDir)) {
+            throw new ParseException("Missing -r|--resolver-result-path argument.", 0);
         }
-        while (pathToEvidenceDir.contains("\""))
-            pathToEvidenceDir = pathToEvidenceDir.replace("\"", "");
+
         return pathToEvidenceDir + File.separator + SCA_RESOLVER_RESULT_FILE_NAME;
     }
 
