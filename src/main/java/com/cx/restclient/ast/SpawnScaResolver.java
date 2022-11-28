@@ -3,14 +3,16 @@ package com.cx.restclient.ast;
 import com.cx.restclient.exception.CxClientException;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 
@@ -31,19 +33,10 @@ public class SpawnScaResolver {
      * @param scaResolverAddParams - Additional parameters for SCA resolver
      * @return
      */
-    protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams, String pathToResultJSONFile, Logger log)
+    protected static int runScaResolver(String pathToScaResolver, List<String> scaResolverAddParams, String pathToResultJSONFile, Logger log)
             throws CxClientException {
         int exitCode = -100;
-        String[] scaResolverCommand;
-
-        List<String> arguments = new ArrayList<String>();
-        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(scaResolverAddParams);
-        while (m.find())
-            arguments.add(m.group(1));
-		/*
-		 Convert path and additional parameters into a single CMD command
-		 */
-        scaResolverCommand = new String[arguments.size() + 2];
+        List<String> scaResolverCommand = new ArrayList<>();
 
         if (!SystemUtils.IS_OS_UNIX) {
             //Add "ScaResolver.exe" to cmd command on Windows
@@ -54,46 +47,96 @@ public class SpawnScaResolver {
         }
 
         log.debug("Starting build CMD command");
-        scaResolverCommand[0] = pathToScaResolver;
-        scaResolverCommand[1] = OFFLINE;
+        log.debug("Command: " + pathToScaResolver);
+        scaResolverCommand.add(pathToScaResolver);
+        log.debug("    " + OFFLINE);
+        scaResolverCommand.add(OFFLINE);
 
-        for (int i = 0; i < arguments.size(); i++) {
+        boolean configGiven = false;
+        for (int i = 0; i < scaResolverAddParams.size(); i++) {
+            String arg = scaResolverAddParams.get(i);
+            String value = scaResolverAddParams.get(i + 1);
 
-            String arg = arguments.get(i);
-            if (arg.equalsIgnoreCase("debug")) {
-                arg = "Debug";
+            if ((value.startsWith("-") && value.length() == 2) || value.startsWith("--")) {
+                log.debug("    " + arg);
+                scaResolverCommand.add(arg);
+                continue;
             }
-            if (arg.equalsIgnoreCase("error")) {
-                arg = "Error";
+
+            if (arg.equals("--log-level")) {
+                value = StringUtils.capitalize(value);
+            } else if (arg.equals("-r") || arg.equals("--resolver-result-path")) {
+                value = pathToResultJSONFile;
+            } else if (arg.equals("-c") || arg.equals("--config-path")) {
+                configGiven = true;
             }
-            scaResolverCommand[i + 2] = arg;
-            if (arg.equals("-r")) {
-                while (pathToResultJSONFile.contains("\""))
-                    pathToResultJSONFile = pathToResultJSONFile.replace("\"", "");
-                scaResolverCommand[i + 3] = pathToResultJSONFile;
-                i++;
+
+            if (arg.equals("-p") || arg.contains("password")) {
+                log.debug("    " + arg + " *************");
+            } else {
+                log.debug("    " + arg + " " + value);
             }
+
+            scaResolverCommand.add(arg);
+            scaResolverCommand.add(value);
+            i++;
         }
+
+        if (!configGiven) {
+            Path parent = Paths.get(pathToResultJSONFile).getParent();
+            Path logDir = Paths.get(parent.toString(), "log");
+            Path configPath = Paths.get(parent.toString(), "Configuration.ini");
+
+            try {
+                Files.createDirectories(logDir);
+            } catch (IOException e) {
+                log.error("Could not create log directory: " + e.getMessage(), e.getStackTrace());
+                throw new CxClientException(e);
+            }
+
+            try (FileWriter config = new FileWriter(configPath.toString())) {
+                config.write("LogsDirectory=" + logDir);
+            } catch (IOException e) {
+                log.error("Could not create configuration file: " + e.getMessage(), e.getStackTrace());
+            }
+
+            log.debug("    --config-path " + configPath);
+            scaResolverCommand.add("--config-path");
+            scaResolverCommand.add(configPath.toString());
+        }
+
         log.debug("Finished created CMD command");
         try {
-            log.info("Executing next command: " + Arrays.toString(scaResolverCommand));
             Process process;
-            if (!SystemUtils.IS_OS_UNIX) {
-                log.debug("Executing cmd command on windows. ");
-                process = Runtime.getRuntime().exec(scaResolverCommand);
-            } else {
+            String[] command = new String[scaResolverCommand.size()];
+            command = scaResolverCommand.toArray(command);
+
+            if (SystemUtils.IS_OS_UNIX) {
+                // FIXME: This has no action.
                 String tempPermissionValidation = "ls " + pathToScaResolver + " -ltr";
                 printExecCommandOutput(tempPermissionValidation, log);
-
-                log.debug("Executing ScaResolver command.");
-                process = Runtime.getRuntime().exec(scaResolverCommand);
             }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));) {
-            	String line = null;
+
+            log.debug("Executing ScaResolver command.");
+            process = Runtime.getRuntime().exec(command);
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line = null;
                 while ((line = reader.readLine()) != null) {
+                    log.info(line);
                 }
             } catch (IOException e) {
-                log.error("Error while trying write to the file: " + e.getMessage(), e.getStackTrace());
+                log.error("Error while reading standard output: " + e.getMessage(), e.getStackTrace());
+                throw new CxClientException(e);
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.error(line);
+                }
+            } catch (IOException e) {
+                log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
                 throw new CxClientException(e);
             }
             exitCode = process.waitFor();
