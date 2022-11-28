@@ -9,6 +9,22 @@ import org.apache.commons.text.StringEscapeUtils;
 
 public class CxSCAResolverUtils {
 
+    public static Map<String, String> shortArgumentsMap() {
+        Map<String, String> args = new HashMap<>();
+        args.put("-a", "--account");
+        args.put("-c", "--config-path");
+        args.put("-e", "--excludes");
+        args.put("-n", "--project-name");
+        args.put("-p", "--password");
+        args.put("-r", "--resolver-result-path");
+        args.put("-s", "--scan-path");
+        args.put("-t", "--project-teams");
+        args.put("-u", "--username");
+        args.put("-v", "--version");
+
+        return Collections.unmodifiableMap(args);
+    }
+
     public static Map<String, String> parseArguments(String text) throws ParseException {
         // Split the provided arguments text on spaces.
         // NOTE: We loose multiple spaces information but that should not be of an issue.
@@ -20,6 +36,7 @@ public class CxSCAResolverUtils {
         }
 
         String[] arguments = text.split("\\s+");
+        Map<String, String> shortArgs = shortArgumentsMap();
 
         int parsePos = 0;    // Keep track of our position in the text for error reporting.
         for (int i = 0; i < arguments.length;) {
@@ -40,6 +57,10 @@ public class CxSCAResolverUtils {
             }
 
             parsePos += arg.length() + 1;
+            if (shortArgs.containsKey(arg)) {
+                arg = shortArgs.get(arg);
+            }
+
             // Complete the value until we reach a new argument.
             for (i++; i < arguments.length; i++) {
                 if ((arguments[i].startsWith("-") && arguments[i].length() == 2) || arguments[i].startsWith("--")) {
