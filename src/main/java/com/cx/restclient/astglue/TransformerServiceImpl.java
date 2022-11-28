@@ -11,19 +11,28 @@ import com.checkmarx.one.dto.project.ProjectCreateResponse;
 import com.checkmarx.one.dto.scan.ScanConfig;
 import com.checkmarx.one.dto.scan.sast.SastConfig;
 import com.checkmarx.one.sast.CxOneProjectTransformer;
-import com.checkmarx.one.sast.FilterTransformer;
+import com.checkmarx.one.dto.configuration.ProjectConfiguration;
+import com.checkmarx.one.dto.configuration.ProjectConfigurationResults;
+import com.checkmarx.one.dto.configuration.ProjectConfigurationResponse;
 import com.checkmarx.one.sast.PresetTransformer;
 import com.checkmarx.one.sast.ProjectNameTransformer;
 import com.checkmarx.one.sast.ProxyTransformer;
 import com.checkmarx.one.sast.ScanConfigTransformer;
 import com.checkmarx.one.sast.TeamsTransformer;
 import com.checkmarx.one.util.zip.PathFilter;
+import com.cx.restclient.CxClientDelegator;
+import com.cx.restclient.CxSASTClient;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ProxyConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TransformerServiceImpl implements  TransformerService{
 
 	private CxScanConfig cxConfig;
+	private static final Logger log = LoggerFactory.getLogger(TransformerServiceImpl.class);
+
 	public TransformerServiceImpl(CxScanConfig scanConfig) {
 		this.cxConfig = scanConfig;
 	}
@@ -68,19 +77,57 @@ public class TransformerServiceImpl implements  TransformerService{
 		String projectId = project.getId();
 		String projectName = project.getName();
 		
-		FilterTransformer filterTransformer = new FilterTransformer(cxOneClient);
-		PathFilter pathfilter = filterTransformer.getFilterFromSastExclusion(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
+		PathFilter pathfilter = new PathFilter(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
+		ProjectConfiguration projectConfiguration = new TransformerServiceImpl(cxConfig)
+				.getProjectConfiguration(cxOneClient, projectId);
+		if (projectConfiguration != null && projectConfiguration.getAllowOverride()) {
+			try {
+				CxClientDelegator clientDelegator = new CxClientDelegator(cxConfig, log);
+				CxSASTClient cxSastClient = clientDelegator.getSastClient();
+				Map<Integer, String> engineConfigurationsMap = cxSastClient.getEngineConfigurationMap();
+				EngineConfigurationTransformer engineConfigurationTransformer = new EngineConfigurationTransformer(
+						cxOneClient);
+				ProjectConfiguration updatedProjectConfiguration = engineConfigurationTransformer
+						.getEngineConfigurationTransformer(projectConfiguration, engineConfigurationsMap,
+								cxConfig.getEngineConfigurationId());
+				cxOneClient.patchEngineConfiguration(updatedProjectConfiguration, projectId);
+			} catch (Exception e) {
+				log.error("Exception occured while updating Engine Configuration ", e);
+			}
+
+		}
 		
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
-				/*new PathFilter("source", "*.java")*/pathfilter, tags, cxConfig.getSourceDir());
+				pathfilter, tags, cxConfig.getSourceDir());
 		cxOneConfig.setScanConfig(scanConfig);
-		
+
 		PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
 		String astPreset = presetTransformer.getPresetNameById(cxConfig.getPresetId());
 		((SastConfig)(cxOneConfig.getScanConfig().getScanners().get(0))).setPresetName(astPreset);
 //		cxOneConfig = presetTransformer.getPresetName(cxConfig.getPresetName(), cxOneConfig);
 		
 		return cxOneConfig;
+	}
+
+	private ProjectConfiguration getProjectConfiguration(CxOneClient client, String projectId) {
+
+		ProjectConfiguration projectConfiguration = null;
+		try {
+			ProjectConfigurationResponse response = client.getProjectConfiguration(projectId);
+			ObjectMapper mapper = new ObjectMapper();
+			ProjectConfigurationResults results = mapper.readValue(response.toString(),
+					ProjectConfigurationResults.class);
+
+			List<ProjectConfiguration> projectConfigList = results.getResults().get(0);
+			for (ProjectConfiguration configuration : projectConfigList) {
+				if (configuration.getName().equalsIgnoreCase("languageMode")) {
+					return configuration;
+				}
+			}
+		} catch (Exception e) {
+			log.error("Error occurred either while calling getProjectConfiguration Or parsing it: " + e);
+		}
+		return projectConfiguration;
 	}
 }

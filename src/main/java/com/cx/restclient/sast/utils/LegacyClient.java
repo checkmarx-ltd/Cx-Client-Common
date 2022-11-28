@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.cx.restclient.common.CxPARAM.*;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
@@ -277,7 +279,19 @@ public abstract class LegacyClient {
         httpClient.setTeamPathHeader(this.teamPath);
         return (List<EngineConfiguration>) httpClient.getRequest(SAST_ENGINE_CONFIG, CONTENT_TYPE_APPLICATION_JSON_V1, EngineConfiguration.class, 200, "engine configurations", true);
     }
-
+    public Map<Integer, String> getEngineConfigurationMap() {
+        Map<Integer, String> engineConfigurationMap = null;
+        try {
+            List<EngineConfiguration> engineConfigurationList = getEngineConfiguration();
+            engineConfigurationMap = new HashMap<>();
+            for (EngineConfiguration engineConfiguration : engineConfigurationList) {
+                engineConfigurationMap.put(engineConfiguration.getId(), engineConfiguration.getName());
+            }
+        } catch (Exception e) {
+            log.error("Getting Eninge Configuration Map failed ", e);
+        }
+        return engineConfigurationMap;
+    }
 
     public void validateConfig(CxScanConfig config) throws CxClientException {
         String message = null;
