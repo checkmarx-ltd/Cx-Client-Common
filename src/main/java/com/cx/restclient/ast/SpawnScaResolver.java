@@ -3,8 +3,12 @@ package com.cx.restclient.ast;
 import com.cx.restclient.exception.CxClientException;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +52,7 @@ public class SpawnScaResolver {
         log.debug("    " + OFFLINE);
         scaResolverCommand.add(OFFLINE);
 
+        boolean configGiven = false;
         for (int i = 0; i < scaResolverAddParams.size(); i++) {
             String arg = scaResolverAddParams.get(i);
             String value = scaResolverAddParams.get(i + 1);
@@ -62,6 +67,8 @@ public class SpawnScaResolver {
                 value = StringUtils.capitalize(value);
             } else if (arg.equals("-r") || arg.equals("--resolver-result-path")) {
                 value = pathToResultJSONFile;
+            } else if (arg.equals("-c") || arg.equals("--config-path")) {
+                configGiven = true;
             }
 
             if (arg.equals("-p") || arg.contains("password")) {
@@ -74,6 +81,30 @@ public class SpawnScaResolver {
             scaResolverCommand.add(value);
             i++;
         }
+
+        if (!configGiven) {
+            Path parent = Paths.get(pathToResultJSONFile).getParent();
+            Path logDir = Paths.get(parent.toString(), "log");
+            Path configPath = Paths.get(parent.toString(), "Configuration.ini");
+
+            try {
+                Files.createDirectories(logDir);
+            } catch (IOException e) {
+                log.error("Could not create log directory: " + e.getMessage(), e.getStackTrace());
+                throw new CxClientException(e);
+            }
+
+            try (FileWriter config = new FileWriter(configPath.toString())) {
+                config.write("LogsDirectory=" + logDir);
+            } catch (IOException e) {
+                log.error("Could not create configuration file: " + e.getMessage(), e.getStackTrace());
+            }
+
+            log.debug("    --config-path " + configPath);
+            scaResolverCommand.add("--config-path");
+            scaResolverCommand.add(configPath.toString());
+        }
+
         log.debug("Finished created CMD command");
         try {
             Process process;
