@@ -79,22 +79,33 @@ public class SpawnScaResolver {
             Process process;
             String[] command = new String[scaResolverCommand.size()];
             command = scaResolverCommand.toArray(command);
-            if (!SystemUtils.IS_OS_UNIX) {
-                log.debug("Executing cmd command on windows. ");
-                process = Runtime.getRuntime().exec(command);
-            } else {
+
+            if (SystemUtils.IS_OS_UNIX) {
+                // FIXME: This has no action.
                 String tempPermissionValidation = "ls " + pathToScaResolver + " -ltr";
                 printExecCommandOutput(tempPermissionValidation, log);
-
-                log.debug("Executing ScaResolver command.");
-                process = Runtime.getRuntime().exec(command);
             }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));) {
-            	String line = null;
+
+            log.debug("Executing ScaResolver command.");
+            process = Runtime.getRuntime().exec(command);
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line = null;
                 while ((line = reader.readLine()) != null) {
+                    log.info(line);
                 }
             } catch (IOException e) {
-                log.error("Error while trying write to the file: " + e.getMessage(), e.getStackTrace());
+                log.error("Error while reading standard output: " + e.getMessage(), e.getStackTrace());
+                throw new CxClientException(e);
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.error(line);
+                }
+            } catch (IOException e) {
+                log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
                 throw new CxClientException(e);
             }
             exitCode = process.waitFor();
