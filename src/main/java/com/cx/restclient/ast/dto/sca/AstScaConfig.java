@@ -44,7 +44,7 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private Boolean isScaProxy;
 
 	private String pathToScaResolver;
-    private String scaResolverAddParameters;
+    private List<String> scaResolverAddParameters;
 	
     private Map<String,String> envVariables;
     private List<String> configFilePaths;

@@ -74,7 +74,6 @@ import com.cx.restclient.sast.utils.zip.NewCxZipFile;
 import com.cx.restclient.sast.utils.zip.Zipper;
 import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
 import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
-import com.cx.restclient.sca.utils.CxSCAResolverUtils;
 import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
 import com.cx.restclient.sca.utils.fingerprints.FingerprintCollector;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -389,11 +388,16 @@ public class AstScaClient extends AstClient implements Scanner {
      * @param scaResolverAddParams - SCA resolver additional parameters
      * @return - SCA resolver execution result file path.
      */
-    private  String getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams) throws ParseException
+    private  String getScaResolverResultFilePathFromAdditionalParams(List<String> scaResolverAddParams) throws ParseException
     {
-        Map<String, String> params = CxSCAResolverUtils.parseArguments(scaResolverAddParams);
+        String pathToEvidenceDir = null;
+        for (int i = 0; i < scaResolverAddParams.size(); i++) {
+            if (scaResolverAddParams.get(i).equals("-r") ||  scaResolverAddParams.get(i).equals("--resolver-result-path")) {
+                pathToEvidenceDir = scaResolverAddParams.get(i + 1);
+                break;
+            }
+        }
 
-        String pathToEvidenceDir = params.getOrDefault("-r", params.get("--resolver-result-path"));
         if (StringUtils.isEmpty(pathToEvidenceDir)) {
             throw new ParseException("Missing -r|--resolver-result-path argument.", 0);
         }

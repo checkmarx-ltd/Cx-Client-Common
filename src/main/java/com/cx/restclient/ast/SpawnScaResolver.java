@@ -1,16 +1,12 @@
 package com.cx.restclient.ast;
 
 import com.cx.restclient.exception.CxClientException;
-import com.cx.restclient.sca.utils.CxSCAResolverUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -33,17 +29,10 @@ public class SpawnScaResolver {
      * @param scaResolverAddParams - Additional parameters for SCA resolver
      * @return
      */
-    protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams, String pathToResultJSONFile, Logger log)
+    protected static int runScaResolver(String pathToScaResolver, List<String> scaResolverAddParams, String pathToResultJSONFile, Logger log)
             throws CxClientException {
         int exitCode = -100;
         List<String> scaResolverCommand = new ArrayList<>();
-
-        Map<String, String> arguments;
-        try {
-            arguments = CxSCAResolverUtils.parseArguments(scaResolverAddParams);
-        } catch (ParseException e) {
-            throw new CxClientException(e.getMessage());
-        }
 
         if (!SystemUtils.IS_OS_UNIX) {
             //Add "ScaResolver.exe" to cmd command on Windows
@@ -59,11 +48,11 @@ public class SpawnScaResolver {
         log.debug("    " + OFFLINE);
         scaResolverCommand.add(OFFLINE);
 
-        for (Map.Entry<String, String> entry: arguments.entrySet()) {
-            String arg = entry.getKey();
-            String value = entry.getValue();
+        for (int i = 0; i < scaResolverAddParams.size(); i++) {
+            String arg = scaResolverAddParams.get(i);
+            String value = scaResolverAddParams.get(i + 1);
 
-            if (value == null) {
+            if ((value.startsWith("-") && value.length() == 2) || value.startsWith("--")) {
                 log.debug("    " + arg);
                 scaResolverCommand.add(arg);
                 continue;
@@ -83,6 +72,7 @@ public class SpawnScaResolver {
 
             scaResolverCommand.add(arg);
             scaResolverCommand.add(value);
+            i++;
         }
         log.debug("Finished created CMD command");
         try {
