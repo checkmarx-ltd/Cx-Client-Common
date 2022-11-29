@@ -44,8 +44,8 @@ public class TransformerServiceImpl implements  TransformerService{
 		String groupName = teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath());
 //		cxOneConfig.getScanConfig().getProject().getGroups().add(teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath()));
 		
-		ProjectNameTransformer projectTransformer = new ProjectNameTransformer(cxOneClient);
-		String transformedProjectName = projectTransformer.getProjectName(cxConfig.getProjectName(), cxConfig.getBranchName());
+		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
+		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(), cxConfig.getBranchName());
 		
 		ProxyTransformer proxyTransformer = new ProxyTransformer(cxOneClient);
 		ProxyConfig proxyConfig = cxConfig.getProxyConfig();
@@ -63,10 +63,14 @@ public class TransformerServiceImpl implements  TransformerService{
 		//with this name exist don't create a new project rather get the existing project's projectId. This will have similar design as in SAST. But in SAST we had 
 		//API to get project by name and teamId (Refer getProjectByName() in LegacyClient.java). But with present implementation , when jenkins pipeline has different
 		//project name which is not present in AST, creating a new project and projectId is giving us the correct value.
+		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName) ;
+		String projectName = transformedProjectName;
+		if(projectId == null || projectId == "") {
 		ProjectCreateResponse project = projectCreateTransformer.getProjectObject(groups, cxConfig.getSourceDir(), 
 				1, cxConfig.getBranchName(), cxConfig.getCxOrigin(), tags);
-		String projectId = project.getId();
-		String projectName = project.getName();
+		projectId = project.getId();
+		projectName = project.getName();
+		} 
 		
 		FilterTransformer filterTransformer = new FilterTransformer(cxOneClient);
 		PathFilter pathfilter = filterTransformer.getFilterFromSastExclusion(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
@@ -75,7 +79,8 @@ public class TransformerServiceImpl implements  TransformerService{
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
 				/*new PathFilter("source", "*.java")*/pathfilter, tags, cxConfig.getSourceDir());
 		cxOneConfig.setScanConfig(scanConfig);
-		
+//		String projectId = projectNameTransformer.getProjectIdForProjectName(projectName);
+		cxOneConfig.getScanConfig().getProject().setId(projectId);
 		PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
 		String astPreset = presetTransformer.getPresetNameById(cxConfig.getPresetId());
 		((SastConfig)(cxOneConfig.getScanConfig().getScanners().get(0))).setPresetName(astPreset);
