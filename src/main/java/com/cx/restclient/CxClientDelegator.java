@@ -146,7 +146,7 @@ public class CxClientDelegator implements Scanner {
             }
             
             boolean hasScaViolations = false;
-            if (scaResults != null && scaResults.getPolicyEvaluations() != null && !scaResults.getPolicyEvaluations().isEmpty()) {
+            if (scaResults != null && scaResults.getPolicyEvaluations() != null && scaResults.getPolicyEvaluations().stream().filter(policy->policy.getIsViolated()).count()!=0) {
             	hasScaViolations = true;
             }            
 
