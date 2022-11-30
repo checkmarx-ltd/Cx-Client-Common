@@ -1,4 +1,4 @@
-# cx-client-common
+# cx-client-common 
 Client library that allows Java applications to interact with Checkmarx products.
 
 ## Release Notes
