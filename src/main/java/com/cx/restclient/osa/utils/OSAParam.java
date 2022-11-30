@@ -20,4 +20,6 @@ public class OSAParam {
     public static final String OSA_LIBRARIES_NAME = "CxOSALibraries";
     public static final String OSA_VULNERABILITIES_NAME = "CxOSAVulnerabilities";
     public static final String OSA_SUMMARY_NAME = "CxOSASummary";
+    public static final String LINK_FORMAT = "/CxWebClient/portal#/projectState/";
+    public static final String LINK_FORMAL_SUMMARY = "/Summary";
 }
