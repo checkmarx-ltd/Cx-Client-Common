@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+
 import com.checkmarx.one.CxOneClient;
 import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.project.ProjectCreateResponse;
@@ -24,8 +26,10 @@ import com.cx.restclient.dto.ProxyConfig;
 public class TransformerServiceImpl implements  TransformerService{
 
 	private CxScanConfig cxConfig;
-	public TransformerServiceImpl(CxScanConfig scanConfig) {
+	private Logger log;
+	public TransformerServiceImpl(CxScanConfig scanConfig, Logger log) {
 		this.cxConfig = scanConfig;
+		this.log = log;
 	}
 
 	@Override
@@ -70,6 +74,8 @@ public class TransformerServiceImpl implements  TransformerService{
 				1, cxConfig.getBranchName(), cxConfig.getCxOrigin(), tags);
 		projectId = project.getId();
 		projectName = project.getName();
+		log.info("Created a project with ID {}", projectId);
+		cxOneConfig.setIsNewProject(true);
 		} 
 		
 		FilterTransformer filterTransformer = new FilterTransformer(cxOneClient);

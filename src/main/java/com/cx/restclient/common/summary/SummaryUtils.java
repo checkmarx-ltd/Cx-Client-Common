@@ -6,10 +6,15 @@ import com.cx.restclient.cxArm.dto.Policy;
 import com.cx.restclient.dto.scansummary.ScanSummary;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
+import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.ast.dto.sca.AstScaResults;
+
+import freemarker.core.ParseException;
 import freemarker.template.Configuration;
+import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
 import freemarker.template.Version;
 
 import java.io.IOException;
@@ -22,9 +27,16 @@ public abstract class SummaryUtils {
     private SummaryUtils() {
     }
 
-    public static String generateSummary(SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults, CxScanConfig config) throws IOException, TemplateException {
+	public static String generateSummary(SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults,
+			CxScanConfig config) throws IOException, TemplateException {
 
-        Configuration cfg = new Configuration(new Version("2.3.23"));
+        return generateSummaryHelper(sastResults, osaResults, scaResults, null, config);
+    }
+
+	private static String generateSummaryHelper(SASTResults sastResults, OSAResults osaResults,
+			AstScaResults scaResults, AstSastResults astSastResults, CxScanConfig config) throws TemplateNotFoundException,
+			MalformedTemplateNameException, ParseException, IOException, TemplateException {
+		Configuration cfg = new Configuration(new Version("2.3.23"));
         cfg.setClassForTemplateLoading(SummaryUtils.class, "/com/cx/report");
         Template template = cfg.getTemplate("report.ftl");
 
@@ -35,7 +47,7 @@ public abstract class SummaryUtils {
         // TODO: null value for "osa" should be handled inside the template.
         templateData.put("osa", osaResults != null ? osaResults : new OSAResults());
         templateData.put("sca", scaResults != null ? scaResults : new AstScaResults());
-
+        templateData.put("astSast", astSastResults != null ? astSastResults : new AstSastResults());
         DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults, scaResults);
 
         templateData.put("dependencyResult", dependencyScanResult != null ? dependencyScanResult : new DependencyScanResult());
@@ -87,57 +99,6 @@ public abstract class SummaryUtils {
                 buildFailed = true;
             }
         }
-
-/*
-        //osa:
-        if (config.getDependencyScannerType() == DependencyScannerType.OSA) {
-            if (osaResults!=null && osaResults.isOsaResultsReady()) {
-                boolean thresholdExceeded = scanSummary.isOsaThresholdExceeded();
-                templateData.put("osaThresholdExceeded", thresholdExceeded);
-                buildFailed |= thresholdExceeded;
-
-                //calculate osa bars:
-                OSASummaryResults osaSummaryResults = osaResults.getResults();
-                int osaHigh = osaSummaryResults.getTotalHighVulnerabilities();
-                int osaMedium = osaSummaryResults.getTotalMediumVulnerabilities();
-                int osaLow = osaSummaryResults.getTotalLowVulnerabilities();
-                float osaMaxCount = Math.max(osaHigh, Math.max(osaMedium, osaLow));
-                float osaBarNorm = osaMaxCount * 10f / 9f;
-
-                float osaHighTotalHeight = (float) osaHigh / osaBarNorm * 238f;
-                float osaMediumTotalHeight = (float) osaMedium / osaBarNorm * 238f;
-                float osaLowTotalHeight = (float) osaLow / osaBarNorm * 238f;
-
-                templateData.put("osaHighTotalHeight", osaHighTotalHeight);
-                templateData.put("osaMediumTotalHeight", osaMediumTotalHeight);
-                templateData.put("osaLowTotalHeight", osaLowTotalHeight);
-                } else {
-                buildFailed = true;
-            }
-            } else if (config.getDependencyScannerType() == DependencyScannerType.SCA){
-                boolean thresholdExceeded = scanSummary.isOsaThresholdExceeded();
-                templateData.put("scaThresholdExceeded", thresholdExceeded);
-                buildFailed |= thresholdExceeded;
-
-                //calculate sca bars:
-                AstScaSummaryResults scaSummaryResults = scaResults.getSummary();
-                int scaHigh = scaSummaryResults.getHighVulnerabilityCount();
-                int scaMedium = scaSummaryResults.getMediumVulnerabilityCount();
-                int scaLow = scaSummaryResults.getLowVulnerabilityCount();
-                float scaMaxCount = Math.max(scaHigh, Math.max(scaMedium, scaLow));
-                float scaBarNorm = scaMaxCount * 10f / 9f;
-
-                float scaHighTotalHeight = (float) scaHigh / scaBarNorm * 238f;
-                float scaMediumTotalHeight = (float) scaMedium / scaBarNorm * 238f;
-                float scaLowTotalHeight = (float) scaLow / scaBarNorm * 238f;
-
-                templateData.put("scaHighTotalHeight", scaHighTotalHeight);
-                templateData.put("scaMediumTotalHeight", scaMediumTotalHeight);
-                templateData.put("scaLowTotalHeight", scaLowTotalHeight);
-            }else{
-                buildFailed = true;
-            }
-*/
 
         if (config.isOsaEnabled() || config.isAstScaEnabled()) {
             if (dependencyScanResult != null && dependencyScanResult.isResultReady()) {
@@ -207,8 +168,12 @@ public abstract class SummaryUtils {
         StringWriter writer = new StringWriter();
         template.process(templateData, writer);
         return writer.toString();
-    }
+	}
+	public static String generateSummary(SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults,
+			AstSastResults astSastResults, CxScanConfig config) throws IOException, TemplateException {
 
+        return generateSummaryHelper(sastResults, osaResults, scaResults, astSastResults, config);
+    }
     private static DependencyScanResult resolveDependencyResult(OSAResults osaResults, AstScaResults scaResults) {
         DependencyScanResult dependencyScanResult;
         if (osaResults != null) {

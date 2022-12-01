@@ -44,6 +44,10 @@ public class ScanResults extends Results implements Serializable {
         return (AstSastResults)resultsMap.get(ScannerType.AST_SAST);
     }
 
+    public AstSastResults getAstSastResults() {
+        return (AstSastResults)resultsMap.get(ScannerType.CXONE_SAST);
+    }
+    
     public AstScaResults getScaResults() {
         return (AstScaResults)resultsMap.get(ScannerType.AST_SCA);
     }

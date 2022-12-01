@@ -50,13 +50,13 @@ public class CxOneWrapperClient implements Scanner{
     private String scanId;
     private String projectId;
     private AstSastResults astSastResults = new AstSastResults();
-    private String language = "en-US";
+    private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS= "\nAvoid duplicate project scans in queue\n";
     
 	CxOneWrapperClient(CxScanConfig config, Logger log) throws MalformedURLException {
 		this.config = config;
         this.log = log;
 		CxConfigParamsTransformerServiceFactory factory = new CxConfigParamsTransformerServiceFactory();
-		TransformerService service = factory.create(ScannerType.SAST, ScannerType.CXONE_SAST, config);
+		TransformerService service = factory.create(ScannerType.SAST, ScannerType.CXONE_SAST, config, log);
 		oneConfig = service.getCxOneConfig();
         oneConfig.setAccessControlBaseUrl(config.getAccessControlBaseUrl());
         oneConfig.setApiBaseUrl(config.getApiBaseUrl());
@@ -108,13 +108,25 @@ public class CxOneWrapperClient implements Scanner{
 
 	@Override
 	public Results waitForScanResults() {
+		try {
         try {
         	log.info("------------------------------------Get AST Results:-----------------------------------");
         	log.info("Waiting for AST scan to finish.");
         	ScanStatusResponse scanStatusRes = cxOneClient.waitForScanToResolve(scanId);
         	ResultsResponse results = cxOneClient.getResults(new ResultsRequest(scanStatusRes.getId(), null, null));
-            
-            
+        }
+        	catch (ConditionTimeoutException e) {
+    			
+    			if (!errorToBeSuppressed(e)) {
+    				// throw the exception so that caught by outer catch
+    				throw new Exception(e.getMessage());
+    			}
+    		} catch (CxClientException e) {
+    			if (!errorToBeSuppressed(e)) {
+    				// throw the exception so that caught by outer catch
+    				throw new Exception(e.getMessage());
+    			}
+    		} 
           //PDF report
             if (config.getGeneratePDFReport()) {
                 log.info("Generating PDF report");
@@ -122,17 +134,17 @@ public class CxOneWrapperClient implements Scanner{
 //                For now just do nothing if user has selected "Generate PDF"
                 
                 }
-//            return results.getResults();
-            return astSastResults;
         } catch (Exception e) {            
+            if(!errorToBeSuppressed(e))
             	astSastResults.setException(new CxClientException(e));
         }
 
+//            return results.getResults();
         return astSastResults;
     }
 
 	@Override
-	public Results getLatestScanResults() {
+	public AstSastResults getLatestScanResults() {
 		ScanIdConfigRequest scanIdConfig = new ScanIdConfigRequest();
 		scanIdConfig.setField("scan-ids");
 		scanIdConfig.setProjectId(projectId);
@@ -145,7 +157,7 @@ public class CxOneWrapperClient implements Scanner{
 		ScanStatusResponse lastScanResponse = cxOneClient.getScanStatus(lastScanId);
 		if (TaskStatus.COMPLETED.getValue().equals(lastScanResponse.getStatus().getValue())) {
             try {
-				return retrieveSASTResults(lastScanId, projectId);
+				return retrieveAstSastResults(lastScanId, projectId);
 			} catch (Exception e) {
 	            log.error(e.getMessage());
 	            astSastResults.setException(new CxClientException(e));
@@ -154,23 +166,75 @@ public class CxOneWrapperClient implements Scanner{
 		return null;
 	}
 
-	private AstSastResults retrieveSASTResults(String scanId, String projectId) throws IOException {
+	private AstSastResults retrieveAstSastResults(String scanId, String projectId) throws IOException {
 
-//		 ResultsSummaryRequest summaryPayLoad = new ResultsSummaryRequest(scanId, includeSeverityStatus, includeQueries, includeFiles, applyPredicates, language)
-//	        SASTStatisticsResponse statisticsResults = getScanStatistics(scanId);
-//
-//	        astSastResults.setResults(scanId, statisticsResults, config.getUrl(), projectId);
-//
-//	        //SAST detailed report
-//	        if (config.getGenerateXmlReport() == null || config.getGenerateXmlReport()) {
-//	            byte[] cxReport = getScanReport(astSastResults.getScanId(), ReportType.XML, CONTENT_TYPE_APPLICATION_XML_V1);
-//	            CxXMLResults reportObj = convertToXMLResult(cxReport);
-//	            astSastResults.setScanDetailedReport(reportObj,config);
-//	            astSastResults.setRawXMLReport(cxReport);
-//	        }
-//	        astSastResults.setSastResultsReady(true);
+		 /*ResultsSummaryRequest summaryPayLoad = new ResultsSummaryRequest(scanId, includeSeverityStatus, includeQueries, includeFiles, applyPredicates, language)
+	        SASTStatisticsResponse statisticsResults = getScanStatistics(scanId);
+
+	        astSastResults.setResults(scanId, statisticsResults, config.getUrl(), projectId);
+
+	        //SAST detailed report
+	        if (config.getGenerateXmlReport() == null || config.getGenerateXmlReport()) {
+	            byte[] cxReport = getScanReport(astSastResults.getScanId(), ReportType.XML, CONTENT_TYPE_APPLICATION_XML_V1);
+	            CxXMLResults reportObj = convertToXMLResult(cxReport);
+	            astSastResults.setScanDetailedReport(reportObj,config);
+	            astSastResults.setRawXMLReport(cxReport);
+	        }
+	        astSastResults.setSastResultsReady(true);*/
 	        return astSastResults;
 	    }
+	
+	/*
+     * Suppress only those conditions for which it is generally acceptable
+     * to have plugin not error out so that rest of the pipeline can continue.
+     */
+	private boolean errorToBeSuppressed(Exception error) {
+
+		final String additionalMessage = "Build status will be marked successfull as this error is benign. Results from last scan will be displayed, if available."; 
+		boolean suppressed = false;
+		
+		//log actual error as it is first.
+		log.error(error.getMessage());
+	
+		if (error instanceof ConditionTimeoutException && config.getContinueBuild()) {	
+			suppressed = true;		
+		}
+		//Plugins will control if errors handled here will be ignored.
+		else if(config.isIgnoreBenignErrors()) {
+			
+			if (error.getMessage().contains("source folder is empty,") || (astSastResults.getException() != null
+					&& astSastResults.getException().getMessage().contains("No files to zip"))) {
+				
+				suppressed = true;
+			} else if (error.getMessage().contains("No files to zip")) {
+				suppressed = true;
+			} else if (error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
+				suppressed = true;
+			}
+		}
+		
+		if(suppressed) {			
+			log.info(additionalMessage);
+			try {
+				astSastResults = getLatestScanResults();
+				if (oneConfig.isIsNewProject()) {
+					String message = String
+							.format("The project %s is a new project. Hence there is no last scan report to be shown.", config.getProjectName());
+					log.info(message);
+				}
+			}catch(Exception okayToNotHaveResults){
+				astSastResults = null;
+			}
+			
+			if(astSastResults == null)
+				astSastResults = new AstSastResults();
+			
+			astSastResults.setException(null);
+			setState(State.SKIPPED);						
+			
+		}		
+		return suppressed;
+	}
 	@Override
 	public void close() {
 		// TODO Auto-generated method stub
