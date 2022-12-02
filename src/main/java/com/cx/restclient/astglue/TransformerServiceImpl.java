@@ -9,10 +9,15 @@ import org.slf4j.Logger;
 
 import com.checkmarx.one.CxOneClient;
 import com.checkmarx.one.dto.CxOneConfig;
+import com.checkmarx.one.dto.configuration.ProjectConfiguration;
+import com.checkmarx.one.dto.configuration.ProjectConfigurationResponse;
+import com.checkmarx.one.dto.configuration.ProjectConfigurationResults;
 import com.checkmarx.one.dto.project.ProjectCreateResponse;
 import com.checkmarx.one.dto.scan.ScanConfig;
 import com.checkmarx.one.dto.scan.sast.SastConfig;
 import com.checkmarx.one.sast.CxOneProjectTransformer;
+import com.checkmarx.one.sast.EngineConfigurationMap;
+import com.checkmarx.one.sast.EngineConfigurationTransformer;
 import com.checkmarx.one.sast.FilterTransformer;
 import com.checkmarx.one.sast.PresetTransformer;
 import com.checkmarx.one.sast.ProjectNameTransformer;
@@ -22,6 +27,7 @@ import com.checkmarx.one.sast.TeamsTransformer;
 import com.checkmarx.one.util.zip.PathFilter;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ProxyConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TransformerServiceImpl implements  TransformerService{
 
@@ -81,6 +87,21 @@ public class TransformerServiceImpl implements  TransformerService{
 		FilterTransformer filterTransformer = new FilterTransformer(cxOneClient);
 		PathFilter pathfilter = filterTransformer.getFilterFromSastExclusion(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
 		
+		ProjectConfiguration projectConfiguration = new TransformerServiceImpl(cxConfig, log)
+				.getProjectConfiguration(cxOneClient, projectId);
+		if (projectConfiguration != null && projectConfiguration.getAllowOverride()) {
+			try {
+				Map<Integer, String> engineConfigurationsMap = EngineConfigurationMap
+						.getEngineConfigurationMap();
+				EngineConfigurationTransformer engineConfigurationTransformer = new EngineConfigurationTransformer(
+						cxOneClient);
+				ProjectConfiguration updatedProjectConfiguration = engineConfigurationTransformer
+						.getEngineConfigurationTransformer(projectConfiguration, engineConfigurationsMap,
+								cxConfig.getEngineConfigurationId());
+				cxOneClient.patchEngineConfiguration(updatedProjectConfiguration, projectId);
+			} catch (Exception e) {
+				log.error("Exception occured while updating Engine Configuration ", e);
+			}
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
 				/*new PathFilter("source", "*.java")*/pathfilter, tags, cxConfig.getSourceDir());
@@ -93,5 +114,26 @@ public class TransformerServiceImpl implements  TransformerService{
 //		cxOneConfig = presetTransformer.getPresetName(cxConfig.getPresetName(), cxOneConfig);
 		
 		return cxOneConfig;
+	}
+
+	private ProjectConfiguration getProjectConfiguration(CxOneClient client, String projectId) {
+
+		ProjectConfiguration projectConfiguration = null;
+		try {
+			ProjectConfigurationResponse response = client.getProjectConfiguration(projectId);
+			ObjectMapper mapper = new ObjectMapper();
+			ProjectConfigurationResults results = mapper.readValue(response.toString(),
+					ProjectConfigurationResults.class);
+
+			List<ProjectConfiguration> projectConfigList = results.getResults().get(0);
+			for (ProjectConfiguration configuration : projectConfigList) {
+				if (configuration.getName().equalsIgnoreCase("languageMode")) {
+					return configuration;
+				}
+			}
+		} catch (Exception e) {
+			log.error("Error occurred either while calling getProjectConfiguration Or parsing it: " + e);
+		}
+		return projectConfiguration;
 	}
 }
