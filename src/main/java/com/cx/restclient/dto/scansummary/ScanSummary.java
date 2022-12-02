@@ -1,5 +1,6 @@
 package com.cx.restclient.dto.scansummary;
 
+import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.ast.dto.sca.AstScaResults;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
 import com.cx.restclient.common.CxPARAM;
@@ -19,9 +20,12 @@ public class ScanSummary {
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     private final boolean policyViolated;
 
-    public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {
+    public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults, AstSastResults astSastResults) {
 
         addSastThresholdErrors(config, sastResults);
+        if(astSastResults != null) {
+        addAstSastThresholdErrors(config, astSastResults);
+        }
         addDependencyScanThresholdErrors(config, osaResults, scaResults);
 
         addNewResultThresholdErrors(config, sastResults);
@@ -29,7 +33,8 @@ public class ScanSummary {
         policyViolated = determinePolicyViolation(config, sastResults, osaResults, scaResults);
     }
 
-    @Override
+    
+	@Override
     public String toString() {
         StringBuilder result = new StringBuilder();
 
@@ -85,7 +90,18 @@ public class ScanSummary {
             checkForThresholdError(sastResults.getLow(), config.getSastLowThreshold(), ErrorSource.SAST, Severity.LOW);
         }
     }
+    
+    private void addAstSastThresholdErrors(CxScanConfig config, AstSastResults astSastResults) {
+    	if (config.isSASTThresholdEffectivelyEnabled() &&
+                astSastResults != null &&
+                astSastResults.isAstSastResultsReady()) {
+            checkForThresholdError(astSastResults.getHigh(), config.getSastHighThreshold(), ErrorSource.CXONE_SAST, Severity.HIGH);
+            checkForThresholdError(astSastResults.getMedium(), config.getSastMediumThreshold(), ErrorSource.CXONE_SAST, Severity.MEDIUM);
+            checkForThresholdError(astSastResults.getLow(), config.getSastLowThreshold(), ErrorSource.CXONE_SAST, Severity.LOW);
+        }
+	}
 
+    
     private void addDependencyScanThresholdErrors(CxScanConfig config, OSAResults osaResults, AstScaResults scaResults) {
         if (config.isOSAThresholdEffectivelyEnabled() && (scaResults != null || osaResults != null)) {
 
