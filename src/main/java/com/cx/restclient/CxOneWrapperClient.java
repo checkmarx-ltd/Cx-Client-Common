@@ -1,18 +1,10 @@
 package com.cx.restclient;
 
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_PDF_V1;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_XML_V1;
-import static com.cx.restclient.sast.utils.SASTParam.PDF_REPORT_NAME;
-import static com.cx.restclient.sast.utils.SASTUtils.convertToXMLResult;
-import static com.cx.restclient.sast.utils.SASTUtils.writePDFReport;
-import static com.cx.restclient.sast.utils.SASTUtils.writeReport;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import org.awaitility.core.ConditionTimeoutException;
 import org.slf4j.Logger;
@@ -20,6 +12,9 @@ import org.slf4j.Logger;
 import com.checkmarx.one.CxOneClient;
 import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.TaskStatus;
+import com.checkmarx.one.dto.report.CreateAstReportRequest;
+import com.checkmarx.one.dto.resultsummary.ResultSummaryResponse;
+import com.checkmarx.one.dto.scan.ResultDetailsResponse;
 import com.checkmarx.one.dto.scan.ResultsRequest;
 import com.checkmarx.one.dto.scan.ResultsResponse;
 import com.checkmarx.one.dto.scan.ResultsSummaryRequest;
@@ -27,6 +22,7 @@ import com.checkmarx.one.dto.scan.ScanIdConfigRequest;
 import com.checkmarx.one.dto.scan.ScanResponse;
 import com.checkmarx.one.dto.scan.ScanStatusResponse;
 import com.cx.restclient.ast.dto.sast.AstSastResults;
+import com.cx.restclient.ast.dto.sast.AstSastUtils;
 import com.cx.restclient.astglue.CxConfigParamsTransformerServiceFactory;
 import com.cx.restclient.astglue.TransformerService;
 import com.cx.restclient.common.Scanner;
@@ -34,10 +30,9 @@ import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.Results;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
+import com.cx.restclient.sast.dto.CreateReportResponse;
 import com.cx.restclient.sast.dto.CxXMLResults;
 import com.cx.restclient.sast.dto.ReportType;
-import com.cx.restclient.sast.dto.SASTStatisticsResponse;
-import com.cx.restclient.sast.utils.SASTUtils;
 import com.cx.restclient.sast.utils.State;
 
 public class CxOneWrapperClient implements Scanner{
@@ -51,6 +46,7 @@ public class CxOneWrapperClient implements Scanner{
     private String projectId;
     private AstSastResults astSastResults = new AstSastResults();
     private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS= "\nAvoid duplicate project scans in queue\n";
+    private String language = "en-US";
     
 	CxOneWrapperClient(CxScanConfig config, Logger log) throws MalformedURLException {
 		this.config = config;
@@ -72,6 +68,7 @@ public class CxOneWrapperClient implements Scanner{
 		AstSastResults initAstSastResults = new AstSastResults();
         try {
             initiate();
+            language = cxOneClient.getLanguageFromAccessToken();
         } catch (CxClientException e) {
             setState(State.FAILED);
             initAstSastResults.setException(e);
@@ -87,9 +84,7 @@ public class CxOneWrapperClient implements Scanner{
             	// This will invoke init() of CxHttpClient and then generate access token within this call.Login happens in this method
     			cxOneClient.init();
     			String accessToken = cxOneClient.getAccessToken();
-    			// TODO : Remove this AT
     			log.info("Login successful to AST" + accessToken);
-//                resolveTeam();
             }
         } catch (Exception e) {
             throw new CxClientException(e);
@@ -168,22 +163,37 @@ public class CxOneWrapperClient implements Scanner{
 
 	private AstSastResults retrieveAstSastResults(String scanId, String projectId) throws IOException {
 
-		 /*ResultsSummaryRequest summaryPayLoad = new ResultsSummaryRequest(scanId, includeSeverityStatus, includeQueries, includeFiles, applyPredicates, language)
-	        SASTStatisticsResponse statisticsResults = getScanStatistics(scanId);
+		ResultSummaryResponse statisticsResults = getScanStatistics(scanId);
 
 	        astSastResults.setResults(scanId, statisticsResults, config.getUrl(), projectId);
 
-	        //SAST detailed report
+	        //AST detailed report
 	        if (config.getGenerateXmlReport() == null || config.getGenerateXmlReport()) {
 	            byte[] cxReport = getScanReport(astSastResults.getScanId(), ReportType.XML, CONTENT_TYPE_APPLICATION_XML_V1);
-	            CxXMLResults reportObj = convertToXMLResult(cxReport);
+	            ResultsResponse reportObj = AstSastUtils.convertToXMLResult(cxReport);
 	            astSastResults.setScanDetailedReport(reportObj,config);
-	            astSastResults.setRawXMLReport(cxReport);
+//	            astSastResults.setRawXMLReport(cxReport);
 	        }
-	        astSastResults.setSastResultsReady(true);*/
+	        astSastResults.setSastResultsReady(true);
 	        return astSastResults;
 	    }
 	
+	 private byte[] getScanReport(String scanId, ReportType reportType, String contentType) throws IOException {
+		 //TODO : Remove compilation issues
+//	        CreateAstReportRequest reportRequest = new CreateAstReportRequest(scanId, reportType.name());
+//	        CreateReportResponse createReportResponse = createScanReport(reportRequest);
+//	        int reportId = createReportResponse.getReportId();
+//	        reportWaiter.waitForTaskToFinish(Long.toString(reportId), reportTimeoutSec, log);
+//
+//	        return getReport(reportId, contentType);
+		 return null;
+	    }
+	 
+	 private ResultSummaryResponse getScanStatistics(String scanId) throws IOException {
+			ResultsSummaryRequest summaryPayLoad = new ResultsSummaryRequest(scanId, true, false, false, false, language);
+			ResultSummaryResponse resultsSummary = cxOneClient.getResultsSummary(summaryPayLoad);
+	        return resultsSummary;
+	    }
 	/*
      * Suppress only those conditions for which it is generally acceptable
      * to have plugin not error out so that rest of the pipeline can continue.

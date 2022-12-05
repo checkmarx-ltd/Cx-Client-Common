@@ -53,7 +53,7 @@ public abstract class SummaryUtils {
         templateData.put("dependencyResult", dependencyScanResult != null ? dependencyScanResult : new DependencyScanResult());
 
 
-        ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
+        ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults, astSastResults);
 
         //calculated params:
 
@@ -62,7 +62,7 @@ public abstract class SummaryUtils {
         int policyViolatedCount;
         //sast:
         if (config.isSastEnabled()) {
-            if (sastResults != null && sastResults.isSastResultsReady()) {
+            if (sastResults != null && sastResults.isSastResultsReady() && astSastResults==null) {
                 boolean sastThresholdExceeded = scanSummary.isSastThresholdExceeded();
                 boolean sastNewResultsExceeded = scanSummary.isSastThresholdForNewResultsExceeded();
                 templateData.put("sastThresholdExceeded", sastThresholdExceeded);
@@ -96,7 +96,12 @@ public abstract class SummaryUtils {
                 templateData.put("sastLowNewHeight", sastLowNewHeight);
                 templateData.put("sastLowRecurrentHeight", sastLowRecurrentHeight);
             } else {
+            	if(astSastResults != null) {
+            		//TODO : Handle AST Sast Result
+            		System.out.println( " IN AST BLOCK");
+            	}else {
                 buildFailed = true;
+            	}
             }
         }
 
