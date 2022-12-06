@@ -114,13 +114,12 @@ public class TransformerServiceImpl implements  TransformerService{
 			if (presetConfiguration != null && presetConfiguration.getAllowOverride()) {
 				Map<Integer, String> sastPresetMap = PresetMap.getSastPresetMap();
 				PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
-
-				ProjectConfiguration updatedPresetConfiguration = presetTransformer.getPresetTransformer(
-						presetConfiguration, sastPresetMap, cxConfig.getPresetId());
+				ProjectConfiguration updatedPresetConfiguration = presetTransformer
+						.getPresetTransformer(presetConfiguration, sastPresetMap, cxConfig.getPresetId());
 				updatedProjectConfigurationList.add(updatedPresetConfiguration);
 				cxConfig.setPresetName(updatedPresetConfiguration.getValue());
 			}
-			
+
 			ProjectConfiguration incrementalConfiguration = transformerServiceImpl.getIncrementalConfiguration(projectConfigurationList);
 			if(incrementalConfiguration != null && incrementalConfiguration.getAllowOverride()) {
 				ProjectConfiguration updatedIncrementalConfiguration = incrementalConfiguration;
@@ -135,7 +134,6 @@ public class TransformerServiceImpl implements  TransformerService{
 				updatedFilterConfiguration.setValue(transformerServiceImpl.getFilterConfigurationValue(
 						cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern()));
 				updatedProjectConfigurationList.add(updatedFilterConfiguration);
-
 			}
 
 			if (updatedProjectConfigurationList != null && !updatedProjectConfigurationList.isEmpty()) {
@@ -148,34 +146,20 @@ public class TransformerServiceImpl implements  TransformerService{
 		}
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
-				/*new PathFilter("source", "*.java")*/pathfilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
+				pathfilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
 		cxOneConfig.setScanConfig(scanConfig);
 //		String projectId = projectNameTransformer.getProjectIdForProjectName(projectName);
 		cxOneConfig.getScanConfig().getProject().setId(projectId);
-		
-		
-		
-		
-		
-		
-//		PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
-//		String astPreset = presetTransformer.getPresetNameById(cxConfig.getPresetId());
-//		((SastConfig)(cxOneConfig.getScanConfig().getScanners().get(0))).setPresetName(astPreset);
-		//cxOneConfig = presetTransformer.getPresetName(cxConfig.getPresetName(), cxOneConfig);
-		
 		return cxOneConfig;
 		}
 
 		private List<ProjectConfiguration> getProjectConfigurationList(
 				ProjectConfigurationResponse projectConfigurationResponse) {
-
 			try {
-
 				if (projectConfigurationResponse != null) {
 					ObjectMapper mapper = new ObjectMapper();
 					ProjectConfigurationResults results = mapper.readValue(projectConfigurationResponse.toString(),
 							ProjectConfigurationResults.class);
-
 					return results.getResults().get(0);
 				}
 			} catch (Exception e) {
