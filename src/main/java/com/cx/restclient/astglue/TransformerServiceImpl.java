@@ -86,8 +86,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		cxOneConfig.setIsNewProject(true);
 		} 
 		
-		FilterTransformer filterTransformer = new FilterTransformer(cxOneClient);
-		PathFilter pathfilter = filterTransformer.getFilterFromSastExclusion(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
+		PathFilter astFilter = new PathFilter(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
 		
 		TransformerServiceImpl transformerServiceImpl = new TransformerServiceImpl(cxConfig, log);
 		//TransformerServiceImpl transformerServiceImpl = new TransformerServiceImpl(cxConfig, LoggerFactory.getLogger(TransformerServiceImpl.class));
@@ -146,7 +145,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		}
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
-				pathfilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
+				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
 		cxOneConfig.setScanConfig(scanConfig);
 //		String projectId = projectNameTransformer.getProjectIdForProjectName(projectName);
 		cxOneConfig.getScanConfig().getProject().setId(projectId);
@@ -217,4 +216,4 @@ public class TransformerServiceImpl implements  TransformerService{
 				filter = excludeFilesPattern;
 			return filter;
 		}
-	}
+}
