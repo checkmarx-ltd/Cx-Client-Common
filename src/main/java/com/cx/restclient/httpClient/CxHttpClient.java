@@ -121,6 +121,7 @@ public class CxHttpClient implements Closeable {
 
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
+    	   	   	
         this.log = log;
         this.rootUri = rootUri;
         this.refreshToken = refreshToken;
@@ -150,6 +151,7 @@ public class CxHttpClient implements Closeable {
             cb.setSSLSocketFactory(sslConnectionSocketFactory);
             cb.setConnectionManager(cm);
         } else {
+        	this.log.info("Using jvm property: " + System.getProperty("javax.net.ssl.trustStore"));
             cb.setConnectionManager(getHttpConnectionManager(false));
         }
         cb.setConnectionManagerShared(true);
@@ -335,7 +337,7 @@ public class CxHttpClient implements Closeable {
         if (disableSSLValidation) {
             factory = getTrustAllSSLSocketFactory();
         } else {
-            factory = new SSLConnectionSocketFactory(SSLContexts.createDefault());
+            factory = new SSLConnectionSocketFactory(SSLContexts.createDefault(), NoopHostnameVerifier.INSTANCE);
         }
         Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register(HTTPS, factory)
