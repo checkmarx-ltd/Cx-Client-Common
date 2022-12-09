@@ -42,6 +42,8 @@ public abstract class SummaryUtils {
 
         Map<String, Object> templateData = new HashMap<>();
         templateData.put("config", config);
+        //TODO: While handling AstSASTResults in report.ftl file, we need the below line implementation
+//        templateData.put("sastScannerType", String based on the flag);
         templateData.put("sast", sastResults != null ? sastResults : new SASTResults());
 
         // TODO: null value for "osa" should be handled inside the template.
@@ -52,9 +54,13 @@ public abstract class SummaryUtils {
 
         templateData.put("dependencyResult", dependencyScanResult != null ? dependencyScanResult : new DependencyScanResult());
 
-
-        ScanSummary scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults, astSastResults);
-
+        
+        ScanSummary scanSummary = null; 
+		if (astSastResults != null) {
+			scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults, astSastResults);
+		} else {
+			scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
+		}
         //calculated params:
 
         boolean buildFailed = false;

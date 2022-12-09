@@ -9,9 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.checkmarx.one.dto.resultsummary.ResultSummaryResponse;
-import com.checkmarx.one.dto.scan.ResultDataResponse;
-import com.checkmarx.one.dto.scan.ResultDetailsResponse;
-import com.checkmarx.one.dto.scan.ResultsResponse;
+import com.checkmarx.one.dto.scan.Scans;
+import com.checkmarx.one.dto.scan.sast.SastResultDetailsResponse;
+import com.checkmarx.one.dto.scan.sast.SastResultsResponse;
+import com.checkmarx.one.dto.scan.sast.ScanMetricsResponse;
 import com.cx.restclient.ast.dto.sast.report.AstSastSummaryResults;
 import com.cx.restclient.ast.dto.sast.report.Finding;
 import com.cx.restclient.configuration.CxScanConfig;
@@ -47,9 +48,8 @@ public class AstSastResults extends Results implements Serializable {
     private String scanStartTime = "";
     private String scanEndTime = "";
     
-    private String filesScanned;
-    private String LOC;
-    private List<ResultDataResponse> queryList;
+    private int filesScanned;
+    private int LOC;
 
     private byte[] rawXMLReport;
     private byte[] PDFReport;
@@ -71,23 +71,62 @@ public class AstSastResults extends Results implements Serializable {
     public void setScanId(String scanId) {
         this.scanId = scanId;
     }
+    public String getAstSastScanLink() {
+        return astScanLink;
+    }
+
+    public void setAstSastScanLink(String astScanLink) {
+        this.astScanLink = astScanLink;
+    }
+    public int getNewHigh() {
+        return newHigh;
+    }
+
+    public void setNewHigh(int newHigh) {
+        this.newHigh = newHigh;
+    }
+
+    public int getNewMedium() {
+        return newMedium;
+    }
+
+    public void setNewMedium(int newMedium) {
+        this.newMedium = newMedium;
+    }
+
+    public int getNewLow() {
+        return newLow;
+    }
+
+    public void setNewLow(int newLow) {
+        this.newLow = newLow;
+    }
+
+    public int getNewInfo() {
+        return newInfo;
+    }
+
+    public void setNewInfo(int newInfo) {
+        this.newInfo = newInfo;
+    }
     
     public void setResults(String scanId, ResultSummaryResponse statisticsResults, String url, String projectId) {
         setScanId(scanId);
-        setHigh(statisticsResults.getSastCounters().getSeverityCounters().size());
-        //TODO : To uncomment after implementing individual method to return individual severity count
-//        setMedium(statisticsResults.getMediumSeverity());
-//        setLow(statisticsResults.getLowSeverity());
-//        setInformation(statisticsResults.getInfoSeverity());
+        setHigh(statisticsResults.getHighSeverityCounter());
+        setMedium(statisticsResults.getMediumSeverityCounter());
+        setLow(statisticsResults.getLowSeverityCounter());
+        setInformation(statisticsResults.getInfoSeverityCounter());
         setAstSastScanLink(url, scanId, projectId);
         setAstSastProjectLink(url, projectId);
     }
- public void setScanDetailedReport(ResultsResponse reportObj,CxScanConfig config) throws IOException {
-    	
-        for (ResultDetailsResponse q : reportObj.getResults()) {
-            List<ResultDetailsResponse> qResult = reportObj.getResults();
+ public void setScanDetailedReport(SastResultsResponse sastResultsFromAst,ScanMetricsResponse scanMetrics, CxScanConfig config) throws IOException {
+     this.LOC = scanMetrics.getTotalScannedLoc();
+     this.filesScanned = scanMetrics.getTotalScannedFilesCount();
+     
+        for (SastResultDetailsResponse q : sastResultsFromAst.getResults()) {
+            List<SastResultDetailsResponse> qResult = sastResultsFromAst.getResults();
             for (int i = 0; i < qResult.size(); i++) {
-            	ResultDetailsResponse result = qResult.get(i);
+            	SastResultDetailsResponse result = qResult.get(i);
                  if ("New".equals(result.getStatus())) {
                     Severity sev = Severity.valueOf(result.getSeverity());
                     switch (sev) {
@@ -108,10 +147,6 @@ public class AstSastResults extends Results implements Serializable {
             }
         }
     }
- 
-    public void setAstSastScanLink(String astScanLink) {
-        this.astScanLink = astScanLink;
-    }
 
     public void setAstSastScanLink(String url, String scanId, String projectId) {
         this.astScanLink = String.format(url + SCAN_LINK_FORMAT, scanId, projectId);
@@ -121,7 +156,7 @@ public class AstSastResults extends Results implements Serializable {
         return astSastResultsReady;
     }
 
-    public void setSastResultsReady(boolean astSastResultsReady) {
+    public void setAstSastResultsReady(boolean astSastResultsReady) {
         this.astSastResultsReady = astSastResultsReady;
     } 
     
@@ -164,4 +199,36 @@ public class AstSastResults extends Results implements Serializable {
     public void setInformation(int information) {
         this.information = information;
     }
+
+	public void setRawXMLReport(byte[] cxReport) {
+		this.rawXMLReport = rawXMLReport;		
+	}
+
+	public void setPDFReport(byte[] pdfReport2) {
+		this.PDFReport = PDFReport;		
+	}
+
+	public void setASTSastPDFLink(String pdfLink) {
+		this.sastPDFLink = sastPDFLink;		
+	}
+
+	public void setPdfFileName(String pdfFileName2) {
+		this.pdfFileName = pdfFileName;		
+	}
+	public byte[] getRawXMLReport() {
+        return rawXMLReport;
+    }
+
+    public String getPdfFileName() {
+        return pdfFileName;
+    }
+    public byte[] getPDFReport() {
+        return PDFReport;
+    }
+
+	public void updateAstSastResult(Scans scanDetails) {
+		this.scanStart = scanDetails.getCreatedAt();
+        this.scanEndTime = scanDetails.getUpdatedAt();
+//        setScanStartEndDates(this.scanStart, this.scanTime,sastLanguage);
+	}
 }
