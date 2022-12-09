@@ -151,7 +151,9 @@ public class CxHttpClient implements Closeable {
             cb.setSSLSocketFactory(sslConnectionSocketFactory);
             cb.setConnectionManager(cm);
         } else {
-        	this.log.info("Using jvm property: " + System.getProperty("javax.net.ssl.trustStore"));
+        	String customTrustStore = System.getProperty("javax.net.ssl.trustStore");
+        	if(!StringUtils.isEmpty(customTrustStore))
+        		this.log.info("Custom truststore is configured. Ensure that trusted certificate for all CxSAST/CxSCA endpoints are imported. Custom store path: " + customTrustStore );
             cb.setConnectionManager(getHttpConnectionManager(false));
         }
         cb.setConnectionManagerShared(true);
