@@ -91,6 +91,7 @@ public class SpawnScaResolver {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));) {
             	String line = null;
                 while ((line = reader.readLine()) != null) {
+                	log.debug(line);
                 }
             } catch (IOException e) {
                 log.error("Error while trying write to the file: " + e.getMessage(), e.getStackTrace());
