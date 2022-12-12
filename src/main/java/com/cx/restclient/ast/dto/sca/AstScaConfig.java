@@ -46,7 +46,20 @@ public class AstScaConfig extends ASTConfig implements Serializable {
 	private String pathToScaResolver;
     private String scaResolverAddParameters;
 	
-    private Map<String,String> envVariables;
+    public String getPathToScaResolver() {
+		return pathToScaResolver;
+	}
+	public void setPathToScaResolver(String pathToScaResolver) {
+		this.pathToScaResolver = pathToScaResolver;
+	}
+	public String getScaResolverAddParameters() {
+		return scaResolverAddParameters;
+	}
+	public void setScaResolverAddParameters(String scaResolverAddParameters) {
+		this.scaResolverAddParameters = scaResolverAddParameters;
+	}
+
+	private Map<String,String> envVariables;
     private List<String> configFilePaths;
     
     public void setTeamPath(String teamPath) {
