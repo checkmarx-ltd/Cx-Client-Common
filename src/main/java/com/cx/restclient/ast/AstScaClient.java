@@ -300,7 +300,12 @@ public class AstScaClient extends AstClient implements Scanner {
                 byte[] scanReport = getReport(scaResults.getScanId(), reportFormat);
                 String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
                 String PDF_REPORT_NAME = "AstScaReport";
-				String fileName = PDF_REPORT_NAME  + "_" + now + "." + reportFormat.toLowerCase();
+                String fileName = "";
+                if(reportFormat.equals("CSV")) {
+                    reportFormat = "zip";      
+                }
+              
+                 fileName = PDF_REPORT_NAME  + "_" + now + "." + reportFormat.toLowerCase();
                 writeReport(scanReport, fileName, log);
                 if (reportFormat.toLowerCase().equals("pdf")) {
                     scaResults.setPDFReport(scanReport);
