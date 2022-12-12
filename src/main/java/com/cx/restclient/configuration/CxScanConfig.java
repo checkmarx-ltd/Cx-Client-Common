@@ -72,6 +72,7 @@ public class CxScanConfig implements Serializable {
     private String clientId;
     private String clientSecret;
     private String tenant;
+    private String filePath;
     
     public String getAccessControlBaseUrl() {
 		return accessControlBaseUrl;
@@ -111,6 +112,14 @@ public class CxScanConfig implements Serializable {
 
 	public void setTenant(String tenant) {
 		this.tenant = tenant;
+	}
+	
+	public String getFilePath() {
+		return filePath;
+	}
+
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
 	}
 
 	 public String getBranchName() {

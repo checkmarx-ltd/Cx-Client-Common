@@ -1,15 +1,15 @@
 package com.cx.restclient.sast.utils;
 
-public class RoutingFunction {
+public class MigrationYaml {
 	private String regex;
 	private String isMigrate;
 
-	public RoutingFunction() {
+	public MigrationYaml() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
 
-	public RoutingFunction(String regex, String isMigrate) {
+	public MigrationYaml(String regex, String isMigrate) {
 		super();
 		this.regex = regex;
 		this.isMigrate = isMigrate;

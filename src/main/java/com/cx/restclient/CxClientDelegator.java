@@ -21,7 +21,7 @@ import com.cx.restclient.dto.ScanResults;
 import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.sast.dto.SASTResults;
-import com.cx.restclient.sast.utils.ResponseFunction;
+import com.cx.restclient.sast.utils.MigrationYamlResponse;
 import com.cx.restclient.sast.utils.SASTToASTProjectRoutingMapper;
 import com.cx.restclient.sast.utils.State;
 
@@ -43,10 +43,17 @@ public class CxClientDelegator implements Scanner {
 
         this.config = config;
         this.log = log;
-        //TODO : matchRegex will accept the team name
-//        ResponseFunction response = SASTToASTProjectRoutingMapper.matchRegex("");
-        if (config.isSubmitToAST() /*& response.getIsMigrate().booleanValue()*/) {
-            scannersMap.put(ScannerType.AST_SAST, new CxOneWrapperClient(config, log));
+		if (config.isSubmitToAST()) {
+			MigrationYamlResponse migrationYamlResponse = null;
+			if (config.getFilePath() == null || config.getFilePath().isEmpty()) {
+				log.warn("File Path Cannot be null or Empty");
+				throw new RuntimeException("File Path Cannot be null or Empty");
+			} else
+				migrationYamlResponse = SASTToASTProjectRoutingMapper.isProjectEligibleToMigrateAST(
+						config.getFilePath(), config.getTeamPath(), config.getTeamId(),log);
+			if (migrationYamlResponse != null && migrationYamlResponse.getIsMigrate()) {
+				scannersMap.put(ScannerType.AST_SAST, new CxOneWrapperClient(config, log));
+		    }
         } else if (config.isSastEnabled()) {
             scannersMap.put(ScannerType.SAST, new CxSASTClient(config, log));
         }
