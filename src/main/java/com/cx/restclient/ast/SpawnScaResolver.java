@@ -31,7 +31,7 @@ public class SpawnScaResolver {
      * @param scaResolverAddParams - Additional parameters for SCA resolver
      * @return
      */
-    protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams, String pathToResultJSONFile, Logger log)
+    protected static int runScaResolver(String pathToScaResolver, String scaResolverAddParams, String pathToResultJSONFile,String pathToSASTResultJSONFile, Logger log)
             throws CxClientException {
         int exitCode = -100;
         String[] scaResolverCommand;
@@ -60,19 +60,21 @@ public class SpawnScaResolver {
         for (int i = 0; i < arguments.size(); i++) {
 
             String arg = arguments.get(i);
-            if (arg.equalsIgnoreCase("debug")) {
-                arg = "Debug";
-            }
-            if (arg.equalsIgnoreCase("error")) {
-                arg = "Error";
-            }
             scaResolverCommand[i + 2] = arg;
-            if (arg.equals("-r")) {
+            	if (arg.equals("-r") || "--resolver-result-path".equals(arg)) {
                 while (pathToResultJSONFile.contains("\""))
                     pathToResultJSONFile = pathToResultJSONFile.replace("\"", "");
                 scaResolverCommand[i + 3] = pathToResultJSONFile;
                 i++;
             }
+            
+        else if("--sast-result-path".equals(arg))
+        {
+        	while (pathToSASTResultJSONFile.contains("\""))
+        		pathToSASTResultJSONFile = pathToSASTResultJSONFile.replace("\"", "");
+            scaResolverCommand[i+3] = pathToSASTResultJSONFile;
+            i++;
+        }  
         }
         log.debug("Finished created CMD command");
         try {
@@ -81,6 +83,7 @@ public class SpawnScaResolver {
             if (!SystemUtils.IS_OS_UNIX) {
                 log.debug("Executing cmd command on windows. ");
                 process = Runtime.getRuntime().exec(scaResolverCommand);
+     
             } else {
                 String tempPermissionValidation = "ls " + pathToScaResolver + " -ltr";
                 printExecCommandOutput(tempPermissionValidation, log);
