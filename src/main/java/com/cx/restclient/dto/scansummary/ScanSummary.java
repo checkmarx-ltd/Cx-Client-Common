@@ -1,5 +1,9 @@
 package com.cx.restclient.dto.scansummary;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.checkmarx.one.dto.resultsummary.SeverityEnum;
 import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.ast.dto.sca.AstScaResults;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
@@ -9,9 +13,6 @@ import com.cx.restclient.osa.dto.OSAResults;
 import com.cx.restclient.osa.dto.OSASummaryResults;
 import com.cx.restclient.sast.dto.SASTResults;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Collects errors from provided scan results, based on scan config.
  */
@@ -19,6 +20,16 @@ public class ScanSummary {
     private final List<ThresholdError> thresholdErrors = new ArrayList<>();
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     private final boolean policyViolated;
+
+    public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {
+
+        addSastThresholdErrors(config, sastResults);
+        addDependencyScanThresholdErrors(config, osaResults, scaResults);
+
+        addNewResultThresholdErrors(config, sastResults);
+
+        policyViolated = determinePolicyViolation(config, sastResults, osaResults, scaResults);
+    }
 
     public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults, AstSastResults astSastResults) {
 
@@ -32,7 +43,6 @@ public class ScanSummary {
 
         policyViolated = determinePolicyViolation(config, sastResults, osaResults, scaResults);
     }
-
     
 	@Override
     public String toString() {
