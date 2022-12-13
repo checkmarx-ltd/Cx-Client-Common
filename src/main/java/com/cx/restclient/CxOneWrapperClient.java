@@ -104,7 +104,7 @@ public class CxOneWrapperClient implements Scanner{
 		ScanResponse results = cxOneClient.scan(oneConfig.getScanConfig());
 		scanId = (String)results.getId();
 		astSastResults.setScanId(scanId);
-		log.info("AST SAST scan created successfully: Scan ID is {}", scanId);
+		log.info("CxOne SAST scan created successfully: Scan ID is {}", scanId);
 		
         return astSastResults;
 	}
