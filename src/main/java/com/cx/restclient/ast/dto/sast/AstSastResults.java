@@ -1,7 +1,7 @@
 package com.cx.restclient.ast.dto.sast;
 
-import static com.cx.restclient.sast.utils.SASTParam.PROJECT_LINK_FORMAT;
-import static com.cx.restclient.sast.utils.SASTParam.SCAN_LINK_FORMAT;
+import static com.cx.restclient.ast.dto.sast.AstSASTParam.PROJECT_LINK_FORMAT;
+import static com.cx.restclient.ast.dto.sast.AstSASTParam.SCAN_LINK_FORMAT;
 
 import java.io.IOException;
 import java.io.Serializable;
