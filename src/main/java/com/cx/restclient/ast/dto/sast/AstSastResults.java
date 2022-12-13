@@ -6,8 +6,11 @@ import static com.cx.restclient.sast.utils.SASTParam.SCAN_LINK_FORMAT;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+import com.checkmarx.one.dto.resultsummary.ResultSummaries;
+import com.checkmarx.one.dto.resultsummary.ResultSummary;
 import com.checkmarx.one.dto.resultsummary.ResultSummaryResponse;
 import com.checkmarx.one.dto.scan.Scans;
 import com.checkmarx.one.dto.scan.sast.SastResultDetailsResponse;
@@ -18,6 +21,8 @@ import com.cx.restclient.ast.dto.sast.report.Finding;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
 import com.cx.restclient.dto.Results;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -110,15 +115,44 @@ public class AstSastResults extends Results implements Serializable {
         this.newInfo = newInfo;
     }
     
-    public void setResults(String scanId, ResultSummaryResponse statisticsResults, String url, String projectId) {
-        setScanId(scanId);
-        setHigh(statisticsResults.getHighSeverityCounter());
-        setMedium(statisticsResults.getMediumSeverityCounter());
-        setLow(statisticsResults.getLowSeverityCounter());
-        setInformation(statisticsResults.getInfoSeverityCounter());
-        setAstSastScanLink(url, scanId, projectId);
-        setAstSastProjectLink(url, projectId);
-    }
+    /**
+     * This method sets the result details to the AstSastResults
+     * @param scanId
+     * @param resultsSummaryRes
+     * @param url
+     * @param projectId
+     * @throws JsonMappingException
+     * @throws JsonProcessingException
+     */
+	public void setResults(String scanId, ResultSummaryResponse resultsSummaryRes, String url, String projectId)
+			throws JsonMappingException, JsonProcessingException {
+		setScanId(scanId);
+		//Setting the result high/medium/low count to AstSastResults
+		ResultSummaries scansSummaries;
+		scansSummaries = resultsSummaryRes.getContent();
+
+		for (Iterator iterator = scansSummaries.getScansSummaries().iterator(); iterator.hasNext();) {
+			ResultSummary resultSummaryResponse = (ResultSummary) iterator.next();
+			if (resultSummaryResponse.getScanId().equalsIgnoreCase(scanId)) {
+				System.out.println(resultSummaryResponse.getLowSeverityCounter());
+				setLow(resultSummaryResponse.getLowSeverityCounter());
+				setHigh(resultSummaryResponse.getHighSeverityCounter());
+				setMedium(resultSummaryResponse.getMediumSeverityCounter());
+				setLow(resultSummaryResponse.getLowSeverityCounter());
+				setInformation(resultSummaryResponse.getInfoSeverityCounter());
+			}
+		}
+
+		setAstSastScanLink(url, scanId, projectId);
+		setAstSastProjectLink(url, projectId);
+	}
+	/**
+	 * Sets the details report
+	 * @param sastResultsFromAst
+	 * @param scanMetrics
+	 * @param config
+	 * @throws IOException
+	 */
  public void setScanDetailedReport(SastResultsResponse sastResultsFromAst,ScanMetricsResponse scanMetrics, CxScanConfig config) throws IOException {
      this.LOC = scanMetrics.getTotalScannedLoc();
      this.filesScanned = scanMetrics.getTotalScannedFilesCount();

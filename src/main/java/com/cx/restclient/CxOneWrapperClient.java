@@ -186,9 +186,9 @@ public class CxOneWrapperClient implements Scanner{
 
 	private AstSastResults retrieveAstSastResults(String scanId, String projectId) throws IOException {
 
-			ResultSummaryResponse resultSummary = getScanStatistics(scanId);
+			ResultSummaryResponse resultsSummaryRes = getScanStatistics(scanId);
 			ScanMetricsResponse scanMetrics = cxOneClient.getScanMetrics(scanId);
-	        astSastResults.setResults(scanId, resultSummary, config.getUrl(), projectId);
+	        astSastResults.setResults(scanId, resultsSummaryRes, config.getUrl(), projectId);
 
         	SastResultsResponse results = cxOneClient.getSASTResults(new ResultsRequest(scanId, null, null));
         	Scans scanDetails = cxOneClient.getScanDetails(scanId);
