@@ -92,7 +92,12 @@ public abstract class LegacyClient {
             else {
             	Long masterProjectId;
             	List<Project> masterProject = getProjectByName(config.getMasterBranchProjName(), config.getTeamId(), teamPath);
+            	if (masterProject != null) {
             	masterProjectId = masterProject.get(0).getId();
+            	}
+            	else {
+                    throw new CxClientException("Master project does not exist:" + config.getMasterBranchProjName());
+                }
             	projectId = createChildProject(masterProjectId, config.getProjectName());
             	if (projectId == UNKNOWN_INT) {
                     throw new CxClientException("Project was not created successfully: ".concat(config.getProjectName()));
