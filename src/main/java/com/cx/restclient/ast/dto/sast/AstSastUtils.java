@@ -10,21 +10,21 @@ import javax.xml.bind.Unmarshaller;
 
 import org.slf4j.Logger;
 
-import com.checkmarx.one.dto.scan.sast.SastResultsResponse;
+import com.checkmarx.one.dto.scan.sast.SastResults;
 import com.cx.restclient.exception.CxClientException;
 import com.sun.xml.bind.v2.ContextFactory;
 
 public class AstSastUtils {
 	
-	 public static SastResultsResponse convertToXMLResult(byte[] cxReport) throws CxClientException {
-		 SastResultsResponse reportObj = null;
+	 public static SastResults convertToXMLResult(byte[] cxReport) throws CxClientException {
+		 SastResults reportObj = null;
 	        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(cxReport)) {
 
-	              JAXBContext jaxbContext = ContextFactory.createContext(SastResultsResponse.class.getPackage().getName(),                    
-	            		  SastResultsResponse.class.getClassLoader(), Collections.<String, Object>emptyMap());
+	              JAXBContext jaxbContext = ContextFactory.createContext(SastResults.class.getPackage().getName(),                    
+	            		  SastResults.class.getClassLoader(), Collections.<String, Object>emptyMap());
 	            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
-	            reportObj = (SastResultsResponse) unmarshaller.unmarshal(byteArrayInputStream);
+	            reportObj = (SastResults) unmarshaller.unmarshal(byteArrayInputStream);
 
 	        } catch (JAXBException | IOException e) {
 	            throw new CxClientException("Failed to parse xml report: " + e.getMessage(), e);

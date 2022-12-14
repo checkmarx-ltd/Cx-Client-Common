@@ -25,8 +25,8 @@ import com.checkmarx.one.dto.scan.ResultsSummaryRequest;
 import com.checkmarx.one.dto.scan.ScanIdConfigRequest;
 import com.checkmarx.one.dto.scan.ScanResponse;
 import com.checkmarx.one.dto.scan.ScanStatusResponse;
-import com.checkmarx.one.dto.scan.Scans;
-import com.checkmarx.one.dto.scan.sast.SastResultDetailsResponse;
+import com.checkmarx.one.dto.scan.ScansResponse;
+import com.checkmarx.one.dto.scan.sast.SastResultDetails;
 import com.checkmarx.one.dto.scan.sast.SastResultsResponse;
 import com.checkmarx.one.dto.scan.sast.ScanMetricsResponse;
 import com.cx.restclient.ast.dto.sast.AstSastQueryCounter;
@@ -41,6 +41,8 @@ import com.cx.restclient.dto.ScannerType;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sast.dto.ReportType;
 import com.cx.restclient.sast.utils.State;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class CxOneWrapperClient implements Scanner{
     private CxScanConfig config;
@@ -104,6 +106,7 @@ public class CxOneWrapperClient implements Scanner{
 		ScanResponse results = cxOneClient.scan(oneConfig.getScanConfig());
 		scanId = (String)results.getId();
 		astSastResults.setScanId(scanId);
+		astSastResults.setScanResponse(results);
 		log.info("CxOne SAST scan created successfully: Scan ID is {}", scanId);
 		
         return astSastResults;
@@ -188,10 +191,10 @@ public class CxOneWrapperClient implements Scanner{
 
 			ResultSummaryResponse resultsSummaryRes = getScanStatistics(scanId);
 			ScanMetricsResponse scanMetrics = cxOneClient.getScanMetrics(scanId);
-	        astSastResults.setResults(scanId, resultsSummaryRes, config.getUrl(), projectId);
+	        astSastResults.setResults(scanId, resultsSummaryRes, oneConfig, projectId);
 
         	SastResultsResponse results = cxOneClient.getSASTResults(new ResultsRequest(scanId, null, null));
-        	Scans scanDetails = cxOneClient.getScanDetails(scanId);
+        	ScansResponse scanDetails = cxOneClient.getScanDetails(scanId);
         	populateAstSastResults(results, scanDetails);
             astSastResults.setScanDetailedReport(results,scanMetrics, config);
 	        
@@ -214,14 +217,14 @@ public class CxOneWrapperClient implements Scanner{
 	        return resultsSummary;
 	    }
 	 
-	private void populateAstSastResults(SastResultsResponse results, Scans scanDetails) throws IOException {
+	private void populateAstSastResults(SastResultsResponse results, ScansResponse scanDetails) throws CxClientException, JsonMappingException, JsonProcessingException {
 		
 		astSastResults.updateAstSastResult(scanDetails);
 		
-		for (SastResultDetailsResponse q : results.getResults()) {
-			List<SastResultDetailsResponse> qResult = results.getResults();
+		for (SastResultDetails q : results.getContent().getResults()) {
+			List<SastResultDetails> qResult = results.getContent().getResults();
 			for (int i = 0; i < qResult.size(); i++) {
-				SastResultDetailsResponse result = qResult.get(i);
+				SastResultDetails result = qResult.get(i);
 				AstSastQueryCounter queryCtr = new AstSastQueryCounter();
 				SeverityEnum sev = SeverityEnum.valueOf(result.getSeverity());
 				switch (sev) {
