@@ -164,8 +164,8 @@ public class AstSastResults extends Results implements Serializable {
 	 * @throws IOException
 	 */
  public void setScanDetailedReport(SastResultsResponse results,ScanMetricsResponse scanMetrics, CxScanConfig config) throws IOException {
-     this.LOC = scanMetrics.getTotalScannedLoc();
-     this.filesScanned = scanMetrics.getTotalScannedFilesCount();
+     this.LOC = scanMetrics.getTotalLoc();
+     this.filesScanned = scanMetrics.getTotalScannedFiles();
      
         for (SastResultDetails q : results.getContent().getResults()) {
             List<SastResultDetails> qResult = results.getContent().getResults();
