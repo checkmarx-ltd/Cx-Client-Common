@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import com.checkmarx.one.CxOneClient;
@@ -17,9 +18,7 @@ import com.checkmarx.one.dto.configuration.ProjectConfigurationResults;
 import com.checkmarx.one.dto.project.ProjectCreateResponse;
 import com.checkmarx.one.dto.scan.ScanConfig;
 import com.checkmarx.one.sast.CxOneProjectTransformer;
-import com.checkmarx.one.sast.EngineConfigurationMap;
 import com.checkmarx.one.sast.EngineConfigurationTransformer;
-import com.checkmarx.one.sast.FilterTransformer;
 import com.checkmarx.one.sast.PresetMap;
 import com.checkmarx.one.sast.PresetTransformer;
 import com.checkmarx.one.sast.ProjectNameTransformer;
@@ -97,12 +96,11 @@ public class TransformerServiceImpl implements  TransformerService{
 		if (projectConfigurationList != null) {
 			ProjectConfiguration languageModeConfiguration = transformerServiceImpl
 					.getLanguageModeConfiguration(projectConfigurationList);
-			if (languageModeConfiguration != null && languageModeConfiguration.getAllowOverride()) {
-				Map<Integer, String> engineConfigurationsMap = EngineConfigurationMap.getEngineConfigurationMap();
+			if (languageModeConfiguration != null && languageModeConfiguration.getAllowOverride()) {				
 				EngineConfigurationTransformer engineConfigurationTransformer = new EngineConfigurationTransformer(
 						cxOneClient);
 				ProjectConfiguration updatedLanguageModeConfiguration = engineConfigurationTransformer
-						.getEngineConfigurationTransformer(languageModeConfiguration, engineConfigurationsMap,
+						.getEngineConfigurationTransformer(languageModeConfiguration, 
 								cxConfig.getEngineConfigurationId());
 				updatedProjectConfigurationList.add(updatedLanguageModeConfiguration);
 				cxConfig.setEngineConfigurationName(updatedLanguageModeConfiguration.getValue());
@@ -204,16 +202,25 @@ public class TransformerServiceImpl implements  TransformerService{
 
 		private String getFilterConfigurationValue(String sastFolderExclusions, String sastFilterPattern) {
 			String filter = "";
-			String excludeFoldersPattern = Arrays.stream(sastFolderExclusions.split(",")).map(String::trim)
+			String excludeFoldersPattern = "";
+			if(!StringUtils.isEmpty(sastFolderExclusions))
+				excludeFoldersPattern =	Arrays.stream(sastFolderExclusions.split(",")).map(String::trim)
 					.collect(Collectors.joining(","));
-			String excludeFilesPattern = Arrays.stream(sastFilterPattern.split(",")).map(String::trim)
+			
+			String excludeFilesPattern = "";
+			if(!StringUtils.isEmpty(sastFilterPattern))
+				excludeFilesPattern = Arrays.stream(sastFilterPattern.split(",")).map(String::trim)
 					.map(file -> file.replace("!**/", "")).collect(Collectors.joining(","));
+			
 			if (excludeFoldersPattern != null && !excludeFoldersPattern.isEmpty())
 				filter = excludeFoldersPattern;
-			if (filter != null && !filter.isEmpty())
-				filter += "," + excludeFilesPattern;
-			else if (excludeFilesPattern != null && !excludeFilesPattern.isEmpty())
-				filter = excludeFilesPattern;
+			
+			if (excludeFilesPattern != null && !excludeFilesPattern.isEmpty())
+				if(filter.isEmpty())
+					filter = excludeFilesPattern;
+				else
+					filter += "," + excludeFilesPattern;
+			
 			return filter;
 		}
 }
