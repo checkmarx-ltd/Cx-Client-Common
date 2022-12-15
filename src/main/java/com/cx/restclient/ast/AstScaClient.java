@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.text.SimpleDateFormat;
@@ -456,16 +457,16 @@ public class AstScaClient extends AstClient implements Scanner {
             String tempSASTResultFile =  tempDirectory + File.separator + SASTParam.SAST_RESOLVER_RESULT_FILE_NAME;
             log.debug("Copying ScaResolver result files to temporary location.");
             File destTempDir = new File(tempDirectory);
-            destTempDir.setWritable(true, false);
-            FileUtils.copyFileToDirectory(new File(pathToResultJSONFile), destTempDir);
+            Files.createDirectory(destTempDir.toPath());           
+            Files.copy(new File(pathToResultJSONFile).toPath(), new File(tempResultFile).toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+            if(!StringUtils.isEmpty(pathToSASTResultJSONFile)) 
+            	FileUtils.copyFile(new File(pathToSASTResultJSONFile), new File(tempSASTResultFile), StandardCopyOption.COPY_ATTRIBUTES);
             
-            if(pathToSASTResultJSONFile!=null && !pathToSASTResultJSONFile.isEmpty()) 
-            FileUtils.copyFileToDirectory(new File(pathToSASTResultJSONFile),destTempDir);
-            log.info("Completed File copy to"+tempDirectory);
+            log.info("Completed File copy to "+tempDirectory);
             zipFile = zipEvidenceFile(destTempDir);
             log.info("Deleting temporary uploaded file for scan {}", destTempDir.getAbsolutePath());
             FileUtils.deleteDirectory(destTempDir);
-            log.info("Deleted temp directory");
+            log.info("Deleted temp directory " + destTempDir.getAbsolutePath());
         }else{
             throw new CxClientException("Error while running sca resolver executable. Exit code: "+exitCode);
         }
@@ -481,7 +482,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
 	private String createTimestampBasedPath(String inputResultFilePath, String timeStamp,
 			String targetFileName) {
-    	 if(inputResultFilePath == "") 
+    	 if(inputResultFilePath.isEmpty()) 
              return inputResultFilePath;
 
              String lastPathComponent = "";
@@ -597,7 +598,7 @@ public class AstScaClient extends AstClient implements Scanner {
 	private File zipEvidenceFile(File filePath) throws IOException {
 
         tempUploadFile = File.createTempFile(TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP, ".zip");
-		String sourceDir = filePath.getParent();
+		String sourceDir = filePath.getAbsolutePath();
 
         log.info("Collecting files to zip archive: {}", tempUploadFile.getAbsolutePath());
 
