@@ -18,6 +18,7 @@ import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.TaskStatus;
 import com.checkmarx.one.dto.report.CreateAstReportRequest;
 import com.checkmarx.one.dto.report.CreateAstReportResponse;
+import com.checkmarx.one.dto.report.ReportDataRequest;
 import com.checkmarx.one.dto.resultsummary.ResultSummaryResponse;
 import com.checkmarx.one.dto.resultsummary.SeverityEnum;
 import com.checkmarx.one.dto.scan.ResultsRequest;
@@ -144,7 +145,7 @@ public class CxOneWrapperClient implements Scanner{
           //PDF report
             if (config.getGeneratePDFReport()) {
                 log.info("Generating PDF report");
-                byte[] pdfReport = getScanReport(astSastResults.getScanId(), ReportType.PDF, CONTENT_TYPE_APPLICATION_PDF_V1);
+                byte[] pdfReport = getScanReport(astSastResults.getScanId(), projectId, astSastResults.getScanResponse().getBranch(), ReportType.PDF, CONTENT_TYPE_APPLICATION_PDF_V1);
                 astSastResults.setPDFReport(pdfReport);
                 if (config.getReportsDir() != null) {
                     String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
@@ -202,8 +203,9 @@ public class CxOneWrapperClient implements Scanner{
 	        return astSastResults;
 	    }
 	
-	 private byte[] getScanReport(String scanId, ReportType reportType, String contentType) throws IOException {
-	        CreateAstReportRequest reportRequest = new CreateAstReportRequest(scanId, reportType.name());
+	 private byte[] getScanReport(String scanId, String projectId, String branch, ReportType reportType, String contentType) throws IOException {
+		 ReportDataRequest reportData = new ReportDataRequest(scanId, projectId, branch);
+	        CreateAstReportRequest reportRequest = new CreateAstReportRequest("scan-report", "cli", reportType.name(), reportData);
 	        CreateAstReportResponse reportResponse = cxOneClient.createScanReport(reportRequest);
 	        String reportId = reportResponse.getReportId();
 	        cxOneClient.waitForReportToResolve(reportId, reportTimeoutSec, log);
