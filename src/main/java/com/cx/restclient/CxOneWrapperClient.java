@@ -30,6 +30,7 @@ import com.checkmarx.one.dto.scan.ScansResponse;
 import com.checkmarx.one.dto.scan.sast.SastResultDetails;
 import com.checkmarx.one.dto.scan.sast.SastResultsResponse;
 import com.checkmarx.one.dto.scan.sast.ScanMetricsResponse;
+import com.cx.restclient.ast.dto.sast.AstSASTParam;
 import com.cx.restclient.ast.dto.sast.AstSastQueryCounter;
 import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.ast.dto.sast.AstSastUtils;
@@ -139,7 +140,7 @@ public class CxOneWrapperClient implements Scanner{
         if (config.getEnablePolicyViolations()) {
             // DO Nothing . Policy violation feature remains silent
         }
-		if (astSastResults.getAstSastScanLink() != null)
+		if (astSastResults.getCxOneSastScanLink() != null)
 			AstSastUtils.printAstSASTResultsToConsole(astSastResults, config.getEnablePolicyViolations(), log);
 
           //PDF report
@@ -151,7 +152,7 @@ public class CxOneWrapperClient implements Scanner{
                     String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
                     String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
                     String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
-                    astSastResults.setASTSastPDFLink(pdfLink);
+                    astSastResults.setCxOneSastPDFLink(pdfLink);
                     astSastResults.setPdfFileName(pdfFileName);
                 }
                             
@@ -199,13 +200,13 @@ public class CxOneWrapperClient implements Scanner{
         	populateAstSastResults(results, scanDetails);
             astSastResults.setScanDetailedReport(results,scanMetrics, config);
 	        
-	        astSastResults.setAstSastResultsReady(true);
+	        astSastResults.setCxOneSastResultsReady(true);
 	        return astSastResults;
 	    }
 	
 	 private byte[] getScanReport(String scanId, String projectId, String branch, ReportType reportType, String contentType) throws IOException {
 		 ReportDataRequest reportData = new ReportDataRequest(scanId, projectId, branch);
-	        CreateAstReportRequest reportRequest = new CreateAstReportRequest("scan-report", "cli", reportType.name(), reportData);
+	        CreateAstReportRequest reportRequest = new CreateAstReportRequest(AstSASTParam.REPORT_NAME, AstSASTParam.CLI_REPORT_TYPE, reportType.name(), reportData);
 	        CreateAstReportResponse reportResponse = cxOneClient.createScanReport(reportRequest);
 	        String reportId = reportResponse.getReportId();
 	        cxOneClient.waitForReportToResolve(reportId, reportTimeoutSec, log);
@@ -220,7 +221,7 @@ public class CxOneWrapperClient implements Scanner{
 	    }
 	 
 	private void populateAstSastResults(SastResultsResponse results, ScansResponse scanDetails) throws CxClientException, JsonMappingException, JsonProcessingException {
-		
+		astSastResults.setCxOneLanguage(language);
 		astSastResults.updateAstSastResult(scanDetails);
 		
 		for (SastResultDetails q : results.getContent().getResults()) {
@@ -279,7 +280,7 @@ public class CxOneWrapperClient implements Scanner{
 			log.info(additionalMessage);
 			try {
 				astSastResults = getLatestScanResults();
-				if (oneConfig.isIsNewProject() && astSastResults.getAstSastScanLink() == null) {
+				if (oneConfig.isIsNewProject() && astSastResults.getCxOneSastScanLink() == null) {
 					String message = String
 							.format("The project %s is a new project. Hence there is no last scan report to be shown.", config.getProjectName());
 					log.info(message);

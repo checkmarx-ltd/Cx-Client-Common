@@ -19,6 +19,10 @@ import com.cx.restclient.sast.dto.SASTResults;
 public class ScanSummary {
     private final List<ThresholdError> thresholdErrors = new ArrayList<>();
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
+    
+//    private final List<ThresholdError> cxOnethresholdErrors = new ArrayList<>();
+//    private final List<Severity> cxOneewResultThresholdErrors = new ArrayList<>();
+    
     private final boolean policyViolated;
 
     public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {
@@ -33,13 +37,10 @@ public class ScanSummary {
 
     public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults, AstSastResults astSastResults) {
 
-        addSastThresholdErrors(config, sastResults);
-        if(astSastResults != null) {
-        addAstSastThresholdErrors(config, astSastResults);
-        }
+        addCxOneSastThresholdErrors(config, astSastResults);
         addDependencyScanThresholdErrors(config, osaResults, scaResults);
 
-        addNewResultThresholdErrors(config, sastResults);
+        addCxOneNewResultThresholdErrors(config, astSastResults);
 
         policyViolated = determinePolicyViolation(config, sastResults, osaResults, scaResults);
     }
@@ -82,7 +83,12 @@ public class ScanSummary {
     public boolean isSastThresholdExceeded() {
         return thresholdErrors.stream().anyMatch(error -> error.getSource() == ErrorSource.SAST);
     }
-
+    public boolean isCxOneSastThresholdExceeded() {
+        return thresholdErrors.stream().anyMatch(error -> error.getSource() == ErrorSource.CXONE_SAST);
+    }
+    public boolean isCxOneSastThresholdForNewResultsExceeded() {
+        return !newResultThresholdErrors.isEmpty();
+    }
     public boolean isOsaThresholdExceeded() {
         return thresholdErrors.stream().anyMatch(error -> error.getSource() == ErrorSource.OSA || error.getSource() == ErrorSource.SCA);
     }
@@ -101,10 +107,10 @@ public class ScanSummary {
         }
     }
     
-    private void addAstSastThresholdErrors(CxScanConfig config, AstSastResults astSastResults) {
+    private void addCxOneSastThresholdErrors(CxScanConfig config, AstSastResults astSastResults) {
     	if (config.isSASTThresholdEffectivelyEnabled() &&
                 astSastResults != null &&
-                astSastResults.isAstSastResultsReady()) {
+                astSastResults.isCxOneSastResultsReady()) {
             checkForThresholdError(astSastResults.getHigh(), config.getSastHighThreshold(), ErrorSource.CXONE_SAST, Severity.HIGH);
             checkForThresholdError(astSastResults.getMedium(), config.getSastMediumThreshold(), ErrorSource.CXONE_SAST, Severity.MEDIUM);
             checkForThresholdError(astSastResults.getLow(), config.getSastLowThreshold(), ErrorSource.CXONE_SAST, Severity.LOW);
@@ -170,7 +176,31 @@ public class ScanSummary {
             }
         }
     }
+    private void addCxOneNewResultThresholdErrors(CxScanConfig config, AstSastResults astSastResults) {
 
+        if (astSastResults != null && astSastResults.isCxOneSastResultsReady() && config.getSastNewResultsThresholdEnabled()) {
+            String severity = config.getSastNewResultsThresholdSeverity();
+
+            if ("LOW".equals(severity)) {
+                if (astSastResults.getNewLow() > 0) {
+                    newResultThresholdErrors.add(Severity.LOW);
+                }
+                severity = "MEDIUM";
+            }
+
+            if ("MEDIUM".equals(severity)) {
+                if (astSastResults.getNewMedium() > 0) {
+                    newResultThresholdErrors.add(Severity.MEDIUM);
+                }
+                severity = "HIGH";
+            }
+
+            if ("HIGH".equals(severity) && astSastResults.getNewHigh() > 0) {
+                newResultThresholdErrors.add(Severity.HIGH);
+            }
+        }
+    		
+	}
     private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {
         return config.getEnablePolicyViolations() &&
                 ((osaResults != null &&

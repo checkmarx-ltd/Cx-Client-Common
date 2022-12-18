@@ -34,7 +34,7 @@ public abstract class SummaryUtils {
     }
 
 	private static String generateSummaryHelper(SASTResults sastResults, OSAResults osaResults,
-			AstScaResults scaResults, AstSastResults astSastResults, CxScanConfig config) throws TemplateNotFoundException,
+			AstScaResults scaResults, AstSastResults cxOneSastResults, CxScanConfig config) throws TemplateNotFoundException,
 			MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Configuration cfg = new Configuration(new Version("2.3.23"));
         cfg.setClassForTemplateLoading(SummaryUtils.class, "/com/cx/report");
@@ -42,22 +42,21 @@ public abstract class SummaryUtils {
 
         Map<String, Object> templateData = new HashMap<>();
         templateData.put("config", config);
-        //TODO: While handling AstSASTResults in report.ftl file, we need the below line implementation
 //        templateData.put("sastScannerType", String based on the flag);
         templateData.put("sast", sastResults != null ? sastResults : new SASTResults());
 
         // TODO: null value for "osa" should be handled inside the template.
         templateData.put("osa", osaResults != null ? osaResults : new OSAResults());
         templateData.put("sca", scaResults != null ? scaResults : new AstScaResults());
-        templateData.put("astSast", astSastResults != null ? astSastResults : new AstSastResults());
+        templateData.put("cxOnesast", cxOneSastResults != null ? cxOneSastResults : new AstSastResults());
         DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults, scaResults);
 
         templateData.put("dependencyResult", dependencyScanResult != null ? dependencyScanResult : new DependencyScanResult());
 
         
         ScanSummary scanSummary = null; 
-		if (astSastResults != null) {
-			scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults, astSastResults);
+		if (cxOneSastResults != null) {
+			scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults, cxOneSastResults);
 		} else {
 			scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults);
 		}
@@ -68,7 +67,7 @@ public abstract class SummaryUtils {
         int policyViolatedCount;
         //sast:
         if (config.isSastEnabled()) {
-            if (sastResults != null && sastResults.isSastResultsReady() && astSastResults==null) {
+            if (sastResults != null && sastResults.isSastResultsReady() && cxOneSastResults==null) {
                 boolean sastThresholdExceeded = scanSummary.isSastThresholdExceeded();
                 boolean sastNewResultsExceeded = scanSummary.isSastThresholdForNewResultsExceeded();
                 templateData.put("sastThresholdExceeded", sastThresholdExceeded);
@@ -101,15 +100,46 @@ public abstract class SummaryUtils {
                 templateData.put("sastLowTotalHeight", sastLowTotalHeight);
                 templateData.put("sastLowNewHeight", sastLowNewHeight);
                 templateData.put("sastLowRecurrentHeight", sastLowRecurrentHeight);
-            } else {
-            	if(astSastResults != null) {
-            		//TODO : Handle AST Sast Result
-            		System.out.println( " IN AST BLOCK");
+            } else if(cxOneSastResults != null) {
+            	if (cxOneSastResults.isCxOneSastResultsReady()) {
+                    boolean cxOnesastThresholdExceeded = scanSummary.isCxOneSastThresholdExceeded();
+                    boolean cxOneNewResultsExceeded = scanSummary.isCxOneSastThresholdForNewResultsExceeded();
+                    templateData.put("cxonesastThresholdExceeded", cxOnesastThresholdExceeded);
+                    templateData.put("cxonesastNewResultsExceeded", cxOneNewResultsExceeded);
+                    buildFailed = cxOnesastThresholdExceeded || cxOneNewResultsExceeded;
+                    //calculate sast bars:
+                    float maxCount = Math.max(cxOneSastResults.getHigh(), Math.max(cxOneSastResults.getMedium(), cxOneSastResults.getLow()));
+                    float sastBarNorm = maxCount * 10f / 9f;
+
+                    //sast high bars
+                    float cxonesastHighTotalHeight = (float) cxOneSastResults.getHigh() / sastBarNorm * 238f;
+                    float cxonesastHighNewHeight = calculateNewBarHeight(cxOneSastResults.getNewHigh(), cxOneSastResults.getHigh(), cxonesastHighTotalHeight);
+                    float cxonesastHighRecurrentHeight = cxonesastHighTotalHeight - cxonesastHighNewHeight;
+                    templateData.put("cxonesastHighTotalHeight", cxonesastHighTotalHeight);
+                    templateData.put("cxonesastHighNewHeight", cxonesastHighNewHeight);
+                    templateData.put("cxonesastHighRecurrentHeight", cxonesastHighRecurrentHeight);
+
+                    //sast medium bars
+                    float cxonesastMediumTotalHeight = (float) cxOneSastResults.getMedium() / sastBarNorm * 238f;
+                    float cxonesastMediumNewHeight = calculateNewBarHeight(cxOneSastResults.getNewMedium(), cxOneSastResults.getMedium(), cxonesastMediumTotalHeight);
+                    float cxonesastMediumRecurrentHeight = cxonesastMediumTotalHeight - cxonesastMediumNewHeight;
+                    templateData.put("cxonesastMediumTotalHeight", cxonesastMediumTotalHeight);
+                    templateData.put("cxonesastMediumNewHeight", cxonesastMediumNewHeight);
+                    templateData.put("cxonesastMediumRecurrentHeight", cxonesastMediumRecurrentHeight);
+
+                    //sast low bars
+                    float cxonesastLowTotalHeight = (float) cxOneSastResults.getLow() / sastBarNorm * 238f;
+                    float cxonesastLowNewHeight = calculateNewBarHeight(cxOneSastResults.getNewLow(), cxOneSastResults.getLow(), cxonesastLowTotalHeight);
+                    float cxonesastLowRecurrentHeight = cxonesastLowTotalHeight - cxonesastLowNewHeight;
+                    templateData.put("cxonesastLowTotalHeight", cxonesastLowTotalHeight);
+                    templateData.put("cxonesastLowNewHeight", cxonesastLowNewHeight);
+                    templateData.put("cxonesastLowRecurrentHeight", cxonesastLowRecurrentHeight);
+            		
             	}else {
                 buildFailed = true;
             	}
             }
-        }
+        } 
 
         if (config.isOsaEnabled() || config.isAstScaEnabled()) {
             if (dependencyScanResult != null && dependencyScanResult.isResultReady()) {

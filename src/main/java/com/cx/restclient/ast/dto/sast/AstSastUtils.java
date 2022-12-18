@@ -44,8 +44,8 @@ public class AstSastUtils {
 	        log.info("Low severity results: " + astSastResults.getLow() + lowNew);
 	        log.info("Information severity results: " + astSastResults.getInformation() + infoNew);
 	        log.info("");
-			if (astSastResults.getAstSastScanLink() != null)
-				log.info("Scan results location: " + astSastResults.getAstSastScanLink());
+			if (astSastResults.getCxOneSastScanLink() != null)
+				log.info("Scan results location: " + astSastResults.getCxOneSastScanLink());
 	        log.info("------------------------------------------------------------------------------------------\n");
 	    }
 }
