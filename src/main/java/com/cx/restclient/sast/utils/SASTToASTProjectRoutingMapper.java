@@ -18,7 +18,7 @@ public class SASTToASTProjectRoutingMapper {
 	private static LinkedHashMap<String, Object> yamlMap;
 	private static LinkedHashMap<String, MigrationYaml> migrationDetailMap;
 
-	private static void parseYaml(String filePath, Logger log) {
+	private static void parseYaml(String filePath, Logger log) throws Exception{
 		Yaml yaml = new Yaml();
 		InputStream inputStream = null;
 		try {
@@ -36,44 +36,52 @@ public class SASTToASTProjectRoutingMapper {
 			}
 		} catch (FileNotFoundException e) {
 			log.error("File not found for this path: " + filePath, e);
-			e.printStackTrace();
-			throw new RuntimeException("File not found  ");
+			throw e;
 		} catch (Exception e) {
-			//log.error("Exception occurred while loading or parsing the Yaml", e);
-			e.printStackTrace();
-			throw new RuntimeException("Exception occurred while loading or parsing the YAML", e);
+			log.error("Exception occurred while loading or parsing the Yaml", e);
+			throw e;
 		
 		}
 		
 	}
 
-	private static MigrationYamlResponse matchRegex(String inputForMatch, Logger log) {
+	private static MigrationYamlResponse matchRegex(String inputForMatch, Logger log)   {
 		MigrationYamlResponse response = null;
 		if (migrationDetailMap != null && !migrationDetailMap.isEmpty()) {
 			Set<String> functionKeys = migrationDetailMap.keySet();
 			for (String key : functionKeys) {
-				if (inputForMatch.matches((String.valueOf(migrationDetailMap.get(key).getRegex())))) {
+				if (inputForMatch.matches((migrationDetailMap.get(key).getRegex()))) {
 					response = new MigrationYamlResponse(key, migrationDetailMap.get(key).getRegex(),
 							Boolean.valueOf(migrationDetailMap.get(key).getIsMigrate()));
 					return response;
 				}
-				log.info("No match found for given team path: " + inputForMatch);
-				throw new RuntimeException("No match found for given team path");
 			}
+			log.warn("No match found for given team path: " + inputForMatch);
+			throw new RuntimeException("No match found for given team path");
 		}
 		return response;
 	}
 	
 	public static MigrationYamlResponse isProjectEligibleToMigrateAST(String filePath, String teamPath, String teamId,
 			Logger log) throws Exception {
-		if ((teamPath == null || teamPath.isEmpty()) && teamId != null && !teamId.isEmpty()
-				&& (Integer.parseInt(teamId) > 0)) {
-			log.warn("Group Id is not supported yet, Please provide teamPath");
-			throw  new RuntimeException("Group Id is not supported yet, Please provide teamPath");
+		if(filePath == null || filePath.isEmpty()) {
+			log.error("File Path can not be null or empty");
+			throw new RuntimeException("File Path can not be null or empty");
 		}
-		if (teamPath != null && !teamPath.isEmpty()) {
-			parseYaml(filePath, log);
-			return matchRegex(teamPath, log);
+		else if ((teamPath == null || teamPath.isEmpty()) && (Integer.parseInt(teamId) > 0)) {
+			if (teamId != null && !teamId.isEmpty()) {
+				log.warn("Group Id is not supported yet, Please provide teamPath");
+				throw new RuntimeException("Group Id is not supported yet, Please provide teamPath");
+			} else {
+				log.warn("Team Path cannot be null or empty");
+			}
+		} else if (teamPath != null && !teamPath.isEmpty()) {
+			try {
+				parseYaml(filePath, log);
+				return matchRegex(teamPath, log);
+			} catch (Exception e) {
+				throw e;
+			}
 		}
 		return null;
 	}

@@ -43,18 +43,23 @@ public class CxClientDelegator implements Scanner {
 
         this.config = config;
         this.log = log;
+        Boolean isAstMigrate = false;
+        Boolean isExceptionFound = false;
 		if (config.isSubmitToAST()) {
 			MigrationYamlResponse migrationYamlResponse = null;
-			if (config.getFilePath() == null || config.getFilePath().isEmpty()) {
-				log.warn("File Path Cannot be null or Empty");
-				throw new RuntimeException("File Path Cannot be null or Empty");
-			} else
+			try {
 				migrationYamlResponse = SASTToASTProjectRoutingMapper.isProjectEligibleToMigrateAST(
-						config.getFilePath(), config.getTeamPath(), config.getTeamId(),log);
+							config.getFilePath(), config.getTeamPath(), config.getTeamId(),log);
+			} catch (Exception e) {
+				isExceptionFound = true;
+				e.printStackTrace();
+			}
 			if (migrationYamlResponse != null && migrationYamlResponse.getIsMigrate()) {
+				isAstMigrate = true;
 				scannersMap.put(ScannerType.AST_SAST, new CxOneWrapperClient(config, log));
 		    }
-        } else if (config.isSastEnabled()) {
+			
+        } if (!isAstMigrate && !isExceptionFound && config.isSastEnabled()) {
             scannersMap.put(ScannerType.SAST, new CxSASTClient(config, log));
         }
 

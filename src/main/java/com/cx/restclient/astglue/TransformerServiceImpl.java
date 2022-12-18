@@ -210,7 +210,7 @@ public class TransformerServiceImpl implements  TransformerService{
 			String excludeFilesPattern = "";
 			if(!StringUtils.isEmpty(sastFilterPattern))
 				excludeFilesPattern = Arrays.stream(sastFilterPattern.split(",")).map(String::trim)
-					.map(file -> file.replace("!**/", "")).collect(Collectors.joining(","));
+					.collect(Collectors.joining(","));
 			
 			if (excludeFoldersPattern != null && !excludeFoldersPattern.isEmpty())
 				filter = excludeFoldersPattern;
