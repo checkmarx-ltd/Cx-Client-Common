@@ -20,9 +20,6 @@ public class ScanSummary {
     private final List<ThresholdError> thresholdErrors = new ArrayList<>();
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     
-//    private final List<ThresholdError> cxOnethresholdErrors = new ArrayList<>();
-//    private final List<Severity> cxOneewResultThresholdErrors = new ArrayList<>();
-    
     private final boolean policyViolated;
 
     public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {

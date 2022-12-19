@@ -118,7 +118,7 @@ public class CxOneWrapperClient implements Scanner{
 	public Results waitForScanResults() {
 		try {
         try {
-        	log.info("------------------------------------Get AST Results:-----------------------------------");
+        	log.info("------------------------------------Get CxOne SAST Results:-----------------------------------");
         	log.info("Waiting for AST scan to finish.");
         	ScanStatusResponse scanStatusRes = cxOneClient.waitForScanToResolve(scanId);
         	log.info("Retrieving AST scan results");
