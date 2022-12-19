@@ -952,10 +952,17 @@
                     <#if policyViolated>
                         <li>${policyViolatedCount} ${policyLabel}  Violated</li>
                     </#if>
+					<#if config.isSubmitToAST() && !cxOneSast.cxoneSastResultsReady>
+                        <li>CxOne SAST Scan Failed</li>
+                    </#if>
                     <#if config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
                     <#elseif config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded)>
                         <li>Exceeded CxSAST Vulnerability Threshold</li>
+					<#elseif config.isSubmitToAST() && cxOneSast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
+                        <li>Exceeded CxOneSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
+                    <#elseif config.isSubmitToAST() && sast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded)>
+                        <li>Exceeded CxOneSAST Vulnerability Threshold</li>
                     <#elseif config.isOsaEnabled() && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxOSA Vulnerability Threshold</li>
                     <#elseif config.isAstScaEnabled() && dependencyResult.resultReady && dependencyThresholdExceeded>
@@ -963,6 +970,9 @@
                     <#else>
                         <li>CxScan Failed</li>
                     </#if>
+					
+					
+                    
                 </ul>
             </div>
         </div>
@@ -1308,7 +1318,305 @@
                         </div>
                     </#if>
                 </div>
+				<#elseif config.isSubmitToAST()>
+				<div class="cxonesast-summary <#if !(config.isOsaEnabled() || config.isAstScaEnabled()) >chart-large</#if>" id="cxonesast-summary">
+                    <div class="summary-report-title cxonesast">
+                        <div class="summary-title-text cxonesast">CxOne SAST Vulnerabilities Status</div>
+                        <#if cxOneSast.astSastResultsReady>
+                            <div id="cxonesast-title-links" class="title-links">
+                                <div class="link-to-result summary-link">
+                                    <a href="${cxOneSast.cxOneScanLink}" class="html-report" id="sast-summary-html-link">
+                                        <div class="results-link-icon link-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="14"
+                                                 viewBox="0 0 12 14">
+                                                viewBox="0 0 12 14">
+                                                <g fill="none" fill-rule="evenodd">
+                                                    <circle stroke="#4A90E2" stroke-width="2" cx="5" cy="5"
+                                                            r="4"></circle>
+                                                    <path fill="#4A90E2"
+                                                          d="M6.366 8.366l1.732-1 3.268 5.66-1.732 1z"></path>
+                                                </g>
+                                            </svg>
+                                        </div>
+                                        <div class="link-text">Results</div>
+                                    </a>
+                                </div>
+
+                                <#if cxOnesast.cxonesastPDFLink??>
+                                    <div id="cxonesast-summary-pdf-link" class="link-to-result">
+                                        <a class="pdf-report" href="${sast.cxonesastPDFLink}">
+                                            <div class="link-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="16"
+                                                     viewBox="0 0 13 16"><title>PDF icon</title>
+                                                    <g fill="none" fill-rule="evenodd">
+                                                        <path d="M8.55 0H8v5h5V4L9.097 0H8.55z" fill="#4A90E2"/>
+                                                        <path d="M.5.5h8.387L12.5 4.204V15.5H.5V.5z" stroke="#4A90E2"/>
+                                                        <text font-family="Roboto-Black, Roboto" font-size="5"
+                                                              font-weight="700" fill="#4A90E2">
+                                                            <tspan x="1.889" y="11">PDF</tspan>
+                                                        </text>
+                                                    </g>
+                                                </svg>
+                                            </div>
+                                            <div class="link-text">
+                                                PDF Report
+                                            </div>
+                                        </a>
+                                    </div>
+                                </#if>
+                            </div>
+                        <#else>
+                            <div id="no-cxOnescan-message-sast-failed" class="no-scan-message-container sast-scan-failed"
+                                 style="display: inline-block">
+                                <div class="no-scan-message">
+                                    <div class="no-scan-message-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                             xmlns:xlink="http://www.w3.org/1999/xlink" width="48px" height="37px"
+                                             viewBox="0 0 48 37"
+                                             version="1.1">
+                                            <!-- Generator: Sketch 45.2 (43514) - http:/*www.bohemiancoding.com/sketch -->
+                                            */ <title>scan_failed</title>
+                                            <desc>Created with Sketch.</desc>
+                                            <defs/>
+                                            <g id="Page-1" stroke="none" stroke-width="1" fill="none"
+                                               fill-rule="evenodd">
+                                                <g id="Jenkins-OSA-empty"
+                                                   transform="translate(-936.000000, -335.000000)">
+                                                    <g id="Group-2" transform="translate(683.000000, 179.000000)">
+                                                        <g id="Group" transform="translate(81.000000, 155.202941)">
+                                                            <g id="Group-3" transform="translate(171.000000, 0.000000)">
+                                                                <g transform="translate(2.000606, 1.714748)">
+                                                                    <path d="M24.3114123,0.619831205 L44.98533,32.7440758 L44.98533,32.7440758 C45.2842135,33.208497 45.1500186,33.8272778 44.6855974,34.1261613 C44.5242092,34.2300245 44.336342,34.2852522 44.1444209,34.2852522 L1.8977196,34.2852522 L1.8977196,34.2852522 C1.34543485,34.2852522 0.897719599,33.837537 0.897719599,33.2852522 C0.897719599,33.0866799 0.956838199,32.8926033 1.0675421,32.7277531 L22.6403257,0.60350849 L22.6403257,0.60350849 C22.948224,0.145014117 23.569508,0.0229318695 24.0280024,0.330830157 C24.1411852,0.406837189 24.2376306,0.50518529 24.3114123,0.619831205 Z"
+                                                                          id="Triangle" stroke="#373050"
+                                                                          stroke-width="2"/>
+                                                                    <rect id="Rectangle-1" fill="#373050" x="21.9993936"
+                                                                          y="11.2852522" width="3" height="13"
+                                                                          rx="1.5"/>
+                                                                    <path d="M23.4993936,26.2852522 L23.4993936,26.2852522 L23.4993936,26.2852522 C24.3278207,26.2852522 24.9993936,26.9568251 24.9993936,27.7852522 L24.9993936,27.7852522 L24.9993936,27.7852522 C24.9993936,28.6136794 24.3278207,29.2852522 23.4993936,29.2852522 L23.4993936,29.2852522 L23.4993936,29.2852522 C22.6709664,29.2852522 21.9993936,28.6136794 21.9993936,27.7852522 L21.9993936,27.7852522 L21.9993936,27.7852522 C21.9993936,26.9568251 22.6709664,26.2852522 23.4993936,26.2852522 Z"
+                                                                          id="Rectangle-1-Copy" fill="#373050"/>
+                                                                </g>
+                                                            </g>
+                                                        </g>
+                                                    </g>
+                                                </g>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <div class="no-scan-message-text">CxOne SAST scan failed</div>
+                                </div>
+                            </div>
+                        </#if>
+                    </div>
+                    <#if cxOneSast.cxoneSastResultsReady>
+                        <!--cxone sast-chart-->
+                        <div class="summary-chart" id="cxonesast-results">
+                            <div class="top-of-chart">
+                                <#if cxOneSast.hasNewResults()>
+                                    <div id="cxonesast-legend-container" class="chart-legend-container">
+                                        <div class="chart-legend">
+                                            <div class="legend-item recurrent-legend">
+                                                <div class="legend-color-box recurrent-legend-color"></div>
+                                                <div class="legend-text recurrent-legend-text">Recurrent</div>
+                                            </div>
+                                            <div class="legend-item new-legend">
+                                                <div class="legend-color-box new-legend-color"></div>
+                                                <div class="legend-text new-legend-text">New</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </#if>
+                            </div>
+
+                            <ul class="chart">
+                                <!--cxOnesast-high-->
+                                <li>
+                                        <span class="bar-1" id="bar-high" style="height: ${cxonesastHighTotalHeight}px">
+                                            <div id="tooltip-high">
+                                                <#if config.sastThresholdsEnabled && config.sastHighThreshold??>
+                                                    <@thresholdTooltip threshold=config.sastHighThreshold count=cxOnesast.high/>
+                                                </#if>
+                                            </div>
+                                            <div id="high-new-scans" class="new-scans"
+                                                 style="height: ${cxonesastHighNewHeight}px"></div>
+                                            <div id="high-recurrent-scans" class="recurrent-scans"
+                                                 style="height: ${cxonesastHighRecurrentHeight}px"></div>
+                                        </span>
+
+                                    <div class="bar-title-wrapper">
+                                        <div class="bar-title-container">
+                                            <div class="bar-title-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                     xmlns:xlink="http://www.w3.org/1999/xlink"
+                                                     width="16px" height="19px" viewBox="0 0 16 19" version="1.1">
+                                                    <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
+                                                    <title>Med</title>
+                                                    <desc>Created with Sketch.</desc>
+                                                    <defs>
+                                                        <path d="M1,1 L8,0 L15,1 C15,1 16,4.01515152 16,7 C16,13.0151515 10.6766131,18.2701936 10.6766131,18.2701936 C10.30293,18.6732545 9.55664682,19 8.9906311,19 L7.0093689,19 C6.45190985,19 5.70245907,18.6673641 5.33497024,18.2411641 C5.33497024,18.2411641 3.70193273e-12,12.5151515 3.63797881e-12,8 C7.03437308e-13,4.82765152 1,1 1,1 Z"
+                                                              id="path-1"/>
+                                                        <path d="M1,1 L8,0 L15,1 C15,1 16,4.01515152 16,7 C16,13.0151515 10.6766131,18.2701936 10.6766131,18.2701936 C10.30293,18.6732545 9.55664682,19 8.9906311,19 L7.0093689,19 C6.45190985,19 5.70245907,18.6673641 5.33497024,18.2411641 C5.33497024,18.2411641 3.70193273e-12,12.5151515 3.63797881e-12,8 C7.03437308e-13,4.82765152 1,1 1,1 Z"
+                                                              id="path-3"/>
+                                                    </defs>
+                                                    <g id="Page-1" stroke="none" stroke-width="1" fill="none"
+                                                       fill-rule="evenodd">
+                                                        <g id="Icons" transform="translate(-47.000000, -88.000000)">
+                                                            <g id="High" transform="translate(47.000000, 88.000000)">
+                                                                <g id="Vonerability-High">
+                                                                    <mask id="mask-2" fill="white">
+                                                                        <use xlink:href="#path-1"/>
+                                                                    </mask>
+                                                                    <g id="Rectangle-10">
+                                                                        <use fill="#D82D49" fill-rule="evenodd"
+                                                                             xlink:href="#path-1"/>
+                                                                        <path stroke="#BB1A34" stroke-width="1"
+                                                                              d="M1.4041953,1.44733409 L8,0.505076272 L14.6160396,1.45022478 C14.6341112,1.51124347 14.6539641,1.5795116 14.6753578,1.65465958 C14.7899552,2.05719756 14.9047222,2.50600605 15.0118679,2.98897331 C15.3098751,4.33226343 15.4915175,5.67204692 15.4997158,6.91419406 C15.4999523,6.95710967 15.4999523,6.95710967 15.5,7 C15.5,9.52090451 14.5340777,12.111589 12.9179883,14.6199787 C12.3484584,15.5039663 11.7377754,16.313821 11.1275564,17.0311249 C10.9144997,17.2815702 10.7170402,17.5022391 10.5403911,17.6908777 C10.4358029,17.8025645 10.3623853,17.8778048 10.3253512,17.9143634 C10.0291161,18.2331673 9.41484636,18.5 8.9906311,18.5 L7.0093689,18.5 C6.59080843,18.5 5.98194778,18.2258269 5.71364227,17.9146561 C5.66213668,17.8588317 5.58703389,17.7761053 5.4807125,17.6555634 C5.30200204,17.4529504 5.10247221,17.2193106 4.88735491,16.9580823 C4.27213719,16.2109907 3.656779,15.394289 3.08320773,14.5359605 C2.09721248,13.0604546 1.34127053,11.6205479 0.906388115,10.2835472 C0.639104683,9.46181216 0.5,8.69692293 0.5,8 C0.5,7.56658708 0.519280284,7.10494686 0.556403808,6.61890492 C0.63408435,5.60186781 0.786470164,4.51217341 0.991682584,3.40118912 C1.09968656,2.81647439 1.21542088,2.26333889 1.3310756,1.7595034 C1.35796875,1.64234673 1.3824953,1.53794489 1.4041953,1.44733409 Z"/>
+                                                                    </g>
+                                                                    <rect id="Rectangle-22" fill="#BB1A34"
+                                                                          mask="url(#mask-2)" x="8"
+                                                                          y="0" width="8" height="20"/>
+                                                                    <mask id="mask-4" fill="white">
+                                                                        <use xlink:href="#path-3"/>
+                                                                    </mask>
+                                                                    <path stroke="#BB1A34"
+                                                                          d="M1.4041953,1.44733409 L8,0.505076272 L14.6160396,1.45022478 C14.6341112,1.51124347 14.6539641,1.5795116 14.6753578,1.65465958 C14.7899552,2.05719756 14.9047222,2.50600605 15.0118679,2.98897331 C15.3098751,4.33226343 15.4915175,5.67204692 15.4997158,6.91419406 C15.4999523,6.95710967 15.4999523,6.95710967 15.5,7 C15.5,9.52090451 14.5340777,12.111589 12.9179883,14.6199787 C12.3484584,15.5039663 11.7377754,16.313821 11.1275564,17.0311249 C10.9144997,17.2815702 10.7170402,17.5022391 10.5403911,17.6908777 C10.4358029,17.8025645 10.3623853,17.8778048 10.3253512,17.9143634 C10.0291161,18.2331673 9.41484636,18.5 8.9906311,18.5 L7.0093689,18.5 C6.59080843,18.5 5.98194778,18.2258269 5.71364227,17.9146561 C5.66213668,17.8588317 5.58703389,17.7761053 5.4807125,17.6555634 C5.30200204,17.4529504 5.10247221,17.2193106 4.88735491,16.9580823 C4.27213719,16.2109907 3.656779,15.394289 3.08320773,14.5359605 C2.09721248,13.0604546 1.34127053,11.6205479 0.906388115,10.2835472 C0.639104683,9.46181216 0.5,8.69692293 0.5,8 C0.5,7.56658708 0.519280284,7.10494686 0.556403808,6.61890492 C0.63408435,5.60186781 0.786470164,4.51217341 0.991682584,3.40118912 C1.09968656,2.81647439 1.21542088,2.26333889 1.3310756,1.7595034 C1.35796875,1.64234673 1.3824953,1.53794489 1.4041953,1.44733409 Z"/>
+                                                                    <polygon id="H" fill="#FFFFFF" mask="url(#mask-4)"
+                                                                             points="5 12 7 12 7 9.5 9 9.5 9 12 11 12 11 5 9 5 9 7.5 7 7.5 7 5 5 5"/>
+                                                                </g>
+                                                            </g>
+                                                        </g>
+                                                    </g>
+                                                </svg>
+                                            </div>
+                                            <div class="bar-title">High -</div>
+                                            <div class="bar-count" id="bar-count-high">${cxOnesast.high}</div>
+                                        </div>
+                                        <#if cxOnesast.hasNewResults()>
+                                            <div id="new-bar-count-high" class="new-bar-title-container">${cxOnesast.newHigh}
+                                                New
+                                            </div>
+                                        </#if>
+                                    </div>
+                                </li>
+
+                                <!--cxOnesast-medium-->
+                                <li>
+                                        <span class="bar-2" id="bar-med" style="height: ${cxonesastMediumTotalHeight}px">
+                                                <div id="tooltip-med">
+                                                    <#if config.sastThresholdsEnabled && config.sastMediumThreshold??>
+                                                        <@thresholdTooltip threshold=config.sastMediumThreshold count=cxOnesast.medium/>
+                                                    </#if>
+                                                </div>
+                                                <div id="med-new-scans" class="new-scans"
+                                                     style="height: ${cxonesastMediumNewHeight}px"></div>
+                                                <div id="med-recurrent-scans" class="recurrent-scans"
+                                                     style="height: ${cxonesastMediumRecurrentHeight}px"></div>
+                                        </span>
+                                    <div class="bar-title-wrapper">
+                                        <div class="bar-title-container">
+                                            <div class="bar-title-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                     xmlns:xlink="http://www.w3.org/1999/xlink"
+                                                     width="16" height="20" viewBox="0 0 16 20"><title>Low</title>
+                                                    <defs>
+                                                        <path d="M1 1.053L8 0l7 1.053s1 3.173 1 6.315c0 6.332-5.346 11.89-5.346 11.89-.36.41-1.097.742-1.663.742H7.01c-.558 0-1.3-.34-1.652-.77 0 0-5.358-6.056-5.358-10.81 0-3.338 1-7.367 1-7.367z"
+                                                              id="a"/>
+                                                        <path d="M1 1.053L8 0l7 1.053s1 3.173 1 6.315c0 6.332-5.346 11.89-5.346 11.89-.36.41-1.097.742-1.663.742H7.01c-.558 0-1.3-.34-1.652-.77 0 0-5.358-6.056-5.358-10.81 0-3.338 1-7.367 1-7.367z"
+                                                              id="c"/>
+                                                    </defs>
+                                                    <g fill="none" fill-rule="evenodd">
+                                                        <mask id="b" fill="#fff">
+                                                            <use xlink:href="#a"/>
+                                                        </mask>
+                                                        <use fill="#FFAC00" xlink:href="#a"/>
+                                                        <path stroke="#E49B16"
+                                                              d="M1.41 1.497L8 .507l6.61.993c.02.067.04.144.064.228.114.425.23.898.337 1.407.3 1.418.48 2.83.49 4.143v.09c0 2.665-.973 5.404-2.6 8.06-.572.934-1.186 1.79-1.8 2.55-.214.264-.413.498-.59.698-.106.118-.18.198-.217.237-.282.32-.882.587-1.302.587H7.01c-.414 0-1.01-.277-1.266-.587-.05-.06-.126-.146-.233-.274-.18-.215-.38-.463-.595-.74-.62-.79-1.237-1.653-1.814-2.56C2.12 13.79 1.363 12.28.923 10.877.644 9.994.5 9.17.5 8.42c0-.457.02-.944.057-1.457.077-1.072.23-2.22.435-3.392.11-.615.224-1.198.34-1.73l.077-.343z"/>
+                                                        <path fill="#D79201" mask="url(#b)" d="M8 0h8v20H8z"/>
+                                                        <mask id="d" fill="#fff">
+                                                            <use xlink:href="#c"/>
+                                                        </mask>
+                                                        <path stroke="#D49100"
+                                                              d="M1.41 1.497L8 .507l6.61.993c.02.067.04.144.064.228.114.425.23.898.337 1.407.3 1.418.48 2.83.49 4.143v.09c0 2.665-.973 5.404-2.6 8.06-.572.934-1.186 1.79-1.8 2.55-.214.264-.413.498-.59.698-.106.118-.18.198-.217.237-.282.32-.882.587-1.302.587H7.01c-.414 0-1.01-.277-1.266-.587-.05-.06-.126-.146-.233-.274-.18-.215-.38-.463-.595-.74-.62-.79-1.237-1.653-1.814-2.56C2.12 13.79 1.363 12.28.923 10.877.644 9.994.5 9.17.5 8.42c0-.457.02-.944.057-1.457.077-1.072.23-2.22.435-3.392.11-.615.224-1.198.34-1.73l.077-.343z"/>
+                                                        <path fill="#472F00" mask="url(#d)"
+                                                              d="M4.28 12.632h1.9v-4.21l1.78 2.862H8L9.79 8.4v4.232h1.93v-7.37H9.67L8 8.117 6.33 5.263H4.28"/>
+                                                    </g>
+                                                </svg>
+                                            </div>
+                                            <div class="bar-title">Medium -</div>
+                                            <div class="bar-count" id="bar-count-med">${cxOnesast.medium}</div>
+                                        </div>
+                                        <#if cxOnesast.hasNewResults()>
+                                            <div id="new-bar-count-medium"
+                                                 class="new-bar-title-container">${cxOnesast.newMedium} New
+                                            </div>
+                                        </#if>
+                                    </div>
+                                </li>
+
+                                <!--cxOnesast-low-->
+                                <li>
+                                        <span class="bar-3" id="bar-low" style="height: ${cxonesastLowTotalHeight}px">
+                                            <div id="tooltip-low">
+                                                <#if config.sastThresholdsEnabled && config.sastLowThreshold??>
+                                                    <@thresholdTooltip threshold=config.sastLowThreshold count=cxOnesast.low/>
+                                                </#if>
+                                            </div>
+                                            <div id="low-new-scans" class="new-scans"
+                                                 style="height: ${cxonesastLowNewHeight}px"></div>
+                                            <div id="low-recurrent-scans" class="recurrent-scans"
+                                                 style="height: ${cxonesastLowRecurrentHeight}px"></div>
+                                        </span>
+                                    <div class="bar-title-wrapper">
+                                        <div class="bar-title-container">
+                                            <div class="bar-title-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                     xmlns:xlink="http://www.w3.org/1999/xlink"
+                                                     width="16" height="19" viewBox="0 0 16 19">
+                                                    <title>Low</title>
+                                                    <defs>
+                                                        <path d="M1 1l7-1 7 1s1 3.015 1 6c0 6.015-6 12-6 12H6S0 12.515 0 8c0-3.172 1-7 1-7z"
+                                                              id="cxonesast-low-path-1"/>
+                                                        <path d="M1 1l7-1 7 1s1 3.015 1 6c0 6.015-6 12-6 12H6S0 12.515 0 8c0-3.172 1-7 1-7z"
+                                                              id="cxonesast-low-path-2"/>
+                                                    </defs>
+                                                    <g fill="none" fill-rule="evenodd">
+                                                        <path d="M7.96 17.32L8 .015l-6.5 1s-.96 4.5-.96 8.75c1.272 4.602 5.968 9.25 5.968 9.25h.163l1.29-1.695z"
+                                                              fill="#EDEcxonesast-low-pathFF5"/>
+                                                        <mask id="cxonesast-low-mask-1" fill="#fff">
+                                                            <use xlink:href="#cxonesast-low-path-1"/>
+                                                        </mask>
+                                                        <use fill="#FFEB3B" xlink:href="#cxonesast-low-path-1"/>
+                                                        <path stroke="#E4D200"
+                                                              d="M1.404 1.447L8 .505l6.616.945.06.205c.114.402.23.85.336 1.334.298 1.342.48 2.682.488 3.924V7c0 2.515-1.09 5.243-2.916 7.978-.644.966-1.335 1.863-2.026 2.667-.24.28-.465.53-.665.745-.04.04-.074.077-.105.11H6.222l-.105-.118c-.202-.23-.427-.492-.67-.785-.694-.837-1.388-1.744-2.035-2.687-.89-1.298-1.62-2.56-2.128-3.738C.772 9.982.5 8.912.5 8c0-.433.02-.895.056-1.38C.634 5.6.786 4.51.992 3.4c.108-.584.223-1.137.34-1.64.026-.118.05-.222.072-.313z"/>
+                                                        <path fill="#DDCE00" mask="url(#cxonesast-low-mask-1)"
+                                                              d="M8-8h10v32H8z"/>
+                                                        <mask id="cxonesast-low-mask-2" fill="#fff">
+                                                            <use xlink:href="#cxonesast-low-path-2"/>
+                                                        </mask>
+                                                        <path stroke="#E4D200"
+                                                              d="M1.404 1.447L8 .505l6.616.945.06.205c.114.402.23.85.336 1.334.298 1.342.48 2.682.488 3.924V7c0 2.515-1.09 5.243-2.916 7.978-.644.966-1.335 1.863-2.026 2.667-.24.28-.465.53-.665.745-.04.04-.074.077-.105.11H6.222l-.105-.118c-.202-.23-.427-.492-.67-.785-.694-.837-1.388-1.744-2.035-2.687-.89-1.298-1.62-2.56-2.128-3.738C.772 9.982.5 8.912.5 8c0-.433.02-.895.056-1.38C.634 5.6.786 4.51.992 3.4c.108-.584.223-1.137.34-1.64.026-.118.05-.222.072-.313z"/>
+                                                        <path fill="#605900" mask="url(#cxonesast-low-mask-2)"
+                                                              d="M5.54 12h5.33v-1.7H7.48V5H5.54"/>
+                                                    </g>
+                                                </svg>
+                                            </div>
+                                            <div class="bar-title">Low -</div>
+                                            <div class="bar-count" id="bar-count-low">${cxOnesast.low}</div>
+                                        </div>
+                                        <#if cxOnesast.hasNewResults()>
+                                            <div id="new-bar-count-low" class="new-bar-title-container">${cxOnesast.newLow}
+                                                New
+                                            </div>
+                                        </#if>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </#if>
+					
             </#if>
+			
+			
+			
 
                 <#if config.isOsaEnabled()|| config.isAstScaEnabled() >
         <div class="osa-summary <#if !config.isSastEnabled()>sast-summary chart-large</#if>" id="osa-summary">
@@ -2240,6 +2548,390 @@
                 </div>
             </div>
         </#if>
+		<#elseif config.isSubmitToAST() && config.generateXmlReport &&cxOnesast.cxonesastResultsReady>
+        <#if cxonesast.high gt 0 || cxone.medium gt 0 || cxone.low gt 0>
+            <div id="cxonesast-full" class="sast-full full-results-section">
+                <div class="summary-table-row cxsast-full">
+                    <div class="title-column">
+                        <div class="summary-title">
+                            <div class="sum1">CxOne SAST</div>
+                            <div class="sum1">Full Report</div>
+                        </div>
+                        <div class="detailed-report">
+                            <div class="full-downloads sast-downloads">
+                                <div class="report-link link-to-result">
+                                    <a href="${cxOnesast.cxOneScanLink}" class="pdf-report" id="sast-code-viewer-link"
+                                       target="_top">
+                                        <div class="link-to-result">
+                                            <div class="results-link-icon link-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="14"
+                                                     viewBox="0 0 12 14"><title>analize</title>
+                                                    <g fill="none" fill-rule="evenodd">
+                                                        <circle stroke="#4A90E2" stroke-width="2" cx="5" cy="5" r="4"/>
+                                                        <path fill="#4A90E2"
+                                                              d="M6.366 8.366l1.732-1 3.268 5.66-1.732 1z"/>
+                                                    </g>
+                                                </svg>
+                                            </div>
+                                            <div class="link-text">Analyze Results</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="main-column">
+                        <div class="full-start-end">
+                            <div class="full-start">
+                                <div class="full-start-end-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                         height="26px" version="1.1" viewBox="0 0 23 26" width="23px">
+                                        <title>Icon</title>
+                                        <desc>Created with Sketch.</desc>
+                                        <defs>
+                                            <rect height="23" rx="1.6" id="sast-full-start-rect" width="23" x="0"
+                                                  y="2"/>
+                                            <mask height="23" maskUnits="objectBoundingBox" id="full-start-mask-1"
+                                                  width="23"
+                                                  maskContentUnits="userSpaceOnUse" fill="white" x="0"
+                                                  y="0">
+                                                <use xlink:href="#sast-full-start-rect"/>
+                                            </mask>
+                                        </defs>
+                                        <g stroke-width="1" fill-rule="evenodd" id="sast-full-start-Page-1"
+                                           stroke="none"
+                                           fill="none">
+                                            <g transform="translate(-684.000000, -708.000000)" id="sast-full-start-1"
+                                               stroke="#373050">
+                                                <g transform="translate(273.000000, 695.000000)" id="sast-full-start-2">
+                                                    <g transform="translate(411.000000, 9.000000)"
+                                                       id="sast-full-start-3">
+                                                        <g transform="translate(0.000000, 5.000000)"
+                                                           id="sast-full-start-Icon">
+                                                            <use mask="url(#full-start-mask-1)" stroke-width="4"
+                                                                 id="sast-full-start-Rectangle-1"
+                                                                 xlink:href="#sast-full-start-rect"/>
+                                                            <path stroke-width="2" id="sast-full-start-Line-1"
+                                                                  d="M5,0 L5,2.99971994"
+                                                                  stroke-linecap="square"/>
+                                                            <path stroke-width="2" id="sast-full-start-Line-2"
+                                                                  d="M18,0 L18,2.99971994"
+                                                                  stroke-linecap="square"/>
+                                                        </g>
+                                                    </g>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </svg>
+                                </div>
+                                <div class="full-start-end-text-date">
+                                    <div class="full-start-end-text">
+                                        Start:
+                                    </div>
+                                    <div class="full-start-end-date"
+                                         id="sast-full-start-date">${cxOnesast.scanStartTime}</div>
+                                </div>
+                            </div>
+
+                            <!--sast-full-end-->
+                            <div class="full-end">
+                                <div class="full-start-end-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                         height="26px" version="1.1" viewBox="0 0 23 26" width="23px">
+                                        <title>Icon</title>
+                                        <desc>Created with Sketch.</desc>
+                                        <defs>
+                                            <rect height="23" rx="1.6" id="sast-full-end-rect" width="23" x="0" y="2"/>
+                                            <mask height="23" maskUnits="objectBoundingBox"
+                                                  id="sast-full-end-mask" width="23"
+                                                  maskContentUnits="userSpaceOnUse" fill="white" x="0"
+                                                  y="0">
+                                                <use xlink:href="#sast-full-end-rect"/>
+                                            </mask>
+                                        </defs>
+                                        <g stroke-width="1" fill-rule="evenodd" id="sast-full-end-Page-1" stroke="none"
+                                           fill="none">
+                                            <g transform="translate(-684.000000, -708.000000)" id="sast-full-end-1"
+                                               stroke="#373050">
+                                                <g transform="translate(273.000000, 695.000000)" id="sast-full-end-2">
+                                                    <g transform="translate(411.000000, 9.000000)" id="sast-full-end-3">
+                                                        <g transform="translate(0.000000, 5.000000)"
+                                                           id="sast-full-end-Icon">
+                                                            <use mask="url(#sast-full-end-mask)" stroke-width="4"
+                                                                 id="sast-full-end-use"
+                                                                 xlink:href="#sast-full-end-rect"/>
+                                                            <path stroke-width="2"
+                                                                  id="sast-full-end-Line-1" d="M5,0 L5,2.99971994"
+                                                                  stroke-linecap="square"/>
+                                                            <path stroke-width="2"
+                                                                  id="sast-full-end-Line-2" d="M18,0 L18,2.99971994"
+                                                                  stroke-linecap="square"/>
+                                                        </g>
+                                                    </g>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </svg>
+                                </div>
+                                <div class="full-start-end-text-date">
+                                    <div class="full-start-end-text">
+                                        End:
+                                    </div>
+                                    <div class="full-start-end-date" id="sast-full-end-date">${sast.scanEndTime}</div>
+                                </div>
+                            </div>
+
+                            <!--sast-full-files-->
+                            <div class="full-files">
+                                <div class="full-start-end-icon files-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                         height="26px" version="1.1" viewBox="0 0 21 26" width="21px">
+                                        <title>file</title>
+                                        <desc>Created with Sketch.</desc>
+                                        <defs>
+                                            <path id="sast-full-files-path"
+                                                  d="M15.5147186,0 L1.99456145,0 C0.90234375,0 0,0.89408944 0,1.99700466 L0,24.0029953 C0,25.1050211 0.892995579,26 1.99456145,26 L19.0054385,26 C20.0976562,26 21,25.1059106 21,24.0029953 L21,5.43446766 L20.9745931,5.45987452 L15.5147186,5.55111512e-16 Z"/>
+                                            <mask height="26" maskUnits="objectBoundingBox"
+                                                  id="sast-full-files-mask" width="21"
+                                                  maskContentUnits="userSpaceOnUse" fill="white" x="0" y="0">
+                                                <use xlink:href="#sast-full-files-path"/>
+                                            </mask>
+                                        </defs>
+                                        <g stroke-width="1" fill-rule="evenodd" id="sast-full-files-Page-1"
+                                           stroke="none"
+                                           fill="none">
+                                            <g transform="translate(-847.000000, -709.000000)" id="sast-full-files-1">
+                                                <g transform="translate(273.000000, 695.000000)" id="sast-full-files-2">
+                                                    <g transform="translate(574.000000, 9.000000)"
+                                                       id="sast-full-files-3">
+                                                        <g transform="translate(0.000000, 5.000000)"
+                                                           id="sast-full-files-4">
+                                                            <use mask="url(#sast-full-files-mask)" stroke-width="4"
+                                                                 id="sast-full-files-use" stroke="#373050"
+                                                                 xlink:href="#sast-full-files-path"/>
+                                                            <path id="sast-full-files-path-2"
+                                                                  d="M13.8888889,0 L14.7777778,0 L21,7 L21,7.5 L21,8 L13,8 L13,0 L13.8888889,0 Z"
+                                                                  fill="#373050"/>
+                                                        </g>
+                                                    </g>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </svg>
+                                </div>
+                                <div class="full-start-end-text-date">
+                                    <div class="full-start-end-text">
+                                        Files:
+                                    </div>
+                                    <div class="full-start-end-date" id="sast-full-files">${sast.filesScanned}</div>
+                                </div>
+                            </div>
+
+                            <!--sast-full-loc-->
+                            <div class="full-loc">
+                                <div class="full-start-end-icon loc-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink" height="29"
+                                         id="sast-full-loc-svg"
+                                         version="1.1" viewBox="0 0 29 29" width="29">
+                                        <title>Icon</title>
+                                        <desc>Created with Avocode.</desc>
+                                        <defs id="sast-full-loc-defs"/>
+                                        <path stroke-miterlimit="50" transform="matrix(1,0,0,1,-1012,-1365)"
+                                              stroke-width="2"
+                                              id="sast-full-loc-path-1" fill-opacity="0"
+                                              stroke-dasharray="0"
+                                              d="M1032 1368L1039.95 1378.76L1032 1389.51 " stroke-opacity="1"
+                                              fill="#ffffff"
+                                              stroke="#373050" stroke-linecap="round"
+                                              stroke-linejoin="round"/>
+                                        <path stroke-miterlimit="50" transform="matrix(1,0,0,1,-1012,-1365)"
+                                              stroke-width="2" id="sast-full-loc-path-2" fill-opacity="0"
+                                              stroke-dasharray="0"
+                                              d="M1020.95 1368L1013 1378.76L1020.95 1389.51 " stroke-opacity="1"
+                                              fill="#ffffff" stroke="#373050" stroke-linecap="round"
+                                              stroke-linejoin="round"/>
+                                        <path stroke-miterlimit="50" transform="matrix(1,0,0,1,-1012,-1365)"
+                                              stroke-width="2" id="sast-full-loc-path-3" fill-opacity="0"
+                                              stroke-dasharray="0"
+                                              d="M1028.86 1366L1022.9999999999999 1392.54 " stroke-opacity="1"
+                                              fill="#ffffff" stroke="#373050" stroke-linecap="round"
+                                              stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                                <div class="full-start-end-text-date">
+                                    <div class="full-start-end-text">
+                                        Code Lines:
+                                    </div>
+                                    <div class="full-start-end-date" id="sast-full-loc">${sast.LOC}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <#if sast.high gt 0>
+                            <div id="sast-cve-table-high-container">
+                                <div class="full-severity-title">
+                                    <div class="severity-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                             xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="19"
+                                             viewBox="0 0 16 19"><title>High</title>
+                                            <defs>
+                                                <path d="M1 1l7-1 7 1s1 3.015 1 6c0 6.015-5.323 11.27-5.323 11.27-.374.403-1.12.73-1.686.73H7.01c-.558 0-1.308-.333-1.675-.76C5.335 18.24 0 12.516 0 8c0-3.172 1-7 1-7z"
+                                                      id="sast-full-high-path-1"/>
+                                                <path d="M1 1l7-1 7 1s1 3.015 1 6c0 6.015-5.323 11.27-5.323 11.27-.374.403-1.12.73-1.686.73H7.01c-.558 0-1.308-.333-1.675-.76C5.335 18.24 0 12.516 0 8c0-3.172 1-7 1-7z"
+                                                      id="sast-full-high-path-2"/>
+                                            </defs>
+                                            <g fill="none" fill-rule="evenodd">
+                                                <mask id="sast-full-high-mask-1" fill="#fff">
+                                                    <use xlink:href="#sast-full-high-path-1"/>
+                                                </mask>
+                                                <use fill="#D82D49" xlink:href="#sast-full-high-path-1"/>
+                                                <path stroke="#BB1A34"
+                                                      d="M1.404 1.447L8 .505l6.616.945.06.205c.114.402.23.85.336 1.334.298 1.342.48 2.682.488 3.924V7c0 2.52-.966 5.112-2.582 7.62-.57.884-1.18 1.694-1.79 2.41-.214.252-.41.472-.588.66-.104.113-.178.188-.215.224-.296.32-.91.586-1.334.586H7.01c-.42 0-1.028-.274-1.296-.585-.052-.056-.127-.14-.233-.26-.178-.202-.378-.436-.593-.697-.615-.747-1.23-1.564-1.804-2.422C2.097 13.06 1.34 11.62.906 10.284.64 9.462.5 8.697.5 8c0-.433.02-.895.056-1.38C.634 5.6.786 4.51.992 3.4c.108-.584.223-1.137.34-1.64.026-.118.05-.222.072-.313z"/>
+                                                <path fill="#BB1A34" mask="url(#sast-full-high-mask-1)"
+                                                      d="M8 0h8v20H8z"/>
+                                                <mask id="sast-full-high-mask-2" fill="#fff">
+                                                    <use xlink:href="#sast-full-high-path-2"/>
+                                                </mask>
+                                                <path stroke="#BB1A34"
+                                                      d="M1.404 1.447L8 .505l6.616.945.06.205c.114.402.23.85.336 1.334.298 1.342.48 2.682.488 3.924V7c0 2.52-.966 5.112-2.582 7.62-.57.884-1.18 1.694-1.79 2.41-.214.252-.41.472-.588.66-.104.113-.178.188-.215.224-.296.32-.91.586-1.334.586H7.01c-.42 0-1.028-.274-1.296-.585-.052-.056-.127-.14-.233-.26-.178-.202-.378-.436-.593-.697-.615-.747-1.23-1.564-1.804-2.422C2.097 13.06 1.34 11.62.906 10.284.64 9.462.5 8.697.5 8c0-.433.02-.895.056-1.38C.634 5.6.786 4.51.992 3.4c.108-.584.223-1.137.34-1.64.026-.118.05-.222.072-.313z"/>
+                                                <path fill="#FFF" mask="url(#sast-full-high-mask-2)"
+                                                      d="M5 12h2V9.5h2V12h2V5H9v2.5H7V5H5"/>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <div class="severity-title-name">High</div>
+                                    <div class="severity-count"> ${sast.high}</div>
+                                </div>
+                                <table id="sast-cve-table-high" class="cve-table sast-cve-table sast-cve-table-high">
+                                    <tr>
+                                        <th>Vulnerability</th>
+                                        <th>Issues Found</th>
+                                    </tr>
+                                    <#list sast.queryList as query>
+                                        <#if query.severity == sast.languageMap["High"]>
+                                            <tr>
+                                                <td>${query.name}</td>
+                                                <td>${query.result?size}</td>
+                                            </tr>
+                                        </#if>
+                                    </#list>
+                                </table>
+                            </div>
+                        </#if>
+
+                        <#if sast.medium gt 0>
+                            <div id="sast-cve-table-medium-container">
+                                <div class="full-severity-title">
+                                    <div class="severity-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                             xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="20"
+                                             viewBox="0 0 16 20"><title>Med</title>
+                                            <defs>
+                                                <path d="M1 1.053L8 0l7 1.053s1 3.173 1 6.315c0 6.332-5.346 11.89-5.346 11.89-.36.41-1.097.742-1.663.742H7.01c-.558 0-1.3-.34-1.652-.77 0 0-5.358-6.056-5.358-10.81 0-3.338 1-7.367 1-7.367z"
+                                                      id="sast-full-med-path-1"/>
+                                                <path d="M1 1.053L8 0l7 1.053s1 3.173 1 6.315c0 6.332-5.346 11.89-5.346 11.89-.36.41-1.097.742-1.663.742H7.01c-.558 0-1.3-.34-1.652-.77 0 0-5.358-6.056-5.358-10.81 0-3.338 1-7.367 1-7.367z"
+                                                      id="sast-full-med-path-2"/>
+                                            </defs>
+                                            <g fill="none" fill-rule="evenodd">
+                                                <mask id="sast-full-med-mask-1" fill="#fff">
+                                                    <use xlink:href="#sast-full-med-path-1"/>
+                                                </mask>
+                                                <use fill="#FFAC00" xlink:href="#sast-full-med-path-1"/>
+                                                <path stroke="#E49B16"
+                                                      d="M1.41 1.497L8 .507l6.61.993c.02.067.04.144.064.228.114.425.23.898.337 1.407.3 1.418.48 2.83.49 4.143v.09c0 2.665-.972 5.404-2.6 8.06-.57.934-1.185 1.79-1.8 2.55-.213.264-.412.498-.59.698-.105.118-.18.198-.216.237-.282.32-.882.587-1.302.587H7.01c-.414 0-1.01-.277-1.266-.587-.05-.06-.126-.146-.233-.274-.18-.216-.38-.464-.594-.74-.62-.79-1.237-1.654-1.814-2.56-.982-1.55-1.74-3.06-2.18-4.463C.645 9.994.5 9.17.5 8.42c0-.457.02-.944.057-1.457.077-1.072.23-2.22.435-3.392.11-.614.224-1.197.34-1.73L1.41 1.5z"/>
+                                                <path fill="#D79201" mask="url(#sast-full-med-mask-1)"
+                                                      d="M8 0h8v20H8z"/>
+                                                <mask id="sast-full-med-mask-2" fill="#fff">
+                                                    <use xlink:href="#sast-full-med-path-2"/>
+                                                </mask>
+                                                <path stroke="#D49100"
+                                                      d="M1.41 1.497L8 .507l6.61.993c.02.067.04.144.064.228.114.425.23.898.337 1.407.3 1.418.48 2.83.49 4.143v.09c0 2.665-.972 5.404-2.6 8.06-.57.934-1.185 1.79-1.8 2.55-.213.264-.412.498-.59.698-.105.118-.18.198-.216.237-.282.32-.882.587-1.302.587H7.01c-.414 0-1.01-.277-1.266-.587-.05-.06-.126-.146-.233-.274-.18-.216-.38-.464-.594-.74-.62-.79-1.237-1.654-1.814-2.56-.982-1.55-1.74-3.06-2.18-4.463C.645 9.994.5 9.17.5 8.42c0-.457.02-.944.057-1.457.077-1.072.23-2.22.435-3.392.11-.614.224-1.197.34-1.73L1.41 1.5z"/>
+                                                <path fill="#472F00" mask="url(#sast-full-med-mask-2)"
+                                                      d="M4.28 12.632h1.9v-4.21l1.78 2.862H8L9.79 8.4v4.232h1.93v-7.37H9.67L8 8.117 6.33 5.263H4.28"/>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <div class="severity-title-name">Medium</div>
+                                    <div class="severity-count">${sast.medium}</div>
+                                </div>
+                                <table id="sast-cve-table-medium"
+                                       class="cve-table sast-cve-table sast-cve-table-medium">
+                                    <tr>
+                                        <th>Vulnerability</th>
+                                        <th>Issues Found</th>
+                                    </tr>
+                                    <#list sast.queryList as query>
+                                        <#if query.severity == sast.languageMap["Medium"]>
+                                            <tr>
+                                                <td>${query.name}</td>
+                                                <td>${query.result?size}</td>
+                                            </tr>
+                                        </#if>
+                                    </#list>
+                                </table>
+                            </div>
+                        </#if>
+
+                        <#if sast.low gt 0>
+                            <div id="sast-cve-table-low-container">
+                                <div class="full-severity-title">
+                                    <div class="severity-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                             xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="19"
+                                             viewBox="0 0 16 19"><title>Low</title>
+                                            <defs>
+                                                <path d="M1 1l7-1 7 1s1 3.015 1 6c0 6.015-6 12-6 12H6S0 12.515 0 8c0-3.172 1-7 1-7z"
+                                                      id="sast-full-low-path-1"/>
+                                                <path d="M1 1l7-1 7 1s1 3.015 1 6c0 6.015-6 12-6 12H6S0 12.515 0 8c0-3.172 1-7 1-7z"
+                                                      id="sast-full-low-path-2"/>
+                                            </defs>
+                                            <g fill="none" fill-rule="evenodd">
+                                                <path d="M7.96 17.32L8 .015l-6.5 1s-.96 4.5-.96 8.75c1.272 4.602 5.968 9.25 5.968 9.25h.163l1.29-1.695z"
+                                                      fill="#EDEFF5"/>
+                                                <mask id="sast-full-low-mask-1" fill="#fff">
+                                                    <use xlink:href="#sast-full-low-path-1"/>
+                                                </mask>
+                                                <use fill="#FFEB3B" xlink:href="#sast-full-low-path-1"/>
+                                                <path stroke="#E4D200"
+                                                      d="M1.404 1.447L8 .505l6.616.945.06.205c.114.402.23.85.336 1.334.298 1.34.48 2.68.488 3.923V7c0 2.515-1.09 5.243-2.916 7.978-.644.966-1.335 1.863-2.026 2.667-.24.28-.465.53-.665.745-.04.04-.074.077-.105.11H6.222l-.105-.118c-.202-.23-.427-.492-.67-.785-.694-.837-1.388-1.744-2.035-2.687-.89-1.298-1.62-2.56-2.128-3.738C.772 9.982.5 8.912.5 8c0-.433.02-.895.056-1.38.078-1.02.23-2.11.436-3.22.108-.584.223-1.137.34-1.64.026-.118.05-.222.072-.313z"/>
+                                                <path fill="#DDCE00" mask="url(#sast-full-low-mask-1)"
+                                                      d="M8-8h10v32H8z"/>
+                                                <mask id="sast-full-low-mask-2" fill="#fff">
+                                                    <use xlink:href="#sast-full-low-path-2"/>
+                                                </mask>
+                                                <path stroke="#E4D200"
+                                                      d="M1.404 1.447L8 .505l6.616.945.06.205c.114.402.23.85.336 1.334.298 1.34.48 2.68.488 3.923V7c0 2.515-1.09 5.243-2.916 7.978-.644.966-1.335 1.863-2.026 2.667-.24.28-.465.53-.665.745-.04.04-.074.077-.105.11H6.222l-.105-.118c-.202-.23-.427-.492-.67-.785-.694-.837-1.388-1.744-2.035-2.687-.89-1.298-1.62-2.56-2.128-3.738C.772 9.982.5 8.912.5 8c0-.433.02-.895.056-1.38.078-1.02.23-2.11.436-3.22.108-.584.223-1.137.34-1.64.026-.118.05-.222.072-.313z"/>
+                                                <path fill="#605900" mask="url(#sast-full-low-mask-2)"
+                                                      d="M5.54 12h5.33v-1.7H7.48V5H5.54"/>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <div class="severity-title-name">Low</div>
+                                    <div class="severity-count"> ${sast.low}</div>
+                                </div>
+                                <table id="sast-cve-table-low" class="cve-table sast-cve-table sast-cve-table-low">
+                                    <tr>
+                                        <th>Vulnerability</th>
+                                        <th>Issues Found</th>
+                                    </tr>
+                                    <#list sast.queryList as query>
+                                        <#if query.severity == sast.languageMap["Low"]>
+                                            <tr>
+                                                <td>${query.name}</td>
+                                                <td>${query.result?size}</td>
+                                            </tr>
+                                        </#if>
+                                    </#list>
+                                </table>
+                            </div>
+                        </#if>
+                    </div>
+                </div>
+            </div>
+        </#if>
+		
+    </#if>
     </#if>
 
     <#if ( config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady>

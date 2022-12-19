@@ -6,9 +6,17 @@ import static com.cx.restclient.ast.dto.sast.AstSASTParam.SCAN_LINK_BRANCH;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.resultsummary.ResultSummaries;
@@ -24,6 +32,7 @@ import com.cx.restclient.ast.dto.sast.report.Finding;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.cxArm.dto.Policy;
 import com.cx.restclient.dto.Results;
+import com.cx.restclient.sast.dto.SupportedLanguage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -48,12 +57,8 @@ public class AstSastResults extends Results implements Serializable {
     private int newLow = 0;
     private int newInfo = 0;
 
-    private String astSastScanLink;
-    private String sastProjectLink;
-    private String sastPDFLink;
+    private String cxonesastPDFLink;
 
-    private String scanStart = "";
-    private String scanTime = "";
     private String scanStartTime = "";
     private String scanEndTime = "";
     
@@ -65,9 +70,10 @@ public class AstSastResults extends Results implements Serializable {
     private String pdfFileName;
 
     private List<Policy> sastPolicies = new ArrayList<>();
-	private boolean astSastResultsReady;
-	private String astScanLink;
+	private boolean cxoneSastResultsReady;
+	private String cxOneScanLink;
 	private String astSastProjectLink;
+	private String cxOneLanguage;
 
     public enum Severity {
         High, Medium, Low, Information;
@@ -84,15 +90,18 @@ public class AstSastResults extends Results implements Serializable {
     public void setScanResponse(ScanResponse results) {
         this.scanRes = results;
     }
+    public boolean hasNewResults() {
+        return newHigh + newMedium + newLow > 0;
+    }
     public ScanResponse getScanResponse() {
         return scanRes;
     }
-    public String getAstSastScanLink() {
-        return astScanLink;
+    public String getCxOneSastScanLink() {
+        return cxOneScanLink;
     }
 
-    public void setAstSastScanLink(String astScanLink) {
-        this.astScanLink = astScanLink;
+    public void setCxOneSastScanLink(String astScanLink) {
+        this.cxOneScanLink = astScanLink;
     }
     public int getNewHigh() {
         return newHigh;
@@ -193,15 +202,15 @@ public class AstSastResults extends Results implements Serializable {
     }
 
     public void setAstSastScanLink(CxOneConfig oneConfig, String scanId, String projectId) {
-    	this.astScanLink = oneConfig.getApiBaseUrl() + PROJECT_FOR_SCAN + projectId + SCAN_LINK_BRANCH + getScanResponse().getBranch()+"&id="+ scanId;
+    	this.cxOneScanLink = oneConfig.getApiBaseUrl() + PROJECT_FOR_SCAN + projectId + SCAN_LINK_BRANCH + getScanResponse().getBranch()+"&id="+ scanId;
     }
     
-    public boolean isAstSastResultsReady() {
-        return astSastResultsReady;
+    public boolean isCxOneSastResultsReady() {
+        return cxoneSastResultsReady;
     }
 
-    public void setAstSastResultsReady(boolean astSastResultsReady) {
-        this.astSastResultsReady = astSastResultsReady;
+    public void setCxOneSastResultsReady(boolean astSastResultsReady) {
+        this.cxoneSastResultsReady = astSastResultsReady;
     } 
     
     private void setAstSastProjectLink() {
@@ -253,10 +262,14 @@ public class AstSastResults extends Results implements Serializable {
 		this.PDFReport = PDFReport;		
 	}
 
-	public void setASTSastPDFLink(String pdfLink) {
-		this.sastPDFLink = sastPDFLink;		
+	public void setCxOneSastPDFLink(String pdfLink) {
+		this.cxonesastPDFLink = cxonesastPDFLink;		
 	}
-
+	
+	public String getCxOneSastPDFLink(String pdfLink) {
+		return cxonesastPDFLink;		
+	}
+	
 	public void setPdfFileName(String pdfFileName2) {
 		this.pdfFileName = pdfFileName;		
 	}
@@ -270,10 +283,77 @@ public class AstSastResults extends Results implements Serializable {
     public byte[] getPDFReport() {
         return PDFReport;
     }
-
+/**
+ * Updated scan start and end time
+ * @param scanDetails
+ * @throws JsonMappingException
+ * @throws JsonProcessingException
+ */
 	public void updateAstSastResult(ScansResponse scanDetails) throws JsonMappingException, JsonProcessingException {
-		this.scanStart = scanDetails.getCreatedAt();
+		this.scanStartTime = scanDetails.getCreatedAt();
         this.scanEndTime = scanDetails.getUpdatedAt();
-//        setScanStartEndDates(this.scanStart, this.scanTime,sastLanguage);
+        setScanStartEndDates(this.scanStartTime, this.scanEndTime, cxOneLanguage);
 	}
+	public void setCxOneLanguage(String cxOneLanguage) {
+		this.cxOneLanguage = cxOneLanguage;
+	}
+	 private void setScanStartEndDates(String scanStart, String scanEnd, String lang) {
+
+	        try {
+	            //turn strings to date objects
+	            LocalDateTime scanStartDate = createStartDate(scanStart, lang);
+	            LocalDateTime scanEndDate = createStartDate(scanEnd, lang);
+	            //turn dates back to strings
+	            String scanStartDateFormatted = formatToDisplayDate(scanStartDate);
+	            String scanEndDateFormatted = formatToDisplayDate(scanEndDate);
+
+	            //set sast scan result object with formatted strings
+	            this.scanStartTime = scanStartDateFormatted;
+	            this.scanEndTime = scanEndDateFormatted;
+	        } catch (Exception ignored) {
+	            //ignored
+	       	 ignored.printStackTrace();
+	        }
+
+	    }
+	 
+
+	    private String formatToDisplayDate(LocalDateTime date) throws ParseException{
+	    	 String displayDatePattern = "dd/MM/yy HH:mm:ss";
+	    	return date.format(DateTimeFormatter.ofPattern(displayDatePattern));
+	    }
+
+	    
+	    /*
+	     * Convert localized date to english date
+	     */
+	    private LocalDateTime createStartDate(String scanStart, String langTag) throws Exception {
+	    	LocalDateTime startDate = LocalDateTime.now();
+	    	
+			Locale l = Locale.forLanguageTag(langTag);
+			try {
+		   	   	  final String languageTag =  StringUtils.upperCase(l.getLanguage() + l.getCountry());
+		    	  final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+		    	             .parseCaseInsensitive()
+		    	             .appendPattern(SupportedLanguage.valueOf(languageTag).getDatePattern())
+		    	             .toFormatter(l);
+					
+		    	  		
+		    	 startDate = LocalDateTime.parse(scanStart, formatter);
+				} catch (Exception ignored) {
+
+			    }
+			
+	        return startDate;
+	    }
+
+	    private LocalTime createTimeDate(String hhmmss) throws ParseException {
+	    	LocalTime scanTime = LocalTime.parse(hhmmss,DateTimeFormatter.ofPattern("HH'h':mm'm':ss's'"));
+	    	return scanTime;
+	    }
+
+	    private LocalDateTime createEndDate(LocalDateTime scanStartDate, LocalTime scanTime) {
+	        return  scanStartDate.plusHours(scanTime.getHour()).plusMinutes(scanTime.getMinute()).plusSeconds(scanTime.getSecond());
+	    }
+		
 }
