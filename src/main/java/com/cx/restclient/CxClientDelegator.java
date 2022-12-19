@@ -196,7 +196,9 @@ public class CxClientDelegator implements Scanner {
     public AstScaClient getScaClient() {
         return (AstScaClient) scannersMap.get(ScannerType.AST_SCA);
     }
-
+    public AstScaClient getCxOneSastClient() {
+        return (AstScaClient) scannersMap.get(ScannerType.CXONE_SAST);
+    }
     public void close() {
         scannersMap.values().forEach(Scanner::close);
     }
