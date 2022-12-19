@@ -1,15 +1,15 @@
 package com.cx.restclient.sast.utils;
 
-public class ResponseFunction {
+public class MigrationYamlResponse {
 	private String func;
 	private String regex;
 	private Boolean isMigrate;
 	
-	public ResponseFunction() {
+	public MigrationYamlResponse() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
-	public ResponseFunction(String func, String regex, Boolean isMigrate) {
+	public MigrationYamlResponse(String func, String regex, Boolean isMigrate) {
 		super();
 		this.func = func;
 		this.regex = regex;
