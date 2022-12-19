@@ -255,11 +255,12 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     
-    private byte[] getReport(String scanId, String contentType) throws IOException {
-    	String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
-    	
-        return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}",scanId).replace("{file_type}",contentType), contentType, byte[].class, 200, " scan report: " + reportId, false);
-    }
+	private byte[] getReport(String scanId, String contentType) throws IOException {
+		String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
+
+		return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
+				contentType, byte[].class, 200, " scan report: " + reportId, false);
+	}
 	//cli reports
 	 public static void writeReport(byte[] scanReport, String reportName, Logger log) {
 	        try {
@@ -273,7 +274,7 @@ public class AstScaClient extends AstClient implements Scanner {
 	            }
 
 	            FileUtils.writeByteArrayToFile(reportFile, scanReport);
-	            log.info("report location: " + reportFile.getAbsolutePath());
+	            log.info("Report location: " + reportFile.getAbsolutePath());
 	        } catch (Exception e) {
 	            log.error("Failed to write report: ", e.getMessage());
 	        }
@@ -295,29 +296,24 @@ public class AstScaClient extends AstClient implements Scanner {
                 OSAUtils.writeJsonToFile(REPORT_SCA_SUMMARY + JSON_EXTENSION, scaResults.getSummary(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
             }
             
-            
-            
 			if (config.isGenerateScaReport()) {
-            	if(config.isHasScaReportFormat()) {
-            	String reportFormat = config.getScaReportFormat();
-                log.info("Generating "+reportFormat+" report");
-                byte[] scanReport = getReport(scaResults.getScanId(), reportFormat);
-                String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
-                String PDF_REPORT_NAME = "AstScaReport";
-                String fileName = "";
-                if(reportFormat.equals("CSV")) {
-                    reportFormat = "zip";      
-                }
-              
-                 fileName = PDF_REPORT_NAME  + "_" + now + "." + reportFormat.toLowerCase();
-                writeReport(scanReport, fileName, log);
-                if (reportFormat.toLowerCase().equals("pdf")) {
-                    scaResults.setPDFReport(scanReport);
-                    scaResults.setPdfFileName(fileName);
-                }
-            	}else {
-            		log.error("you have not mentioned sca report format");
-            	}
+				String reportFormat = config.getScaReportFormat();
+				log.info("Generating SCA report. Report type: " + reportFormat);
+				byte[] scanReport = getReport(scaResults.getScanId(), reportFormat);
+				String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
+				String PDF_REPORT_NAME = "AstScaReport";
+				String fileName = "";
+				if (reportFormat.equalsIgnoreCase("CSV")) {
+					reportFormat = "zip";
+				}
+
+				fileName = PDF_REPORT_NAME + "_" + now + "." + reportFormat.toLowerCase();
+				writeReport(scanReport, fileName, log);
+				if (reportFormat.toLowerCase().equals("pdf")) {
+					scaResults.setPDFReport(scanReport);
+					scaResults.setPdfFileName(fileName);
+				}
+
 			}
             return scaResults;
         } catch (CxClientException e) {

@@ -27,8 +27,7 @@ public class CxScanConfig implements Serializable {
     private String osaLocationPath;
     private File reportsDir;
     // Map<reportType, reportPath> / (e.g. PDF to its file path)
-    private Map<ReportType, String> reports = new HashMap<>();
-    private Map<String, String> scaReports = new HashMap<>();
+    private Map<ReportType, String> reports = new HashMap<>();    
     private String username;
     private String password;
     private String refreshToken;
@@ -124,34 +123,6 @@ public class CxScanConfig implements Serializable {
     private boolean generateScaReport = false;
     private boolean hasScaReportFormat = false;
 	private String scaReportFormat;
-    public boolean isHasScaReportFormat() {
-		return hasScaReportFormat;
-	}
-
-	public void setHasScaReportFormat(boolean hasScaReportFormat) {
-		this.hasScaReportFormat = hasScaReportFormat;
-	}
-
-	
-	
-	
-	
-	public boolean isGenerateScaReport() {
-		return generateScaReport;
-	}
-
-	public void setGenerateScaReport(boolean generateScaReport) {
-		this.generateScaReport = generateScaReport;
-	}
-
-	public String getScaReportFormat() {
-		return scaReportFormat;
-	}
-
-	public void setScaReportFormat(String scaReportFormat) {
-		this.scaReportFormat = scaReportFormat;
-	}
-
 
     private Integer postScanActionId;
 
@@ -829,27 +800,7 @@ public class CxScanConfig implements Serializable {
     public void setDefaultProjectName(String defaultProjectName) {
         this.defaultProjectName = defaultProjectName;
     }
-
-    public Map<String, String> getScaReports() {
-        return scaReports;
-    }
-
-    public void addScaPDFReport(String pdfReportPath) {
-        scaReports.put("pdf", pdfReportPath);
-    }
-
-    public void addScaXMLReport(String xmlReportPath) {
-    	scaReports.put("xml", xmlReportPath);
-    }
-
-    public void addScaCSVReport(String csvReportPath) {
-    	scaReports.put("csv", csvReportPath);
-    }
-
-    public void addScaJsonReport(String jsonReportPath) {
-    	scaReports.put("json", jsonReportPath);
-    }
-    
+   
     public Map<ReportType, String> getReports() {
         return reports;
     }
@@ -994,7 +945,22 @@ public class CxScanConfig implements Serializable {
 	public void setMasterBranchProjName(String masterBranchProjName) {
 		this.masterBranchProjName = masterBranchProjName;
 	}
+	
+	public boolean isGenerateScaReport() {
+		return generateScaReport;
+	}
 
+	public void setGenerateScaReport(boolean generateScaReport) {
+		this.generateScaReport = generateScaReport;
+	}
+
+	public String getScaReportFormat() {
+		return scaReportFormat;
+	}
+
+	public void setScaReportFormat(String scaReportFormat) {
+		this.scaReportFormat = scaReportFormat;
+	}
 
 	
 }

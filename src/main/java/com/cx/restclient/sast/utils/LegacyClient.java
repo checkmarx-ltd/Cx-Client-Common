@@ -86,31 +86,39 @@ public abstract class LegacyClient {
             }
             //Create newProject and checking if EnableSASTBranching is enabled then creating branch project 
             if(config.isEnableSASTBranching()) {
-            if(StringUtils.isEmpty(config.getMasterBranchProjName())) {
-            	throw new CxClientException("Master branch project name not found");
+				if (StringUtils.isEmpty(config.getMasterBranchProjName())) {
+					throw new CxClientException("Master branch project name is must to create branched project.");
+				} else {
+					Long masterProjectId;
+					List<Project> masterProject = getProjectByName(config.getMasterBranchProjName(), config.getTeamId(),
+							teamPath);
+					if (masterProject != null && !masterProject.isEmpty()) {
+						masterProjectId = masterProject.get(0).getId();
+					} else {
+						throw new CxClientException(
+								"Master branch project does not exist:" + config.getMasterBranchProjName());
+					}
+					log.info("Project not found, creating a new one.: '{}' with Team '{}'", config.getProjectName(),
+							teamPath);
+					projectId = createChildProject(masterProjectId, config.getProjectName());
+					if (projectId == UNKNOWN_INT) {
+						throw new CxClientException(
+								"Branched project could not be created: " + config.getProjectName());
+					}else {
+						log.info("Created a project with ID {}", projectId);
+						setIsNewProject(true);
+					}
+				}
             }
-            else {
-            	Long masterProjectId;
-            	List<Project> masterProject = getProjectByName(config.getMasterBranchProjName(), config.getTeamId(), teamPath);
-            	if (masterProject != null) {
-            	masterProjectId = masterProject.get(0).getId();
-            	}
-            	else {
-                    throw new CxClientException("Master project does not exist:" + config.getMasterBranchProjName());
-                }
-            	projectId = createChildProject(masterProjectId, config.getProjectName());
-            	if (projectId == UNKNOWN_INT) {
-                    throw new CxClientException("Project was not created successfully: ".concat(config.getProjectName()));
-                }
-            }
-            }
-            else {
-            CreateProjectRequest request = new CreateProjectRequest(config.getProjectName(), config.getTeamId(), config.getPublic());
-            log.info("Project not found, creating a new one.: '{}' with Team '{}'", config.getProjectName(), teamPath);
-            projectId = createNewProject(request, teamPath).getId();
-            log.info("Created a project with ID {}", projectId);
-            setIsNewProject(true);
-            }
+			else {
+				CreateProjectRequest request = new CreateProjectRequest(config.getProjectName(), config.getTeamId(),
+						config.getPublic());
+				log.info("Project not found, creating a new one.: '{}' with Team '{}'", config.getProjectName(),
+						teamPath);
+				projectId = createNewProject(request, teamPath).getId();
+				log.info("Created a project with ID {}", projectId);
+				setIsNewProject(true);
+			}
         } else {
             projectId = projects.get(0).getId();
             setIsNewProject(false);
@@ -502,7 +510,7 @@ public abstract class LegacyClient {
         }        
         catch (CxHTTPClientException e) {
 	        	log.error(e.getMessage());
-	            log.error("HTP error code {} while creating branched project with name '{}' from existing project with ID {}",  e.getStatusCode(), childProjectName, projectId);       
+	            log.error("Error occured while creating branched project with name '{}' from existing project with ID {}",  childProjectName, projectId);       
 	    }
         catch (JSONException e) {
         log.error("Error processing JSON Response while creating branched project with name '{}' from existing project with ID {}", childProjectName, projectId);
