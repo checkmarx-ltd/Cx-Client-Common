@@ -22,7 +22,140 @@ import java.util.List;
 public class AstScaResults extends Results implements Serializable {
     private String scanId;
     private String reportId;
-    private AstScaSummaryResults summary;
+    private byte[] rawXMLReport;
+    private String scaPDFLink;
+    public String getScaPDFLink() {
+		return scaPDFLink;
+	}
+
+	public void setScaPDFLink(String scaPDFLink) {
+		this.scaPDFLink = scaPDFLink;
+	}
+
+	public byte[] getRawXMLReport() {
+		return rawXMLReport;
+	}
+
+	public void setRawXMLReport(byte[] rawXMLReport) {
+		this.rawXMLReport = rawXMLReport;
+	}
+
+	public byte[] getPDFReport() {
+		return PDFReport;
+	}
+
+	public void setPDFReport(byte[] pDFReport) {
+		PDFReport = pDFReport;
+	}
+
+	public String getPdfFileName() {
+		return pdfFileName;
+	}
+
+	public void setPdfFileName(String pdfFileName) {
+		this.pdfFileName = pdfFileName;
+	}
+
+	private byte[] PDFReport;
+    private String pdfFileName;
+
+    public String getScanId() {
+		return scanId;
+	}
+
+	public void setScanId(String scanId) {
+		this.scanId = scanId;
+	}
+
+	public String getReportId() {
+		return reportId;
+	}
+
+	public void setReportId(String reportId) {
+		this.reportId = reportId;
+	}
+
+	public AstScaSummaryResults getSummary() {
+		return summary;
+	}
+
+	public void setSummary(AstScaSummaryResults summary) {
+		this.summary = summary;
+	}
+
+	public String getWebReportLink() {
+		return webReportLink;
+	}
+
+	public void setWebReportLink(String webReportLink) {
+		this.webReportLink = webReportLink;
+	}
+
+	public List<Finding> getFindings() {
+		return findings;
+	}
+
+	public void setFindings(List<Finding> findings) {
+		this.findings = findings;
+	}
+
+	public List<Package> getPackages() {
+		return packages;
+	}
+
+	public void setPackages(List<Package> packages) {
+		this.packages = packages;
+	}
+
+	public boolean isScaResultReady() {
+		return scaResultReady;
+	}
+
+	public void setScaResultReady(boolean scaResultReady) {
+		this.scaResultReady = scaResultReady;
+	}
+
+	public int getNonVulnerableLibraries() {
+		return nonVulnerableLibraries;
+	}
+
+	public void setNonVulnerableLibraries(int nonVulnerableLibraries) {
+		this.nonVulnerableLibraries = nonVulnerableLibraries;
+	}
+
+	public int getVulnerableAndOutdated() {
+		return vulnerableAndOutdated;
+	}
+
+	public void setVulnerableAndOutdated(int vulnerableAndOutdated) {
+		this.vulnerableAndOutdated = vulnerableAndOutdated;
+	}
+
+	public List<PolicyEvaluation> getPolicyEvaluations() {
+		return policyEvaluations;
+	}
+
+	public void setPolicyEvaluations(List<PolicyEvaluation> policyEvaluations) {
+		this.policyEvaluations = policyEvaluations;
+	}
+
+	public boolean isPolicyViolated() {
+		return policyViolated;
+	}
+
+	public void setPolicyViolated(boolean policyViolated) {
+		this.policyViolated = policyViolated;
+	}
+
+	public boolean isBreakTheBuild() {
+		return breakTheBuild;
+	}
+
+	public void setBreakTheBuild(boolean breakTheBuild) {
+		this.breakTheBuild = breakTheBuild;
+	}
+
+	private AstScaSummaryResults summary;
     private String webReportLink;
     private List<Finding> findings;
     private List<Package> packages;
@@ -45,15 +178,6 @@ public class AstScaResults extends Results implements Serializable {
                 }
             }
         }
-    }
-
-	public List<PolicyEvaluation> getPolicyEvaluations() {
-		return policyEvaluations;
-	}
-
-	public void setPolicyEvaluations(List<PolicyEvaluation> policyEvaluations) {
-		this.policyEvaluations = policyEvaluations;
-	}
-	
+    }	
     
 }

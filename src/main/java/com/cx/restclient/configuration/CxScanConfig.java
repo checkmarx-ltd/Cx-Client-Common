@@ -27,7 +27,7 @@ public class CxScanConfig implements Serializable {
     private String osaLocationPath;
     private File reportsDir;
     // Map<reportType, reportPath> / (e.g. PDF to its file path)
-    private Map<ReportType, String> reports = new HashMap<>();
+    private Map<ReportType, String> reports = new HashMap<>();    
     private String username;
     private String password;
     private String refreshToken;
@@ -64,8 +64,7 @@ public class CxScanConfig implements Serializable {
     private String engineConfigurationName;
     private boolean ignoreBenignErrors = false;
 
-    private String osaFolderExclusions;
-
+    private String osaFolderExclusions;    
     public String getEngineConfigurationName() {
         return engineConfigurationName;
     }
@@ -121,6 +120,9 @@ public class CxScanConfig implements Serializable {
     private ProxyConfig proxyConfig;
     private ProxyConfig proxyScaConfig;
     private Boolean useNTLM = false;
+    private boolean generateScaReport = false;
+    private boolean hasScaReportFormat = false;
+	private String scaReportFormat;
 
     private Integer postScanActionId;
 
@@ -128,6 +130,9 @@ public class CxScanConfig implements Serializable {
     
     private boolean isOverrideProjectSetting = false;
 
+    private Boolean enableSastBranching = false;
+    
+    private String masterBranchProjName;
 
     public CxScanConfig() {
     }
@@ -795,7 +800,7 @@ public class CxScanConfig implements Serializable {
     public void setDefaultProjectName(String defaultProjectName) {
         this.defaultProjectName = defaultProjectName;
     }
-
+   
     public Map<ReportType, String> getReports() {
         return reports;
     }
@@ -924,7 +929,38 @@ public class CxScanConfig implements Serializable {
 	public final void setIgnoreBenignErrors(boolean ignoreBenignErrors) {
 		this.ignoreBenignErrors = ignoreBenignErrors;
 	}
+	
+	public Boolean isEnableSASTBranching() {
+		return enableSastBranching;
+	}
 
+	public void setEnableSASTBranching(Boolean enableSASTBranching) {
+		this.enableSastBranching = enableSASTBranching;
+	}
+
+	public String getMasterBranchProjName() {
+		return masterBranchProjName;
+	}
+
+	public void setMasterBranchProjName(String masterBranchProjName) {
+		this.masterBranchProjName = masterBranchProjName;
+	}
+	
+	public boolean isGenerateScaReport() {
+		return generateScaReport;
+	}
+
+	public void setGenerateScaReport(boolean generateScaReport) {
+		this.generateScaReport = generateScaReport;
+	}
+
+	public String getScaReportFormat() {
+		return scaReportFormat;
+	}
+
+	public void setScaReportFormat(String scaReportFormat) {
+		this.scaReportFormat = scaReportFormat;
+	}
 
 	
 }

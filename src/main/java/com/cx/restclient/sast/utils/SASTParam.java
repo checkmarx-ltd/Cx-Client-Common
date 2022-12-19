@@ -38,6 +38,9 @@ public class SASTParam {
     public static final String TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP = "ScaResolverResults";
     public static final String SCA_RESOLVER_RESULT_FILE_NAME = ".cxsca-results.json";
 
+    public static final String SAST_RESOLVER_RESULT_FILE_NAME=".cxsca-sast-results.json";
+    public static final String TEMP_FOLDER_NAME_TO_SCA_RESOLVER_RESULTS = "ScaResolverResultsTemp";
+
     //Links formats
     public static final String LINK_FORMAT = "/CxWebClient/portal#/projectState/";
     public static final String LINK_FORMAL_SUMMARY = "/Summary";
@@ -47,5 +50,8 @@ public class SASTParam {
 
     //REPORT PARAMS
     public static final String PDF_REPORT_NAME = "CxSASTReport";
+    
+    //PROJECT BRANCHING
+    public static final String PROJECT_BRANCH = "projects/{id}/branch";
 }
 
