@@ -56,7 +56,7 @@ public class CxClientDelegator implements Scanner {
 			}
 			if (migrationYamlResponse != null && migrationYamlResponse.getIsMigrate()) {
 				isAstMigrate = true;
-				scannersMap.put(ScannerType.AST_SAST, new CxOneWrapperClient(config, log));
+				scannersMap.put(ScannerType.CXONE_SAST, new CxOneWrapperClient(config, log));
 		    }
 			
         } if (!isAstMigrate && !isExceptionFound && config.isSastEnabled()) {
@@ -208,8 +208,8 @@ public class CxClientDelegator implements Scanner {
     public AstScaClient getScaClient() {
         return (AstScaClient) scannersMap.get(ScannerType.AST_SCA);
     }
-    public AstScaClient getCxOneSastClient() {
-        return (AstScaClient) scannersMap.get(ScannerType.CXONE_SAST);
+    public CxOneWrapperClient  getCxOneSastClient() {
+        return (CxOneWrapperClient) scannersMap.get(ScannerType.CXONE_SAST);
     }
     public void close() {
         scannersMap.values().forEach(Scanner::close);

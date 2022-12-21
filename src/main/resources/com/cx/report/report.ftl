@@ -952,16 +952,16 @@
                     <#if policyViolated>
                         <li>${policyViolatedCount} ${policyLabel}  Violated</li>
                     </#if>
-					<#if config.isSubmitToAST() && !cxOneSast.cxoneSastResultsReady>
+					<#if config.isSubmitToAST() && !cxOnesast.cxoneSastResultsReady>
                         <li>CxOne SAST Scan Failed</li>
                     </#if>
                     <#if config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
                     <#elseif config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded)>
                         <li>Exceeded CxSAST Vulnerability Threshold</li>
-					<#elseif config.isSubmitToAST() && cxOneSast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
+					<#elseif config.isSubmitToAST() && cxOnesast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxOneSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
-                    <#elseif config.isSubmitToAST() && sast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded)>
+                    <#elseif config.isSubmitToAST() && cxOnesast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded)>
                         <li>Exceeded CxOneSAST Vulnerability Threshold</li>
                     <#elseif config.isOsaEnabled() && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxOSA Vulnerability Threshold</li>
@@ -1322,10 +1322,10 @@
 				<div class="cxonesast-summary <#if !(config.isOsaEnabled() || config.isAstScaEnabled()) >chart-large</#if>" id="cxonesast-summary">
                     <div class="summary-report-title cxonesast">
                         <div class="summary-title-text cxonesast">CxOne SAST Vulnerabilities Status</div>
-                        <#if cxOneSast.astSastResultsReady>
+                        <#if cxOnesast.astSastResultsReady>
                             <div id="cxonesast-title-links" class="title-links">
                                 <div class="link-to-result summary-link">
-                                    <a href="${cxOneSast.cxOneScanLink}" class="html-report" id="sast-summary-html-link">
+                                    <a href="${cxOnesast.cxOneScanLink}" class="html-report" id="sast-summary-html-link">
                                         <div class="results-link-icon link-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="14"
                                                  viewBox="0 0 12 14">
@@ -1407,11 +1407,11 @@
                             </div>
                         </#if>
                     </div>
-                    <#if cxOneSast.cxoneSastResultsReady>
+                    <#if cxOnesast.cxoneSastResultsReady>
                         <!--cxone sast-chart-->
                         <div class="summary-chart" id="cxonesast-results">
                             <div class="top-of-chart">
-                                <#if cxOneSast.hasNewResults()>
+                                <#if cxOnesast.hasNewResults()>
                                     <div id="cxonesast-legend-container" class="chart-legend-container">
                                         <div class="chart-legend">
                                             <div class="legend-item recurrent-legend">
@@ -2548,8 +2548,8 @@
                 </div>
             </div>
         </#if>
-		<#elseif config.isSubmitToAST() && config.generateXmlReport &&cxOnesast.cxonesastResultsReady>
-        <#if cxonesast.high gt 0 || cxone.medium gt 0 || cxone.low gt 0>
+		<#elseif config.isSubmitToAST() && config.generateXmlReport && cxOnesast.cxoneSastResultsReady>
+        <#if cxOnesast.high gt 0 || cxOnesast.medium gt 0 || cxOnesast.low gt 0>
             <div id="cxonesast-full" class="sast-full full-results-section">
                 <div class="summary-table-row cxsast-full">
                     <div class="title-column">
@@ -2723,7 +2723,7 @@
                                     <div class="full-start-end-text">
                                         Files:
                                     </div>
-                                    <div class="full-start-end-date" id="sast-full-files">${sast.filesScanned}</div>
+                                    <div class="full-start-end-date" id="sast-full-files">${cxOnesast.filesScanned}</div>
                                 </div>
                             </div>
 
@@ -2763,12 +2763,12 @@
                                     <div class="full-start-end-text">
                                         Code Lines:
                                     </div>
-                                    <div class="full-start-end-date" id="sast-full-loc">${sast.LOC}</div>
+                                    <div class="full-start-end-date" id="sast-full-loc">${cxOnesast.LOC}</div>
                                 </div>
                             </div>
                         </div>
 
-                        <#if sast.high gt 0>
+                        <#if cxOnesast.high gt 0>
                             <div id="sast-cve-table-high-container">
                                 <div class="full-severity-title">
                                     <div class="severity-icon">
@@ -2801,18 +2801,18 @@
                                         </svg>
                                     </div>
                                     <div class="severity-title-name">High</div>
-                                    <div class="severity-count"> ${sast.high}</div>
+                                    <div class="severity-count"> ${cxOnesast.high}</div>
                                 </div>
                                 <table id="sast-cve-table-high" class="cve-table sast-cve-table sast-cve-table-high">
                                     <tr>
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
                                     </tr>
-                                    <#list sast.queryList as query>
-                                        <#if query.severity == sast.languageMap["High"]>
+                                    <#list cxOnesast.sastResults as result>
+                                        <#if result.severity == "High">
                                             <tr>
-                                                <td>${query.name}</td>
-                                                <td>${query.result?size}</td>
+                                                <td>${result.queryName}</td>
+                                                <td>${result.nodes?size}</td>
                                             </tr>
                                         </#if>
                                     </#list>
@@ -2820,7 +2820,7 @@
                             </div>
                         </#if>
 
-                        <#if sast.medium gt 0>
+                        <#if cxOnesast.medium gt 0>
                             <div id="sast-cve-table-medium-container">
                                 <div class="full-severity-title">
                                     <div class="severity-icon">
@@ -2853,7 +2853,7 @@
                                         </svg>
                                     </div>
                                     <div class="severity-title-name">Medium</div>
-                                    <div class="severity-count">${sast.medium}</div>
+                                    <div class="severity-count">${cxOnesast.medium}</div>
                                 </div>
                                 <table id="sast-cve-table-medium"
                                        class="cve-table sast-cve-table sast-cve-table-medium">
@@ -2861,11 +2861,11 @@
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
                                     </tr>
-                                    <#list sast.queryList as query>
-                                        <#if query.severity == sast.languageMap["Medium"]>
+                                    <#list cxOnesast.sastResults as result>
+                                        <#if result.severity == "Medium">
                                             <tr>
-                                                <td>${query.name}</td>
-                                                <td>${query.result?size}</td>
+                                                <td>${result.queryName}</td>
+                                                <td>${result.nodes?size}</td>
                                             </tr>
                                         </#if>
                                     </#list>
@@ -2873,7 +2873,7 @@
                             </div>
                         </#if>
 
-                        <#if sast.low gt 0>
+                        <#if cxOnesast.low gt 0>
                             <div id="sast-cve-table-low-container">
                                 <div class="full-severity-title">
                                     <div class="severity-icon">
@@ -2908,18 +2908,18 @@
                                         </svg>
                                     </div>
                                     <div class="severity-title-name">Low</div>
-                                    <div class="severity-count"> ${sast.low}</div>
+                                    <div class="severity-count"> ${cxOnesast.low}</div>
                                 </div>
                                 <table id="sast-cve-table-low" class="cve-table sast-cve-table sast-cve-table-low">
                                     <tr>
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
                                     </tr>
-                                    <#list sast.queryList as query>
-                                        <#if query.severity == sast.languageMap["Low"]>
+                                    <#list cxOnesast.sastResults as result>
+                                        <#if result.severity == "Low">
                                             <tr>
-                                                <td>${query.name}</td>
-                                                <td>${query.result?size}</td>
+                                                <td>${result.queryName}</td>
+                                                <td>${result.nodes?size}</td>
                                             </tr>
                                         </#if>
                                     </#list>
@@ -2932,7 +2932,7 @@
         </#if>
 		
     </#if>
-    </#if>
+    
 
     <#if ( config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady>
         <#if dependencyResult.dependencyHighCVEReportTable?size gt 0 || dependencyResult.dependencyMediumCVEReportTable?size gt 0 || dependencyResult.dependencyLowCVEReportTable?size gt 0>

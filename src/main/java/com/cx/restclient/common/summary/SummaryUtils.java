@@ -42,7 +42,6 @@ public abstract class SummaryUtils {
 
         Map<String, Object> templateData = new HashMap<>();
         templateData.put("config", config);
-//        templateData.put("sastScannerType", String based on the flag);
         templateData.put("sast", sastResults != null ? sastResults : new SASTResults());
 
         // TODO: null value for "osa" should be handled inside the template.
@@ -101,7 +100,7 @@ public abstract class SummaryUtils {
                 templateData.put("sastLowNewHeight", sastLowNewHeight);
                 templateData.put("sastLowRecurrentHeight", sastLowRecurrentHeight);
             } else if(cxOneSastResults != null) {
-            	if (cxOneSastResults.isCxOneSastResultsReady()) {
+            	if (cxOneSastResults.isCxoneSastResultsReady()) {
                     boolean cxOnesastThresholdExceeded = scanSummary.isCxOneSastThresholdExceeded();
                     boolean cxOneNewResultsExceeded = scanSummary.isCxOneSastThresholdForNewResultsExceeded();
                     templateData.put("cxonesastThresholdExceeded", cxOnesastThresholdExceeded);
