@@ -62,20 +62,21 @@ public class AstSastResults extends Results implements Serializable {
     private String scanStartTime = "";
     private String scanEndTime = "";
     
-    private int filesScanned;
-    private int LOC;
+    private int filesScanned = 0;
+	private int LOC = 0;
 
-    private byte[] rawXMLReport;
+	private byte[] rawXMLReport;
     private byte[] PDFReport;
     private String pdfFileName;
 
     private List<Policy> sastPolicies = new ArrayList<>();
-	private boolean cxoneSastResultsReady;
+	private boolean cxoneSastResultsReady = false;
 	private String cxOneScanLink;
 	private String astSastProjectLink;
-	private String cxOneLanguage;
+	private String cxOneLanguage = "en-US";
+	private List<SastResultDetails> sastResults = new ArrayList<>();
 
-    public enum Severity {
+	public enum Severity {
         High, Medium, Low, Information;
     }
     
@@ -86,7 +87,19 @@ public class AstSastResults extends Results implements Serializable {
     public void setScanId(String scanId) {
         this.scanId = scanId;
     }
-    
+    public int getFilesScanned() {
+		return filesScanned;
+	}
+    public int getLOC() {
+		return LOC;
+	}
+    public void setFilesScanned(int filesScanned) {
+        this.filesScanned = filesScanned;
+    }
+    public void setLOC(int LOC) {
+        this.LOC = LOC;
+    }
+
     public void setScanResponse(ScanResponse results) {
         this.scanRes = results;
     }
@@ -134,6 +147,21 @@ public class AstSastResults extends Results implements Serializable {
     public void setNewInfo(int newInfo) {
         this.newInfo = newInfo;
     }
+    public boolean isCxoneSastResultsReady() {
+		return cxoneSastResultsReady;
+	}
+
+	public void setCxoneSastResultsReady(boolean cxoneSastResultsReady) {
+		this.cxoneSastResultsReady = cxoneSastResultsReady;
+	}
+
+	public List<SastResultDetails> getSastResults() {
+		return sastResults;
+	}
+
+	public void setSastResults(List<SastResultDetails> sastResults) {
+		this.sastResults = sastResults;
+	}
     
     /**
      * This method sets the result details to the AstSastResults
@@ -199,19 +227,12 @@ public class AstSastResults extends Results implements Serializable {
                 }
             }
         }
+        sastResults  = results.getContent().getResults();
     }
 
     public void setAstSastScanLink(CxOneConfig oneConfig, String scanId, String projectId) {
     	this.cxOneScanLink = oneConfig.getApiBaseUrl() + PROJECT_FOR_SCAN + projectId + SCAN_LINK_BRANCH + getScanResponse().getBranch()+"&id="+ scanId;
     }
-    
-    public boolean isCxOneSastResultsReady() {
-        return cxoneSastResultsReady;
-    }
-
-    public void setCxOneSastResultsReady(boolean astSastResultsReady) {
-        this.cxoneSastResultsReady = astSastResultsReady;
-    } 
     
     private void setAstSastProjectLink() {
     	 this.astSastProjectLink = astSastProjectLink;
