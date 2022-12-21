@@ -20,9 +20,6 @@ public class ScanSummary {
     private final List<ThresholdError> thresholdErrors = new ArrayList<>();
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     
-//    private final List<ThresholdError> cxOnethresholdErrors = new ArrayList<>();
-//    private final List<Severity> cxOneewResultThresholdErrors = new ArrayList<>();
-    
     private final boolean policyViolated;
 
     public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {
@@ -110,7 +107,7 @@ public class ScanSummary {
     private void addCxOneSastThresholdErrors(CxScanConfig config, AstSastResults astSastResults) {
     	if (config.isSASTThresholdEffectivelyEnabled() &&
                 astSastResults != null &&
-                astSastResults.isCxOneSastResultsReady()) {
+                astSastResults.isCxoneSastResultsReady()) {
             checkForThresholdError(astSastResults.getHigh(), config.getSastHighThreshold(), ErrorSource.CXONE_SAST, Severity.HIGH);
             checkForThresholdError(astSastResults.getMedium(), config.getSastMediumThreshold(), ErrorSource.CXONE_SAST, Severity.MEDIUM);
             checkForThresholdError(astSastResults.getLow(), config.getSastLowThreshold(), ErrorSource.CXONE_SAST, Severity.LOW);
@@ -178,7 +175,7 @@ public class ScanSummary {
     }
     private void addCxOneNewResultThresholdErrors(CxScanConfig config, AstSastResults astSastResults) {
 
-        if (astSastResults != null && astSastResults.isCxOneSastResultsReady() && config.getSastNewResultsThresholdEnabled()) {
+        if (astSastResults != null && astSastResults.isCxoneSastResultsReady() && config.getSastNewResultsThresholdEnabled()) {
             String severity = config.getSastNewResultsThresholdSeverity();
 
             if ("LOW".equals(severity)) {

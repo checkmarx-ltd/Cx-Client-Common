@@ -96,7 +96,7 @@ public class CxOneWrapperClient implements Scanner{
             	// This will invoke init() of CxHttpClient and then generate access token within this call.Login happens in this method
     			cxOneClient.init();
     			String accessToken = cxOneClient.getAccessToken();
-    			log.info("Login successful to AST" + accessToken);
+    			log.info("Login successful to CxOne SAST");
             }
         } catch (Exception e) {
             throw new CxClientException(e);
@@ -118,7 +118,7 @@ public class CxOneWrapperClient implements Scanner{
 	public Results waitForScanResults() {
 		try {
         try {
-        	log.info("------------------------------------Get AST Results:-----------------------------------");
+        	log.info("------------------------------------Get CxOne SAST Results:-----------------------------------");
         	log.info("Waiting for AST scan to finish.");
         	ScanStatusResponse scanStatusRes = cxOneClient.waitForScanToResolve(scanId);
         	log.info("Retrieving AST scan results");
@@ -200,7 +200,7 @@ public class CxOneWrapperClient implements Scanner{
         	populateAstSastResults(results, scanDetails);
             astSastResults.setScanDetailedReport(results,scanMetrics, config);
 	        
-	        astSastResults.setCxOneSastResultsReady(true);
+	        astSastResults.setCxoneSastResultsReady(true);
 	        return astSastResults;
 	    }
 	
