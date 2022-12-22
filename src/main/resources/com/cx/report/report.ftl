@@ -1023,7 +1023,7 @@
         <div class="summary-section">
             <div id="summary-results" class="summary-results">
 
-            <#if config.isSastEnabled()>
+            <#if config.isSastEnabled() && !config.isSubmitToAST()>
                 <div class="sast-summary <#if !(config.isOsaEnabled() || config.isAstScaEnabled()) >chart-large</#if>" id="sast-summary">
                     <div class="summary-report-title sast">
                         <div class="summary-title-text sast">CxSAST Vulnerabilities Status</div>
@@ -1322,7 +1322,7 @@
 				<div class="cxonesast-summary <#if !(config.isOsaEnabled() || config.isAstScaEnabled()) >chart-large</#if>" id="cxonesast-summary">
                     <div class="summary-report-title cxonesast">
                         <div class="summary-title-text cxonesast">CxOne SAST Vulnerabilities Status</div>
-                        <#if cxOnesast.astSastResultsReady>
+                        <#if cxOnesast.cxoneSastResultsReady>
                             <div id="cxonesast-title-links" class="title-links">
                                 <div class="link-to-result summary-link">
                                     <a href="${cxOnesast.cxOneScanLink}" class="html-report" id="sast-summary-html-link">
@@ -1612,12 +1612,9 @@
                             </ul>
                         </div>
                     </#if>
-					
+				</div>		
             </#if>
 			
-			
-			
-
                 <#if config.isOsaEnabled()|| config.isAstScaEnabled() >
         <div class="osa-summary <#if !config.isSastEnabled()>sast-summary chart-large</#if>" id="osa-summary">
             <div class="summary-report-title osa">
@@ -2677,7 +2674,7 @@
                                     <div class="full-start-end-text">
                                         End:
                                     </div>
-                                    <div class="full-start-end-date" id="sast-full-end-date">${sast.scanEndTime}</div>
+                                    <div class="full-start-end-date" id="sast-full-end-date">${cxOnesast.scanEndTime}</div>
                                 </div>
                             </div>
 
@@ -2803,12 +2800,13 @@
                                     <div class="severity-title-name">High</div>
                                     <div class="severity-count"> ${cxOnesast.high}</div>
                                 </div>
-                                <table id="sast-cve-table-high" class="cve-table sast-cve-table sast-cve-table-high">
+                                <table id="cxOnesast-cve-table-high" class="cve-table sast-cve-table cxOnesast-cve-table-high">
                                     <tr>
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
                                     </tr>
                                     <#list cxOnesast.sastResults as result>
+									<li>IN CX ONE HIGH LIST LOOP</li>
                                         <#if result.severity == "High">
                                             <tr>
                                                 <td>${result.queryName}</td>
@@ -2855,8 +2853,8 @@
                                     <div class="severity-title-name">Medium</div>
                                     <div class="severity-count">${cxOnesast.medium}</div>
                                 </div>
-                                <table id="sast-cve-table-medium"
-                                       class="cve-table sast-cve-table sast-cve-table-medium">
+                                <table id="cxOnesast-cve-table-medium"
+                                       class="cve-table sast-cve-table cxOnesast-cve-table-medium">
                                     <tr>
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
@@ -2910,7 +2908,7 @@
                                     <div class="severity-title-name">Low</div>
                                     <div class="severity-count"> ${cxOnesast.low}</div>
                                 </div>
-                                <table id="sast-cve-table-low" class="cve-table sast-cve-table sast-cve-table-low">
+                                <table id="cxOnesast-cve-table-low" class="cve-table sast-cve-table cxOnesast-cve-table-low">
                                     <tr>
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
