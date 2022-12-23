@@ -26,6 +26,7 @@ import com.checkmarx.one.sast.ProxyTransformer;
 import com.checkmarx.one.sast.ScanConfigTransformer;
 import com.checkmarx.one.sast.TeamsTransformer;
 import com.checkmarx.one.util.zip.PathFilter;
+import com.checkmarx.one.util.zip.ZipUtil;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ProxyConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -96,12 +97,13 @@ public class TransformerServiceImpl implements  TransformerService{
 		if (projectConfigurationList != null) {
 			ProjectConfiguration languageModeConfiguration = transformerServiceImpl
 					.getLanguageModeConfiguration(projectConfigurationList);
-			if (languageModeConfiguration != null && languageModeConfiguration.getAllowOverride()) {				
+			if (languageModeConfiguration != null && languageModeConfiguration.getAllowOverride()) {
 				EngineConfigurationTransformer engineConfigurationTransformer = new EngineConfigurationTransformer(
 						cxOneClient);
-				ProjectConfiguration updatedLanguageModeConfiguration = engineConfigurationTransformer
-						.getEngineConfigurationTransformer(languageModeConfiguration, 
-								cxConfig.getEngineConfigurationId());
+				ProjectConfiguration updatedLanguageModeConfiguration = languageModeConfiguration;
+				String languageMode = engineConfigurationTransformer
+						.getEngineConfigurationTransformer(cxConfig.getEngineConfigurationId());
+				updatedLanguageModeConfiguration.setValue(languageMode);
 				updatedProjectConfigurationList.add(updatedLanguageModeConfiguration);
 				cxConfig.setEngineConfigurationName(updatedLanguageModeConfiguration.getValue());
 
@@ -109,10 +111,10 @@ public class TransformerServiceImpl implements  TransformerService{
 			ProjectConfiguration presetConfiguration = transformerServiceImpl
 					.getPresetConfiguration(projectConfigurationList);
 			if (presetConfiguration != null && presetConfiguration.getAllowOverride()) {
-				Map<Integer, String> sastPresetMap = PresetMap.getSastPresetMap();
 				PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
-				ProjectConfiguration updatedPresetConfiguration = presetTransformer
-						.getPresetTransformer(presetConfiguration, sastPresetMap, cxConfig.getPresetId());
+				ProjectConfiguration updatedPresetConfiguration = presetConfiguration;
+				String presetName = presetTransformer.getPresetTransformer(cxConfig.getPresetId());
+				updatedPresetConfiguration.setValue(presetName);
 				updatedProjectConfigurationList.add(updatedPresetConfiguration);
 				cxConfig.setPresetName(updatedPresetConfiguration.getValue());
 			}
@@ -203,9 +205,11 @@ public class TransformerServiceImpl implements  TransformerService{
 		private String getFilterConfigurationValue(String sastFolderExclusions, String sastFilterPattern) {
 			String filter = "";
 			String excludeFoldersPattern = "";
-			if(!StringUtils.isEmpty(sastFolderExclusions))
+			if(!StringUtils.isEmpty(sastFolderExclusions)) {
 				excludeFoldersPattern =	Arrays.stream(sastFolderExclusions.split(",")).map(String::trim)
 					.collect(Collectors.joining(","));
+				excludeFoldersPattern = ZipUtil.processExcludeFolders(excludeFoldersPattern);
+			}
 			
 			String excludeFilesPattern = "";
 			if(!StringUtils.isEmpty(sastFilterPattern))
