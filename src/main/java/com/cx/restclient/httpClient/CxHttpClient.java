@@ -121,6 +121,7 @@ public class CxHttpClient implements Closeable {
 
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
+    	   	   	
         this.log = log;
         this.rootUri = rootUri;
         this.refreshToken = refreshToken;
@@ -150,6 +151,9 @@ public class CxHttpClient implements Closeable {
             cb.setSSLSocketFactory(sslConnectionSocketFactory);
             cb.setConnectionManager(cm);
         } else {
+        	String customTrustStore = System.getProperty("javax.net.ssl.trustStore");
+        	if(!StringUtils.isEmpty(customTrustStore))
+        		this.log.info("Custom truststore is configured. Ensure that trusted certificate for all CxSAST/CxSCA endpoints are imported. Custom store path: " + customTrustStore );
             cb.setConnectionManager(getHttpConnectionManager(false));
         }
         cb.setConnectionManagerShared(true);
@@ -335,7 +339,7 @@ public class CxHttpClient implements Closeable {
         if (disableSSLValidation) {
             factory = getTrustAllSSLSocketFactory();
         } else {
-            factory = new SSLConnectionSocketFactory(SSLContexts.createDefault());
+            factory = new SSLConnectionSocketFactory(SSLContexts.createDefault(), NoopHostnameVerifier.INSTANCE);
         }
         Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register(HTTPS, factory)

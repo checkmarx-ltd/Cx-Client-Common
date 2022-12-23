@@ -632,7 +632,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         log.info("Sending SAST scan request");
         StringEntity entity = new StringEntity(convertToJson(scanRequest), StandardCharsets.UTF_8);
         CxID createScanResponse = httpClient.postRequest(SAST_CREATE_SCAN, CONTENT_TYPE_APPLICATION_JSON_V1, entity, CxID.class, 201, "create new SAST Scan");
-        log.info(String.format("SAST Scan created successfully. Link to project state: " + config.getUrl() + LINK_FORMAT, projectId));
+        log.info(String.format("SAST Scan created successfully. Link to project state: "  + config.getUrl() + LINK_FORMAT + projectId + LINK_FORMAL_SUMMARY));
 
         return createScanResponse.getId();
     }

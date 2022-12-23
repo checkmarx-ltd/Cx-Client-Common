@@ -264,8 +264,8 @@ public class CxOSAClient extends LegacyClient implements Scanner {
     private String sendOSAScan(String osaDependenciesJson, long projectId) throws IOException {
         log.info("Sending OSA scan request");
         CreateOSAScanResponse osaScan = sendOSARequest(projectId, osaDependenciesJson);
-        String summaryLink = OSAUtils.composeProjectOSASummaryLink(config.getUrl(), projectId);
-        log.info("OSA scan created successfully. Link to project state: " + summaryLink);
+        //String summaryLink = OSAUtils.composeProjectOSASummaryLink(config.getUrl(), projectId);
+        log.info("OSA scan created successfully. Link to project state: " + config.getUrl() + LINK_FORMAT + projectId + LINK_FORMAL_SUMMARY);
 
         return osaScan.getScanId();
     }

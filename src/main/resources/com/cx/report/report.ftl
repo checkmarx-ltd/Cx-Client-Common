@@ -949,8 +949,11 @@
                     <#if config.isOsaEnabled() && !dependencyResult.resultReady>
                         <li>OSA Scan Failed</li>
                     </#if>
+                    <#if config.isAstScaEnabled() && !dependencyResult.resultReady>
+                        <li>SCA Scan Failed</li>
+                    </#if>
                     <#if policyViolated>
-                        <li>${policyViolatedCount} ${policyLabel}  Violated</li>
+                        <li>${policyViolatedCount} ${sast.encodeXSS(policyLabel)}  Violated</li>
                     </#if>
 					<#if config.isSubmitToAST() && !cxOnesast.cxoneSastResultsReady>
                         <li>CxOne SAST Scan Failed</li>
@@ -1621,7 +1624,7 @@
                 <#if dependencyResult.scannerType=="AST_SCA">
                 <div class="summary-title-text osa">CxSCA Vulnerabilities & Libraries</div>
                 <#else>
-                <div class="summary-title-text osa">Cx${dependencyResult.scannerType} Vulnerabilities & Libraries</div>
+                <div class="summary-title-text osa">Cx${sast.encodeXSS(dependencyResult.scannerType)} Vulnerabilities & Libraries</div>
                 </#if>
                 <#if dependencyResult.resultReady>
                     <div id="osa-title-links" class="title-links">
@@ -2244,7 +2247,7 @@
                                         Start:
                                     </div>
                                     <div class="full-start-end-date"
-                                         id="sast-full-start-date">${sast.scanStartTime}</div>
+                                         id="sast-full-start-date">${sast.encodeXSS(sast.scanStartTime)}</div>
                                 </div>
                             </div>
 
@@ -2292,7 +2295,7 @@
                                     <div class="full-start-end-text">
                                         End:
                                     </div>
-                                    <div class="full-start-end-date" id="sast-full-end-date">${sast.scanEndTime}</div>
+                                    <div class="full-start-end-date" id="sast-full-end-date">${sast.encodeXSS(sast.scanEndTime)}</div>
                                 </div>
                             </div>
 
@@ -2338,7 +2341,7 @@
                                     <div class="full-start-end-text">
                                         Files:
                                     </div>
-                                    <div class="full-start-end-date" id="sast-full-files">${sast.filesScanned}</div>
+                                    <div class="full-start-end-date" id="sast-full-files">${sast.encodeXSS(sast.filesScanned)}</div>
                                 </div>
                             </div>
 
@@ -2378,7 +2381,7 @@
                                     <div class="full-start-end-text">
                                         Code Lines:
                                     </div>
-                                    <div class="full-start-end-date" id="sast-full-loc">${sast.LOC}</div>
+                                    <div class="full-start-end-date" id="sast-full-loc">${sast.encodeXSS(sast.LOC)}</div>
                                 </div>
                             </div>
                         </div>
@@ -2416,7 +2419,7 @@
                                         </svg>
                                     </div>
                                     <div class="severity-title-name">High</div>
-                                    <div class="severity-count"> ${sast.high}</div>
+                                    <div class="severity-count">${sast.high}</div>
                                 </div>
                                 <table id="sast-cve-table-high" class="cve-table sast-cve-table sast-cve-table-high">
                                     <tr>
@@ -2426,7 +2429,7 @@
                                     <#list sast.queryList as query>
                                         <#if query.severity == sast.languageMap["High"]>
                                             <tr>
-                                                <td>${query.name}</td>
+                                                <td>${sast.encodeXSS(query.name)}</td>
                                                 <td>${query.result?size}</td>
                                             </tr>
                                         </#if>
@@ -2479,7 +2482,7 @@
                                     <#list sast.queryList as query>
                                         <#if query.severity == sast.languageMap["Medium"]>
                                             <tr>
-                                                <td>${query.name}</td>
+                                                <td>${sast.encodeXSS(query.name)}</td>
                                                 <td>${query.result?size}</td>
                                             </tr>
                                         </#if>
@@ -2533,7 +2536,7 @@
                                     <#list sast.queryList as query>
                                         <#if query.severity == sast.languageMap["Low"]>
                                             <tr>
-                                                <td>${query.name}</td>
+                                                <td>${sast.encodeXSS(query.name)}</td>
                                                 <td>${query.result?size}</td>
                                             </tr>
                                         </#if>
@@ -2941,7 +2944,7 @@
                         <#if dependencyResult.scannerType=="AST_SCA">
                             <div class="sum1">CxSCA</div>
                             <#else>
-                                <div class="sum1">Cx${dependencyResult.scannerType}</div>
+                                <div class="sum1">Cx${sast.encodeXSS(dependencyResult.scannerType)}</div>
                         </#if>
                             <div class="sum1">Full Report</div>
                         </div>
@@ -3014,7 +3017,7 @@
                                     <div class="full-start-end-text">
                                         Start:
                                     </div>
-                                    <div class="full-start-end-date" id="osa-full-start-date">${dependencyResult.scanStartTime}</div>
+                                    <div class="full-start-end-date" id="osa-full-start-date">${sast.encodeXSS(dependencyResult.scanStartTime)}</div>
                                 </div>
                             </div>
 
@@ -3148,9 +3151,9 @@
                                         <#else>
                                         <tr>
                                         </#if>
-                                        <td>${cve.name}</td>
-                                        <td>${cve.publishDate}</td>
-                                        <td>${cve.libraryName}</td>
+                                        <td>${sast.encodeXSS(cve.name)}</td>
+                                        <td>${sast.encodeXSS(cve.publishDate)}</td>
+                                        <td>${sast.encodeXSS(cve.libraryName)}</td>
                                     </tr>
                                     </#list>
                                 </table>
@@ -3204,9 +3207,9 @@
                                         <#else>
                                         <tr>
                                         </#if>
-                                        <td>${cve.name}</td>
-                                        <td>${cve.publishDate}</td>
-                                        <td>${cve.libraryName}</td>
+                                        <td>${sast.encodeXSS(cve.name)}</td>
+                                        <td>${sast.encodeXSS(cve.publishDate)}</td>
+                                        <td>${sast.encodeXSS(cve.libraryName)}</td>
                                     </tr>
                                     </#list>
                                 </table>
@@ -3262,9 +3265,9 @@
                                         <#else>
                                         <tr>
                                         </#if>
-                                        <td>${cve.name}</td>
-                                        <td>${cve.publishDate}</td>
-                                        <td>${cve.libraryName}</td>
+                                        <td>${sast.encodeXSS(cve.name)}</td>
+                                        <td>${sast.encodeXSS(cve.publishDate)}</td>
+                                        <td>${sast.encodeXSS(cve.libraryName)}</td>
                                     </tr>
                                     </#list>
                                 </table>
@@ -3291,6 +3294,8 @@
                 <div class="detailed-report">
                     <div class="full-downloads osa-downloads">
                         <div class="report-link">
+                      
+                        <#if (config.cxARMUrl)??>                   
                             <a href="${config.cxARMUrl}/cxarm/webclient/" class="html-report" id="arm-html-link">
                                 <div class="link-to-result">
                                     <div class="results-link-icon link-icon">
@@ -3307,6 +3312,7 @@
                                     <div class="link-text">Analyze Results</div>
                                 </div>
                             </a>
+                            </#if>
                         </div>
                     </div>
                 </div>
@@ -3361,7 +3367,7 @@
                             </g>
                         </svg>
                     </div>
-                    <div class="severity-title-name">Violated ${policyLabel}</div>
+                    <div class="severity-title-name">Violated ${sast.encodeXSS(policyLabel)}</div>
                     <div class="severity-count">${policyViolatedCount}</div>
                 </div>
                 <table id="policy-violations-table" class="cve-table sast-cve-table osa-policy-violations">
@@ -3375,24 +3381,43 @@
                     <#if sast.sastPolicies?size gt 0>
                         <#list sast.sastPolicies as sastPoliciy>
                             <tr>
-                                <td>${sastPoliciy.policyName}</td>
-                                <td id="ruleName">${sastPoliciy.ruleName}</td>
+                                <td>${sast.encodeXSS(sastPoliciy.policyName)}</td>
+                                <td id="ruleName">${sast.encodeXSS(sastPoliciy.ruleName)}</td>
                                 <td>SAST</td>
                                 <td>${sastPoliciy.violations?size}</td>
-                                <td>${sastPoliciy.firstDetectionDate}</td>
+                                <td>${sast.encodeXSS(sastPoliciy.firstDetectionDate)}</td>
                             </tr>
                         </#list>
                     </#if>
                     <#if osa.osaPolicies?size gt 0>
                         <#list osa.osaPolicies as osaPolicy>
+                       
                             <tr>
-                                <td>${osaPolicy.policyName}</td>
-                                <td id="ruleName">${osaPolicy.ruleName}</td>
+                                <td>${sast.encodeXSS(osaPolicy.policyName)}</td>
+                                <td id="ruleName">${sast.encodeXSS(osaPolicy.ruleName)}</td>
                                 <td>OSA</td>
                                 <td>${osaPolicy.violations?size}</td>
-                                <td>${osaPolicy.firstDetectionDate}</td>
+                                <td>${sast.encodeXSS(osaPolicy.firstDetectionDate)}</td>
                             </tr>
                         </#list>
+                    </#if>
+                   
+                    <#if (sca.policyEvaluations)??> 
+	                    <#if sca.policyEvaluations?size gt 0>
+	                        <#list sca.policyEvaluations as scaPolicy>
+	                        	<#if scaPolicy.isViolated>
+		                            <tr>
+		                                <td>${sast.encodeXSS(scaPolicy.name)}</td>
+		                                <td id="ruleName">
+		                                	<#list scaPolicy.rules as rule>${sast.encodeXSS(rule.name)}<#sep>,</#list>
+		                                </td>
+		                                <td>SCA</td>
+		                                <td>${scaPolicy.rules?size}</td>
+		                                <td>-</td>
+		                            </tr>
+	                            </#if>
+	                        </#list>
+	                    </#if>
                     </#if>
                 </table>
             </div>
