@@ -2809,8 +2809,7 @@
                                         <th>Issues Found</th>
                                     </tr>
                                     <#list cxOnesast.sastResults as result>
-									<li>IN CX ONE HIGH LIST LOOP</li>
-                                        <#if result.severity == "High">
+									    <#if result.severity == "HIGH">
                                             <tr>
                                                 <td>${result.queryName}</td>
                                                 <td>${result.nodes?size}</td>
@@ -2863,7 +2862,15 @@
                                         <th>Issues Found</th>
                                     </tr>
                                     <#list cxOnesast.sastResults as result>
-                                        <#if result.severity == "Medium">
+									<tr>
+									<td>
+									<li>IN CX ONE HIGH LIST LOOP ${result.severity}</li>
+									</td>
+									<td>
+									<li>Hi there</li>
+									</td>
+									</tr>
+                                        <#if result.severity == "MEDIUM">
                                             <tr>
                                                 <td>${result.queryName}</td>
                                                 <td>${result.nodes?size}</td>
@@ -2916,8 +2923,16 @@
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
                                     </tr>
+									<tr>
+									<td>
+									<li>IN CX ONE HIGH LIST LOOP ${result.severity}</li>
+									</td>
+									<td>
+									<li>Hi there</li>
+									</td>
+									</tr>
                                     <#list cxOnesast.sastResults as result>
-                                        <#if result.severity == "Low">
+                                        <#if result.severity == "LOW">
                                             <tr>
                                                 <td>${result.queryName}</td>
                                                 <td>${result.nodes?size}</td>
