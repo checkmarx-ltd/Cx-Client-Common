@@ -138,9 +138,7 @@ public class CxScanConfig implements Serializable {
 		this.submitToAST = submitToAST;
 	}
 
-	public String getEngineConfigurationName() {
 
-    private String osaFolderExclusions;    
     public String getEngineConfigurationName() {
 
         return engineConfigurationName;
