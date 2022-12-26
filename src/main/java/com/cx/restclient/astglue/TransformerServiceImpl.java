@@ -68,6 +68,8 @@ public class TransformerServiceImpl implements  TransformerService{
 		
 		CxOneProjectTransformer projectCreateTransformer = new CxOneProjectTransformer(cxOneClient, transformedProjectName);
 		Map<String, String> tags = new HashMap<>();
+		if(cxConfig.getCustomFields() != null && !cxConfig.getCustomFields().isEmpty()) 
+			tags = setCustomFieldTags(tags, cxConfig.getCustomFields());
 		List<String> groups = new ArrayList<String>();
 		groups.add(groupName);
 		//TODO : Need to check criticality to be set
@@ -227,4 +229,18 @@ public class TransformerServiceImpl implements  TransformerService{
 			
 			return filter;
 		}
-}
+
+		private Map<String, String> setCustomFieldTags(Map<String, String> tags, String customFields) {
+			String customFieldValue = customFields.substring(1, customFields.length() - 1);
+			String[] keyValuePairs = customFieldValue.split(",");
+			for (String pair : keyValuePairs) {
+				String[] entry = pair.split(":");
+				String key = entry[0].trim();
+				key = key.substring(1, key.length() - 1).trim();
+				String value = entry[1].trim();
+				value = value.substring(1, value.length() - 1).trim();
+				tags.put(key, value);
+			}
+			return tags;
+		}
+	}
