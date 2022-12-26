@@ -139,6 +139,7 @@ public class CxOneWrapperClient implements Scanner{
     		} 
         if (config.getEnablePolicyViolations()) {
             // DO Nothing . Policy violation feature remains silent
+        	log.warn("CxOne does not support for Policy violation");
         }
 		if (astSastResults.getCxOneSastScanLink() != null)
 			AstSastUtils.printAstSASTResultsToConsole(astSastResults, config.getEnablePolicyViolations(), log);
