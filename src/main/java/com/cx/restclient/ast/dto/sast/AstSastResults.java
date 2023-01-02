@@ -12,9 +12,11 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -30,7 +32,6 @@ import com.checkmarx.one.dto.scan.sast.ScanMetricsResponse;
 import com.cx.restclient.ast.dto.sast.report.AstSastSummaryResults;
 import com.cx.restclient.ast.dto.sast.report.Finding;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.cxArm.dto.Policy;
 import com.cx.restclient.dto.Results;
 import com.cx.restclient.sast.dto.SupportedLanguage;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -69,15 +70,18 @@ public class AstSastResults extends Results implements Serializable {
     private byte[] PDFReport;
     private String pdfFileName;
 
-    private List<Policy> sastPolicies = new ArrayList<>();
 	private boolean cxoneSastResultsReady = false;
 	private String cxOneScanLink;
 	private String astSastProjectLink;
 	private String cxOneLanguage = "en-US";
 	private List<SastResultDetails> sastResults = new ArrayList<>();
-
+	private Map queryToHighCountMap = new HashMap<String, Integer>();
+	private Map queryToMediumCountMap = new HashMap<String, Integer>();
+	private Map queryToLowCountMap = new HashMap<String, Integer>();
+	private Map queryToInfoCountMap = new HashMap<String, Integer>();
+	
 	public enum Severity {
-        High, Medium, Low, Information;
+        HIGH, MEDIUM, LOW, INFO;
     }
     
     public String getScanId() {
@@ -140,10 +144,28 @@ public class AstSastResults extends Results implements Serializable {
         this.newLow = newLow;
     }
 
+    public int getQueryMediumCount(String queryName) {
+    	int count = (int) this.queryToMediumCountMap.get(queryName);
+    	return count;
+    }
+    
+    public int getQueryHighCount(String queryName) {
+    	Integer count = (Integer) this.queryToHighCountMap.get(queryName);
+    	return count;
+    }
+    
+    public int getQueryLowCount(String queryName) {
+    	int count = (int) this.queryToLowCountMap.get(queryName);
+    	return count;
+    }
+    
+    public int getQueryInfoCount(String queryName) {
+    	int count = (int) this.queryToInfoCountMap.get(queryName);
+    	return count;
+    }
     public int getNewInfo() {
         return newInfo;
     }
-
     public void setNewInfo(int newInfo) {
         this.newInfo = newInfo;
     }
@@ -204,29 +226,82 @@ public class AstSastResults extends Results implements Serializable {
      this.LOC = scanMetrics.getTotalLoc();
      this.filesScanned = scanMetrics.getTotalScannedFiles();
      
-        for (SastResultDetails q : results.getContent().getResults()) {
             List<SastResultDetails> qResult = results.getContent().getResults();
             for (int i = 0; i < qResult.size(); i++) {
             	SastResultDetails result = qResult.get(i);
+            	if(result != null) {
                  if ("New".equals(result.getStatus())) {
                     Severity sev = Severity.valueOf(result.getSeverity());
                     switch (sev) {
-                        case High:
+                        case HIGH:
                             newHigh++;
                             break;
-                        case Medium:
+                        case MEDIUM:
                             newMedium++;
                             break;
-                        case Low:
+                        case LOW:
                             newLow++;
                             break;
-                        case Information:
+                        case INFO:
                             newInfo++;
                             break;
                     }
-                }
+                } 
+                 Severity sev = Severity.valueOf(result.getSeverity());
+                    switch (sev) {
+                    case HIGH:
+                    	 // Handle HIGH severity count incrementing
+                        Integer queryHighCnt =  (Integer) queryToHighCountMap.get(result.getQueryName());
+                        
+                     // if the map contains no mapping for the key,
+                        // then initialize its value as 0
+                        if (queryHighCnt == null) {
+                       	 queryHighCnt = 0;
+                        }
+                        // increment the key's value by 1
+                       
+                        queryToHighCountMap.put(result.getQueryName(), queryHighCnt + 1);
+                        break;
+                    case MEDIUM:
+                    	// Handle MEDIUM severity count incrementing
+                        Integer queryMedCnt =  (Integer) queryToMediumCountMap.get(result.getQueryName());
+                        
+                        // if the map contains no mapping for the key,
+                           // then initialize its value as 0
+                           if (queryMedCnt == null) {
+                           	queryMedCnt = 0;
+                           }
+                           // increment the key's value by 1
+                           queryToMediumCountMap.put(result.getQueryName(), queryMedCnt + 1);
+                        
+                        break;
+                    case LOW:
+                    	// Handle LOW severity count incrementing
+                        Integer queryLowCnt =  (Integer) queryToLowCountMap.get(result.getQueryName());
+                        
+                        // if the map contains no mapping for the key,
+                           // then initialize its value as 0
+                           if (queryLowCnt == null) {
+                        	   queryLowCnt = 0;
+                           }
+                           // increment the key's value by 1
+                           queryToLowCountMap.put(result.getQueryName(), queryLowCnt + 1);
+                        break;
+                    case INFO:
+                    	// Handle LOW severity count incrementing
+                        Integer queryInfoCnt =  (Integer) queryToInfoCountMap.get(result.getQueryName());
+                        
+                        // if the map contains no mapping for the key,
+                           // then initialize its value as 0
+                           if (queryInfoCnt == null) {
+                        	   queryInfoCnt = 0;
+                           }
+                           // increment the key's value by 1
+                           queryToInfoCountMap.put(result.getQueryName(), queryInfoCnt + 1);
+                        break;
+                    }
+            	}
             }
-        }
         sastResults  = results.getContent().getResults();
     }
 

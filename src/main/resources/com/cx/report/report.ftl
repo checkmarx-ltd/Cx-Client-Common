@@ -2808,14 +2808,13 @@
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
                                     </tr>
-                                    <#list cxOnesast.sastResults as result>
-									<li>IN CX ONE HIGH LIST LOOP</li>
-                                        <#if result.severity == "High">
+                                    <#list cxOnesast.queryToHighCountMap?keys as result>
+									    
                                             <tr>
-                                                <td>${result.queryName}</td>
-                                                <td>${result.nodes?size}</td>
+                                                <td>${result}</td>
+                                                <td>${cxOnesast.getQueryHighCount(result)}</td>
                                             </tr>
-                                        </#if>
+                                        
                                     </#list>
                                 </table>
                             </div>
@@ -2862,13 +2861,13 @@
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
                                     </tr>
-                                    <#list cxOnesast.sastResults as result>
-                                        <#if result.severity == "Medium">
+                                    <#list cxOnesast.queryToMediumCountMap?keys as result>
+									    
                                             <tr>
-                                                <td>${result.queryName}</td>
-                                                <td>${result.nodes?size}</td>
+                                                <td>${result}</td>
+                                                <td>${cxOnesast.getQueryMediumCount(result)}</td>
                                             </tr>
-                                        </#if>
+                                        
                                     </#list>
                                 </table>
                             </div>
@@ -2916,13 +2915,15 @@
                                         <th>Vulnerability</th>
                                         <th>Issues Found</th>
                                     </tr>
-                                    <#list cxOnesast.sastResults as result>
-                                        <#if result.severity == "Low">
+									
+									
+                                    <#list cxOnesast.queryToLowCountMap?keys as result>
+									
                                             <tr>
-                                                <td>${result.queryName}</td>
-                                                <td>${result.nodes?size}</td>
+                                                <td>${result}</td>
+                                                <td>${cxOnesast.getQueryLowCount(result)}</td>
                                             </tr>
-                                        </#if>
+                                        
                                     </#list>
                                 </table>
                             </div>

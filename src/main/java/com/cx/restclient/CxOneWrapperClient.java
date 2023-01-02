@@ -196,7 +196,9 @@ public class CxOneWrapperClient implements Scanner{
 			ScanMetricsResponse scanMetrics = cxOneClient.getScanMetrics(scanId);
 	        astSastResults.setResults(scanId, resultsSummaryRes, oneConfig, projectId);
 
-        	SastResultsResponse results = cxOneClient.getSASTResults(new ResultsRequest(scanId, null, null));
+			int totalVulCount = astSastResults.getHigh() + astSastResults.getMedium() + astSastResults.getLow()
+					+ astSastResults.getInformation();
+        	SastResultsResponse results = cxOneClient.getSASTResults(new ResultsRequest(scanId, null, totalVulCount));
         	ScansResponse scanDetails = cxOneClient.getScanDetails(scanId);
         	populateAstSastResults(results, scanDetails);
             astSastResults.setScanDetailedReport(results,scanMetrics, config);
