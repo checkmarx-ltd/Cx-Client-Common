@@ -17,6 +17,7 @@ import com.checkmarx.one.dto.configuration.ProjectConfigurationResponse;
 import com.checkmarx.one.dto.configuration.ProjectConfigurationResults;
 import com.checkmarx.one.dto.project.ProjectCreateResponse;
 import com.checkmarx.one.dto.scan.ScanConfig;
+import com.checkmarx.one.dto.scan.ScanQueueResponse;
 import com.checkmarx.one.sast.CxOneProjectTransformer;
 import com.checkmarx.one.sast.EngineConfigurationTransformer;
 import com.checkmarx.one.sast.PresetMap;
@@ -29,12 +30,21 @@ import com.checkmarx.one.util.zip.PathFilter;
 import com.checkmarx.one.util.zip.ZipUtil;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ProxyConfig;
+import com.cx.restclient.exception.CxClientException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jcraft.jsch.ConfigRepository.Config;
+
+import ch.qos.logback.core.net.server.Client;
 
 public class TransformerServiceImpl implements  TransformerService{
 
 	private CxScanConfig cxConfig;
 	private Logger log;
+	private static final String DENY_NEW_PROJECT_ERROR = "Creation of the new project [{projectName}] is not authorized. " +
+	            "Please use an existing project. \nYou can enable the creation of new projects by disabling" + "" +
+	            " the Deny new Checkmarx projects creation checkbox in the Checkmarx plugin global settings.\n";
+	private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS= "\nAvoid duplicate project scans in queue\n";
+	
 	public TransformerServiceImpl(CxScanConfig scanConfig, Logger log) {
 		this.cxConfig = scanConfig;
 		this.log = log;
@@ -57,8 +67,9 @@ public class TransformerServiceImpl implements  TransformerService{
 //		cxOneConfig.getScanConfig().getProject().getGroups().add(teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath()));
 		
 		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
-		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(), cxConfig.getBranchName());
-		
+		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(),
+				cxConfig.getBranchName());
+
 		ProxyTransformer proxyTransformer = new ProxyTransformer(cxOneClient);
 		ProxyConfig proxyConfig = cxConfig.getProxyConfig();
 		if(proxyConfig != null) {
@@ -68,7 +79,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		
 		CxOneProjectTransformer projectCreateTransformer = new CxOneProjectTransformer(cxOneClient, transformedProjectName);
 		Map<String, String> tags = new HashMap<>();
-		if(cxConfig.getCustomFields() != null && !cxConfig.getCustomFields().isEmpty()) 
+		if(!StringUtils.isEmpty(cxConfig.getCustomFields())) 
 			tags = setCustomFieldTags(tags, cxConfig.getCustomFields());
 		List<String> groups = new ArrayList<String>();
 		groups.add(groupName);
@@ -79,15 +90,25 @@ public class TransformerServiceImpl implements  TransformerService{
 		//project name which is not present in AST, creating a new project and projectId is giving us the correct value.
 		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName) ;
 		String projectName = transformedProjectName;
-		if(projectId == null || projectId == "") {
-		ProjectCreateResponse project = projectCreateTransformer.getProjectObject(groups, cxConfig.getSourceDir(), 
-				1, cxConfig.getBranchName(), cxConfig.getCxOrigin(), tags);
-		projectId = project.getId();
-		projectName = project.getName();
-		log.info("Created a project with ID {}", projectId);
-		cxOneConfig.setIsNewProject(true);
-		} 
-		
+		if (!cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
+			log.info("Project Id :"+projectId);
+			ProjectCreateResponse project = projectCreateTransformer.getProjectObject(groups, cxConfig.getSourceDir(),
+					1, cxConfig.getBranchName(), cxConfig.getCxOrigin(), tags);
+			if (project != null) {
+				projectId = project.getId();
+				projectName = project.getName();
+				log.info("Created a project with ID {}", projectId);
+				cxOneConfig.setIsNewProject(true);
+			}
+		} else if (cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
+			throw new CxClientException(DENY_NEW_PROJECT_ERROR);
+		} else if (cxConfig.getAvoidDuplicateProjectScans()) {
+			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, "running,queued");
+			if(scanQueueResponse != null && scanQueueResponse.getTotalCount() > 0) {
+				throw new CxClientException(MSG_AVOID_DUPLICATE_PROJECT_SCANS);
+			}
+		}
+
 		PathFilter astFilter = new PathFilter(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
 		
 		TransformerServiceImpl transformerServiceImpl = new TransformerServiceImpl(cxConfig, log);
