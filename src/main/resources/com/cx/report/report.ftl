@@ -2629,7 +2629,7 @@
                                         Start:
                                     </div>
                                     <div class="full-start-end-date"
-                                         id="sast-full-start-date">${cxOnesast.scanStartTime}</div>
+                                         id="sast-full-start-date">${sast.encodeXSS(cxOnesast.scanStartTime)}</div>
                                 </div>
                             </div>
 
@@ -2677,7 +2677,7 @@
                                     <div class="full-start-end-text">
                                         End:
                                     </div>
-                                    <div class="full-start-end-date" id="sast-full-end-date">${cxOnesast.scanEndTime}</div>
+                                    <div class="full-start-end-date" id="sast-full-end-date">${sast.encodeXSS(cxOnesast.scanEndTime)}</div>
                                 </div>
                             </div>
 
@@ -2811,7 +2811,7 @@
                                     <#list cxOnesast.queryToHighCountMap?keys as result>
 									    
                                             <tr>
-                                                <td>${result}</td>
+                                                <td>${sast.encodeXSS(result)}</td>
                                                 <td>${cxOnesast.getQueryHighCount(result)}</td>
                                             </tr>
                                         
@@ -2864,7 +2864,7 @@
                                     <#list cxOnesast.queryToMediumCountMap?keys as result>
 									    
                                             <tr>
-                                                <td>${result}</td>
+                                                <td>${sast.encodeXSS(result)}</td>
                                                 <td>${cxOnesast.getQueryMediumCount(result)}</td>
                                             </tr>
                                         
@@ -2920,7 +2920,7 @@
                                     <#list cxOnesast.queryToLowCountMap?keys as result>
 									
                                             <tr>
-                                                <td>${result}</td>
+                                                <td>${sast.encodeXSS(result)}</td>
                                                 <td>${cxOnesast.getQueryLowCount(result)}</td>
                                             </tr>
                                         
