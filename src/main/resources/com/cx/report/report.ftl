@@ -943,7 +943,7 @@
                     Checkmarx scan found the following issues:
                 </p>
                 <ul>
-                    <#if config.isSastEnabled() && !sast.sastResultsReady>
+                    <#if config.isSastEnabled() && !sast.sastResultsReady && !config.isSubmitToAST()>
                         <li>SAST Scan Failed</li>
                     </#if>
                     <#if config.isOsaEnabled() && !dependencyResult.resultReady>
