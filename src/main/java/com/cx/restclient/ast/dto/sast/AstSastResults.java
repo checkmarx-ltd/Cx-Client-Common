@@ -230,7 +230,7 @@ public class AstSastResults extends Results implements Serializable {
             for (int i = 0; i < qResult.size(); i++) {
             	SastResultDetails result = qResult.get(i);
             	if(result != null) {
-                 if ("New".equals(result.getStatus())) {
+                 if ("NEW".equals(result.getStatus())) {
                     Severity sev = Severity.valueOf(result.getSeverity());
                     switch (sev) {
                         case HIGH:
@@ -443,13 +443,4 @@ public class AstSastResults extends Results implements Serializable {
 	        return startDate;
 	    }
 
-	    private LocalTime createTimeDate(String hhmmss) throws ParseException {
-	    	LocalTime scanTime = LocalTime.parse(hhmmss,DateTimeFormatter.ofPattern("HH'h':mm'm':ss's'"));
-	    	return scanTime;
-	    }
-
-	    private LocalDateTime createEndDate(LocalDateTime scanStartDate, LocalTime scanTime) {
-	        return  scanStartDate.plusHours(scanTime.getHour()).plusMinutes(scanTime.getMinute()).plusSeconds(scanTime.getSecond());
-	    }
-		
 }
