@@ -166,6 +166,7 @@ public class TransformerServiceImpl implements  TransformerService{
 				}
 			}
 		}
+		cxOneConfig.setCxOneSastScanTimeoutSec(cxConfig.getSastScanTimeoutInMinutes());
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
 				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());

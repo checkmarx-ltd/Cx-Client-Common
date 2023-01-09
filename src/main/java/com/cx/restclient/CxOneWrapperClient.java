@@ -30,6 +30,7 @@ import com.checkmarx.one.dto.scan.ScansResponse;
 import com.checkmarx.one.dto.scan.sast.SastResultDetails;
 import com.checkmarx.one.dto.scan.sast.SastResultsResponse;
 import com.checkmarx.one.dto.scan.sast.ScanMetricsResponse;
+import com.checkmarx.one.exception.TaskWaiterException;
 import com.cx.restclient.ast.dto.sast.AstSASTParam;
 import com.cx.restclient.ast.dto.sast.AstSastQueryCounter;
 import com.cx.restclient.ast.dto.sast.AstSastResults;
@@ -120,16 +121,16 @@ public class CxOneWrapperClient implements Scanner{
         try {
         	log.info("------------------------------------Get CxOne SAST Results:-----------------------------------");
         	log.info("Waiting for AST scan to finish.");
-        	ScanStatusResponse scanStatusRes = cxOneClient.waitForScanToResolve(scanId);
+	     	ScanStatusResponse scanStatusRes = cxOneClient.waitForScanToResolve(scanId);
         	log.info("Retrieving AST scan results");
         	astSastResults = retrieveAstSastResults(scanStatusRes.getId(), projectId);
         	log.info("Retrieved AST scan results.");
         }
-        	catch (ConditionTimeoutException e) {
+        	catch (TaskWaiterException e) {
     			
     			if (!errorToBeSuppressed(e)) {
     				// throw the exception so that caught by outer catch
-    				throw new Exception(e.getMessage());
+    				throw new CxClientException(e.getMessage());
     			}
     		} catch (CxClientException e) {
     			if (!errorToBeSuppressed(e)) {
@@ -262,7 +263,7 @@ public class CxOneWrapperClient implements Scanner{
 		//log actual error as it is first.
 		log.error(error.getMessage());
 	
-		if (error instanceof ConditionTimeoutException && config.getContinueBuild()) {	
+		if (error instanceof TaskWaiterException && config.getContinueBuild()) {	
 			suppressed = true;		
 		}
 		//Plugins will control if errors handled here will be ignored.
