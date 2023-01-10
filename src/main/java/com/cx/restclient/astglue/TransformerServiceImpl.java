@@ -20,7 +20,6 @@ import com.checkmarx.one.dto.scan.ScanConfig;
 import com.checkmarx.one.dto.scan.ScanQueueResponse;
 import com.checkmarx.one.sast.CxOneProjectTransformer;
 import com.checkmarx.one.sast.EngineConfigurationTransformer;
-import com.checkmarx.one.sast.PresetMap;
 import com.checkmarx.one.sast.PresetTransformer;
 import com.checkmarx.one.sast.ProjectNameTransformer;
 import com.checkmarx.one.sast.ProxyTransformer;
@@ -32,9 +31,6 @@ import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ProxyConfig;
 import com.cx.restclient.exception.CxClientException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jcraft.jsch.ConfigRepository.Config;
-
-import ch.qos.logback.core.net.server.Client;
 
 public class TransformerServiceImpl implements  TransformerService{
 
@@ -64,12 +60,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		cxOneClient.init();
 		TeamsTransformer teamTransformer = new TeamsTransformer(cxOneClient);
 		String groupName = teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath());
-//		cxOneConfig.getScanConfig().getProject().getGroups().add(teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath()));
 		
-		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
-		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(),
-				cxConfig.getBranchName());
-
 		ProxyTransformer proxyTransformer = new ProxyTransformer(cxOneClient);
 		ProxyConfig proxyConfig = cxConfig.getProxyConfig();
 		if(proxyConfig != null) {
@@ -77,19 +68,24 @@ public class TransformerServiceImpl implements  TransformerService{
 				proxyConfig.getUsername(), proxyConfig.getPassword(), proxyConfig.getNoproxyHosts(), proxyConfig.getPort()));
 		}
 		
-		CxOneProjectTransformer projectCreateTransformer = new CxOneProjectTransformer(cxOneClient, transformedProjectName);
+		
 		Map<String, String> tags = new HashMap<>();
 		if(!StringUtils.isEmpty(cxConfig.getCustomFields())) 
 			tags = setCustomFieldTags(tags, cxConfig.getCustomFields());
 		List<String> groups = new ArrayList<String>();
 		groups.add(groupName);
 		//TODO : Need to check criticality to be set
-		//TODO: Creating the project with assumption that the "transformedProjectName" does not exist. Later we need to have the logic to check if project
-		//with this name exist don't create a new project rather get the existing project's projectId. This will have similar design as in SAST. But in SAST we had 
-		//API to get project by name and teamId (Refer getProjectByName() in LegacyClient.java). But with present implementation , when jenkins pipeline has different
-		//project name which is not present in AST, creating a new project and projectId is giving us the correct value.
+		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
+		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(),
+				cxConfig.getBranchName());
 		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName) ;
 		String projectName = transformedProjectName;
+		//TODO : Remove the branch name search
+		/*if(transformedProjectName == null) {
+			use look up which will return project Id
+			if look up also does not give you the project, assume that a new project to be created.
+		}*/
+		CxOneProjectTransformer projectCreateTransformer = new CxOneProjectTransformer(cxOneClient, transformedProjectName);
 		if (!cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
 			log.info("Project Id :"+projectId);
 			ProjectCreateResponse project = projectCreateTransformer.getProjectObject(groups, cxConfig.getSourceDir(),
@@ -171,7 +167,6 @@ public class TransformerServiceImpl implements  TransformerService{
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
 				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
 		cxOneConfig.setScanConfig(scanConfig);
-//		String projectId = projectNameTransformer.getProjectIdForProjectName(projectName);
 		cxOneConfig.getScanConfig().getProject().setId(projectId);
 		return cxOneConfig;
 		}
