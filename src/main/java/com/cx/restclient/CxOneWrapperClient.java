@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.awaitility.core.ConditionTimeoutException;
 import org.slf4j.Logger;
 
@@ -66,14 +67,23 @@ public class CxOneWrapperClient implements Scanner{
         this.log = log;
 		CxConfigParamsTransformerServiceFactory factory = new CxConfigParamsTransformerServiceFactory();
 		TransformerService service = factory.create(ScannerType.SAST, ScannerType.CXONE_SAST, config, log);
-		oneConfig = service.getCxOneConfig();
-        oneConfig.setAccessControlBaseUrl(config.getAccessControlBaseUrl());
-        oneConfig.setApiBaseUrl(config.getApiBaseUrl());
-        oneConfig.setClientId(config.getClientId());
-        oneConfig.setClientSecret(config.getClientSecret());
-        oneConfig.setTenant(config.getTenant());
-        cxOneClient = new CxOneClient(oneConfig);
-        projectId = oneConfig.getScanConfig().getProject().getId();
+		try {
+			oneConfig = service.getCxOneConfig();
+			oneConfig.setAccessControlBaseUrl(config.getAccessControlBaseUrl());
+			oneConfig.setApiBaseUrl(config.getApiBaseUrl());
+			oneConfig.setClientId(config.getClientId());
+			oneConfig.setClientSecret(config.getClientSecret());
+			oneConfig.setTenant(config.getTenant());
+			cxOneClient = new CxOneClient(oneConfig);
+			projectId = oneConfig.getScanConfig().getProject().getId();
+			if(config.isExceptionFlag()) {
+				throw new CxClientException(config.getExceptionMessage());
+			}
+		} catch (CxClientException e) {
+			if (!errorToBeSuppressed(e)) {
+				throw new CxClientException(e);
+			}
+		}
 	}
 
 	@Override
@@ -99,8 +109,9 @@ public class CxOneWrapperClient implements Scanner{
     			String accessToken = cxOneClient.getAccessToken();
     			log.info("Login successful to CxOne SAST");
             }
-        } catch (Exception e) {
-            throw new CxClientException(e);
+        } catch (CxClientException e) {
+			if (!errorToBeSuppressed(e)) 
+				throw new CxClientException(e);
         }		
 	}
 	@Override
@@ -135,7 +146,7 @@ public class CxOneWrapperClient implements Scanner{
     		} catch (CxClientException e) {
     			if (!errorToBeSuppressed(e)) {
     				// throw the exception so that caught by outer catch
-    				throw new Exception(e.getMessage());
+    				throw new CxClientException(e.getMessage());
     			}
     		} 
         if (config.getEnablePolicyViolations()) {
@@ -159,7 +170,8 @@ public class CxOneWrapperClient implements Scanner{
                 }
                             
                 }
-        } catch (Exception e) {            
+        } catch (Exception e) { 
+        	setState(state.FAILED);
             if(!errorToBeSuppressed(e))
             	astSastResults.setException(new CxClientException(e));
         }
@@ -283,6 +295,10 @@ public class CxOneWrapperClient implements Scanner{
 		if(suppressed) {			
 			log.info(additionalMessage);
 			try {
+				if(StringUtils.isEmpty(projectId)) {
+					log.error("Project Id is null");
+					throw new CxClientException("Project Id is null");
+				}
 				astSastResults = getLatestScanResults();
 				if (oneConfig.isIsNewProject() && astSastResults.getCxOneSastScanLink() == null) {
 					String message = String

@@ -208,6 +208,11 @@ public class CxScanConfig implements Serializable {
     private Boolean enableSastBranching = false;
     
     private String masterBranchProjName;
+    
+    private boolean exceptionFlag;
+    
+    private String exceptionMessage;
+
 
     public CxScanConfig() {
     }
@@ -1021,6 +1026,22 @@ public class CxScanConfig implements Serializable {
 		this.masterBranchProjName = masterBranchProjName;
 	}
 	
+	public boolean isExceptionFlag() {
+		return exceptionFlag;
+	}
+
+	public void setExceptionFlag(boolean exceptionFlag) {
+		this.exceptionFlag = exceptionFlag;
+	}
+
+	public String getExceptionMessage() {
+		return exceptionMessage;
+	}
+
+	public void setExceptionMessage(String exceptionMessage) {
+		this.exceptionMessage = exceptionMessage;
+	}
+
 	public boolean isGenerateScaReport() {
 		return generateScaReport;
 	}

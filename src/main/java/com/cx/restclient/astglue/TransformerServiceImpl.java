@@ -76,8 +76,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		groups.add(groupName);
 		//TODO : Need to check criticality to be set
 		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
-		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(),
-				cxConfig.getBranchName());
+		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName());
 		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName) ;
 		String projectName = transformedProjectName;
 		//TODO : Remove the branch name search
@@ -97,11 +96,12 @@ public class TransformerServiceImpl implements  TransformerService{
 				cxOneConfig.setIsNewProject(true);
 			}
 		} else if (cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
-			throw new CxClientException(DENY_NEW_PROJECT_ERROR);
+			throw new CxClientException(DENY_NEW_PROJECT_ERROR.replace("{projectName}", cxConfig.getProjectName()));
 		} else if (cxConfig.getAvoidDuplicateProjectScans()) {
 			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, "running,queued");
-			if(scanQueueResponse != null && scanQueueResponse.getTotalCount() > 0) {
-				throw new CxClientException(MSG_AVOID_DUPLICATE_PROJECT_SCANS);
+			if (scanQueueResponse != null && scanQueueResponse.getTotalCount() > 0) {
+				cxConfig.setExceptionFlag(true);
+				cxConfig.setExceptionMessage(MSG_AVOID_DUPLICATE_PROJECT_SCANS);
 			}
 		}
 
@@ -166,6 +166,10 @@ public class TransformerServiceImpl implements  TransformerService{
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
 				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
+		if(scanConfig.getHandler() == null && !cxConfig.isExceptionFlag()) {
+			cxConfig.setExceptionFlag(true);
+			cxConfig.setExceptionMessage("No files to zip");
+		}
 		cxOneConfig.setScanConfig(scanConfig);
 		cxOneConfig.getScanConfig().getProject().setId(projectId);
 		return cxOneConfig;
