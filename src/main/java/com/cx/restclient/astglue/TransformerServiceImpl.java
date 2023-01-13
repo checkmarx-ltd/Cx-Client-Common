@@ -58,6 +58,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		
 		CxOneClient cxOneClient = new CxOneClient(cxOneConfig);
 		cxOneClient.init();
+	
 		TeamsTransformer teamTransformer = new TeamsTransformer(cxOneClient);
 		String groupName = teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath());
 		
@@ -77,7 +78,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		//TODO : Need to check criticality to be set
 		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
 		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName());
-		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName) ;
+		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName);
 		String projectName = transformedProjectName;
 		//TODO : Remove the branch name search
 		/*if(transformedProjectName == null) {
@@ -94,14 +95,13 @@ public class TransformerServiceImpl implements  TransformerService{
 				projectName = project.getName();
 				log.info("Created a project with ID {}", projectId);
 				cxOneConfig.setIsNewProject(true);
-			}
+			}			
 		} else if (cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
 			throw new CxClientException(DENY_NEW_PROJECT_ERROR.replace("{projectName}", cxConfig.getProjectName()));
 		} else if (cxConfig.getAvoidDuplicateProjectScans()) {
 			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, "running,queued");
 			if (scanQueueResponse != null && scanQueueResponse.getTotalCount() > 0) {
-				cxConfig.setExceptionFlag(true);
-				cxConfig.setExceptionMessage(MSG_AVOID_DUPLICATE_PROJECT_SCANS);
+				throw new CxClientException(MSG_AVOID_DUPLICATE_PROJECT_SCANS);
 			}
 		}
 
@@ -164,11 +164,12 @@ public class TransformerServiceImpl implements  TransformerService{
 		}
 		cxOneConfig.setCxOneSastScanTimeoutSec(cxConfig.getSastScanTimeoutInMinutes());
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
-		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
-				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
-		if(scanConfig.getHandler() == null && !cxConfig.isExceptionFlag()) {
-			cxConfig.setExceptionFlag(true);
-			cxConfig.setExceptionMessage("No files to zip");
+		ScanConfig scanConfig = null;
+		try {
+			scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, astFilter, tags,
+					cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
+		} catch (Exception e) {
+			throw new CxClientException(e.getMessage());
 		}
 		cxOneConfig.setScanConfig(scanConfig);
 		cxOneConfig.getScanConfig().getProject().setId(projectId);

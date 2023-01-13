@@ -12,11 +12,13 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.core.ConditionTimeoutException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 
 import com.checkmarx.one.CxOneClient;
 import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.TaskStatus;
+import com.checkmarx.one.dto.project.ProjectsResponse;
 import com.checkmarx.one.dto.report.CreateAstReportRequest;
 import com.checkmarx.one.dto.report.CreateAstReportResponse;
 import com.checkmarx.one.dto.report.ReportDataRequest;
@@ -76,9 +78,6 @@ public class CxOneWrapperClient implements Scanner{
 			oneConfig.setTenant(config.getTenant());
 			cxOneClient = new CxOneClient(oneConfig);
 			projectId = oneConfig.getScanConfig().getProject().getId();
-			if(config.isExceptionFlag()) {
-				throw new CxClientException(config.getExceptionMessage());
-			}
 		} catch (CxClientException e) {
 			if (!errorToBeSuppressed(e)) {
 				throw new CxClientException(e);
@@ -263,6 +262,21 @@ public class CxOneWrapperClient implements Scanner{
 			}
 		}
 	}
+	
+	private String getProjectIdFromProjectName(String projectName) {
+		String projectId = null;
+		ProjectsResponse projectsResp = cxOneClient.getProjectsByName(projectName);
+		if (projectsResp != null) {
+			int noOfProjects = projectsResp.getTotalCount();
+			if (noOfProjects > 0 && null != projectsResp.getProjects()) {
+				JSONObject object = (JSONObject) projectsResp.getProjects().get(0);
+				if (object != null)
+					projectId = (object.get("id")).toString();
+			}
+		}
+		return projectId;
+	}
+
 	/*
      * Suppress only those conditions for which it is generally acceptable
      * to have plugin not error out so that rest of the pipeline can continue.
@@ -281,13 +295,13 @@ public class CxOneWrapperClient implements Scanner{
 		//Plugins will control if errors handled here will be ignored.
 		else if(config.isIgnoreBenignErrors()) {
 			
-			if (error.getMessage().contains("source folder is empty,") || (astSastResults.getException() != null
+			if ((error.getMessage() != null && error.getMessage().contains("source folder is empty,")) || (astSastResults.getException() != null
 					&& astSastResults.getException().getMessage().contains("No files to zip"))) {
 				
 				suppressed = true;
-			} else if (error.getMessage().contains("No files to zip")) {
+			} else if (error.getMessage() != null && error.getMessage().contains("No files to zip")) {
 				suppressed = true;
-			} else if (error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
+			} else if (error.getMessage() != null && error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
 				suppressed = true;
 			}
 		}
@@ -295,6 +309,15 @@ public class CxOneWrapperClient implements Scanner{
 		if(suppressed) {			
 			log.info(additionalMessage);
 			try {
+				oneConfig = new CxOneConfig();
+				oneConfig.setAccessControlBaseUrl(config.getAccessControlBaseUrl());
+				oneConfig.setApiBaseUrl(config.getApiBaseUrl());
+				oneConfig.setClientId(config.getClientId());
+				oneConfig.setClientSecret(config.getClientSecret());
+				oneConfig.setTenant(config.getTenant());
+				cxOneClient = new CxOneClient(oneConfig);
+    			cxOneClient.init();
+				projectId = getProjectIdFromProjectName(config.getProjectName());
 				if(StringUtils.isEmpty(projectId)) {
 					log.error("Project Id is null");
 					throw new CxClientException("Project Id is null");
