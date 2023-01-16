@@ -52,7 +52,6 @@ public class CxOneWrapperClient implements Scanner{
     private CxOneConfig oneConfig ;
     private CxOneClient cxOneClient;
     private Logger log;
-    private List<String> groups;
     private State state = State.SUCCESS;
     private int reportTimeoutSec = 5000;
     private String scanId;
@@ -119,7 +118,7 @@ public class CxOneWrapperClient implements Scanner{
 	public Results initiateScan() {
 		astSastResults = new AstSastResults();
 		ScanResponse results = cxOneClient.scan(oneConfig.getScanConfig());
-		scanId = (String)results.getId();
+		scanId = results.getId();
 		astSastResults.setScanId(scanId);
 		astSastResults.setScanResponse(results);
 		log.info("CxOne SAST scan created successfully: Scan ID is {}", scanId);
@@ -130,59 +129,62 @@ public class CxOneWrapperClient implements Scanner{
 	@Override
 	public Results waitForScanResults() {
 		try {
-        try {
-        	log.info("------------------------------------Get CxOne SAST Results:-----------------------------------");
-        	log.info("Waiting for AST scan to finish.");
-	     	ScanStatusResponse scanStatusRes = cxOneClient.waitForScanToResolve(scanId);
-        	log.info("Retrieving AST scan results");
-        	astSastResults = retrieveAstSastResults(scanStatusRes.getId(), projectId);
-        	log.info("Retrieved AST scan results.");
-        }
-        	catch (TaskWaiterException e) {
-    			
-    			if (!errorToBeSuppressed(e)) {
-    				// throw the exception so that caught by outer catch
-    				throw new CxClientException(e.getMessage());
-    			}
-    		} catch (CxClientException e) {
-    			if (!errorToBeSuppressed(e)) {
-    				// throw the exception so that caught by outer catch
-    				throw new Exception(e.getMessage());
-    			}
-    		} 
-        if (config.getEnablePolicyViolations()) {
-            // DO Nothing . Policy violation feature remains silent
-        	log.warn("CxOne does not support for Policy violation");
-        }
-		if (astSastResults.getCxOneSastScanLink() != null)
-			AstSastUtils.printAstSASTResultsToConsole(astSastResults, config.getEnablePolicyViolations(), log);
+			try {
+				log.info(
+						"------------------------------------Get CxOne SAST Results:-----------------------------------");
+				log.info("Waiting for AST scan to finish.");
+				ScanStatusResponse scanStatusRes = cxOneClient.waitForScanToResolve(scanId);
+				log.info("Retrieving AST scan results");
+				astSastResults = retrieveAstSastResults(scanStatusRes.getId(), projectId);
+				log.info("Retrieved AST scan results.");
+			} catch (TaskWaiterException e) {
 
-          //PDF report
-            if (config.getGeneratePDFReport()) {
-                log.info("Generating PDF report");
-                byte[] pdfReport = getScanReport(astSastResults.getScanId(), projectId, astSastResults.getScanResponse().getBranch(), ReportType.PDF, CONTENT_TYPE_APPLICATION_PDF_V1);
-                astSastResults.setPDFReport(pdfReport);
-                if (config.getReportsDir() != null) {
-                    String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
-                    String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
-                    String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
-                    astSastResults.setCxOneSastPDFLink(pdfLink);
-                    astSastResults.setPdfFileName(pdfFileName);
-                }
-                            
-                }
-        } catch (Exception e) {            
-            if(!errorToBeSuppressed(e))
-            	astSastResults.setException(new CxClientException(e));
-        }
+				if (!errorToBeSuppressed(e)) {
+					// throw the exception so that caught by outer catch
+					throw new CxClientException(e.getMessage());
+				}
+			} catch (CxClientException e) {
+				if (!errorToBeSuppressed(e)) {
+					// throw the exception so that caught by outer catch
+					throw new Exception(e.getMessage());
+				}
+			}
+			if (config.getEnablePolicyViolations()) {
+				// DO Nothing . Policy violation feature remains silent
+				log.warn("CxOne does not support Policy Management.");
+			}
+			if (astSastResults.getCxOneSastScanLink() != null)
+				AstSastUtils.printAstSASTResultsToConsole(astSastResults, config.getEnablePolicyViolations(), log);
 
-//            return results.getResults();
-        return astSastResults;
-    }
+			// PDF report
+			if (config.getGeneratePDFReport()) {
+				log.info("Generating PDF report");
+				byte[] pdfReport = getScanReport(astSastResults.getScanId(), projectId,
+						astSastResults.getScanResponse().getBranch(), ReportType.PDF, CONTENT_TYPE_APPLICATION_PDF_V1);
+				astSastResults.setPDFReport(pdfReport);
+				if (config.getReportsDir() != null) {
+					String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
+					String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
+					String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
+					astSastResults.setCxOneSastPDFLink(pdfLink);
+					astSastResults.setPdfFileName(pdfFileName);
+				}
+
+			}
+		} catch (Exception e) {
+			if (!errorToBeSuppressed(e))
+				astSastResults.setException(new CxClientException(e));
+		}
+
+		return astSastResults;
+	}
 
 	@Override
 	public AstSastResults getLatestScanResults() {
+
 		astSastResults = new AstSastResults();
+		// TODO : Create empty object of ASTSASTResults and set its language by calling getAccessToekLanguage from CxOneClient
+//		astSastResults.setAstSastLanguage(cxOneClient.getLanguageFromAccessToken());
 		ScanIdConfigRequest scanIdConfig = new ScanIdConfigRequest();
 		scanIdConfig.setField("scan-ids");
 		scanIdConfig.setProjectId(projectId);
@@ -230,7 +232,7 @@ public class CxOneWrapperClient implements Scanner{
 	    }
 	 
 	 private ResultSummaryResponse getScanStatistics(String scanId) throws IOException {
-			ResultsSummaryRequest summaryPayLoad = new ResultsSummaryRequest(scanId, true, false, false, false, language);
+			ResultsSummaryRequest summaryPayLoad = new ResultsSummaryRequest(scanId, true, false, false, false, null);
 			ResultSummaryResponse resultsSummary = cxOneClient.getResultsSummary(summaryPayLoad);
 	        return resultsSummary;
 	    }

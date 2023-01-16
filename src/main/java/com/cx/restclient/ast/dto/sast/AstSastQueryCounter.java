@@ -1,9 +1,10 @@
 package com.cx.restclient.ast.dto.sast;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AstSastQueryCounter {
+public class AstSastQueryCounter implements Serializable{
 	private Map queryHighMap = new HashMap<>();
 	private Map queryMediumMap = new HashMap<>();
 	private Map queryLowMap = new HashMap<>();
