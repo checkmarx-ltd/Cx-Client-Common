@@ -63,46 +63,58 @@ public class CxOneWrapperClient implements Scanner{
     
 	CxOneWrapperClient(CxScanConfig config, Logger log) throws MalformedURLException {
 		this.config = config;
-        this.log = log;
+		this.log = log;
 		CxConfigParamsTransformerServiceFactory factory = new CxConfigParamsTransformerServiceFactory();
 		TransformerService service = factory.create(ScannerType.SAST, ScannerType.CXONE_SAST, config, log);
-		oneConfig = service.getCxOneConfig();
-        oneConfig.setAccessControlBaseUrl(config.getAccessControlBaseUrl());
-        oneConfig.setApiBaseUrl(config.getApiBaseUrl());
-        oneConfig.setClientId(config.getClientId());
-        oneConfig.setClientSecret(config.getClientSecret());
-        oneConfig.setTenant(config.getTenant());
-        cxOneClient = new CxOneClient(oneConfig);
-        projectId = oneConfig.getScanConfig().getProject().getId();
+		try {
+			oneConfig = service.getCxOneConfig();
+			oneConfig.setAccessControlBaseUrl(config.getAccessControlBaseUrl());
+			oneConfig.setApiBaseUrl(config.getApiBaseUrl());
+			oneConfig.setClientId(config.getClientId());
+			oneConfig.setClientSecret(config.getClientSecret());
+			oneConfig.setTenant(config.getTenant());
+			cxOneClient = new CxOneClient(oneConfig);
+			projectId = oneConfig.getScanConfig().getProject().getId();
+		} catch (CxClientException e) {
+			if (!errorToBeSuppressed(e)) {
+				throw new CxClientException(e);
+			}
+		}
+
 	}
 
 	@Override
 	public Results init() {
 		AstSastResults initAstSastResults = new AstSastResults();
-        try {
-            initiate();
-            language = cxOneClient.getLanguageFromAccessToken();
-        } catch (CxClientException e) {
-            setState(State.FAILED);
+		try {
+			if (!this.state.equals(State.SKIPPED)) {
+				initiate();
+				language = cxOneClient.getLanguageFromAccessToken();
+			}
+		} catch (CxClientException e) {
+		     setState(State.FAILED);
             initAstSastResults.setException(e);
         	log.error("error while initializing AST scanner");
         	log.error(e.getMessage());
-        }
+        } 
         return initAstSastResults;
 	}
 
 	private void initiate() {
 		try {
-            if (config.isSubmitToAST()) {
-            	// This will invoke init() of CxHttpClient and then generate access token within this call.Login happens in this method
-    			cxOneClient.init();
-    			String accessToken = cxOneClient.getAccessToken();
-    			log.info("Login successful to CxOne SAST");
-            }
-        } catch (Exception e) {
-            throw new CxClientException(e);
-        }		
+			if (config.isSubmitToAST()) {
+				// This will invoke init() of CxHttpClient and then generate access token within
+				// this call.Login happens in this method
+				cxOneClient.init();
+				String accessToken = cxOneClient.getAccessToken();
+				log.info("Login successful to CxOne SAST");
+			}
+		} catch (Exception e) {
+			if (!errorToBeSuppressed(e))
+				throw new CxClientException(e);
+		}
 	}
+
 	@Override
 	public Results initiateScan() {
 		astSastResults = new AstSastResults();
@@ -170,6 +182,7 @@ public class CxOneWrapperClient implements Scanner{
 
 	@Override
 	public AstSastResults getLatestScanResults() {
+		astSastResults = new AstSastResults();
 		ScanIdConfigRequest scanIdConfig = new ScanIdConfigRequest();
 		scanIdConfig.setField("scan-ids");
 		scanIdConfig.setProjectId(projectId);
@@ -177,18 +190,16 @@ public class CxOneWrapperClient implements Scanner{
 		scanIdConfig.setStatuses("Completed");
 		scanIdConfig.setLimit(1);
 		scanIdConfig.setOffset(0);
-
-		String lastScanId = cxOneClient.getLatestScanId(scanIdConfig);
-		ScanStatusResponse lastScanResponse = cxOneClient.getScanStatus(lastScanId);
-		if (TaskStatus.COMPLETED.getValue().equals(lastScanResponse.getStatus().getValue())) {
-            try {
+		try {
+			String lastScanId = cxOneClient.getLatestScanId(scanIdConfig);
+			ScanStatusResponse lastScanResponse = cxOneClient.getScanStatus(lastScanId);
+			if (TaskStatus.COMPLETED.getValue().equals(lastScanResponse.getStatus().getValue()))
 				return retrieveAstSastResults(lastScanId, projectId);
-			} catch (Exception e) {
-	            log.error(e.getMessage());
-	            astSastResults.setException(new CxClientException(e));
-	        }
-        }
-		return null;
+		} catch (Exception e) {
+			log.error(e.getMessage());
+			astSastResults.setException(new CxClientException(e));
+		}
+		return astSastResults;
 	}
 
 	private AstSastResults retrieveAstSastResults(String scanId, String projectId) throws IOException {
@@ -267,17 +278,19 @@ public class CxOneWrapperClient implements Scanner{
 			suppressed = true;		
 		}
 		//Plugins will control if errors handled here will be ignored.
-		else if(config.isIgnoreBenignErrors()) {
-			
-			if (error.getMessage().contains("source folder is empty,") || (astSastResults.getException() != null
-					&& astSastResults.getException().getMessage().contains("No files to zip"))) {
-				
+		else if (config.isIgnoreBenignErrors()) {
+
+			if ((error.getMessage() != null && error.getMessage().contains("source folder is empty,"))
+					|| (astSastResults.getException() != null
+							&& astSastResults.getException().getMessage().contains("No files to zip"))) {
 				suppressed = true;
-			} else if (error.getMessage().contains("No files to zip")) {
+			} else if (error.getMessage() != null && error.getMessage().contains("No files to zip")) {
 				suppressed = true;
-			} else if (error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
+			} else if (error.getMessage() != null
+					&& error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
 				suppressed = true;
 			}
+
 		}
 		
 		if(suppressed) {			

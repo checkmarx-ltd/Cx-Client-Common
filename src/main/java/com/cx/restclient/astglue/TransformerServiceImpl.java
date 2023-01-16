@@ -76,9 +76,8 @@ public class TransformerServiceImpl implements  TransformerService{
 		groups.add(groupName);
 		//TODO : Need to check criticality to be set
 		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
-		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(),
-				cxConfig.getBranchName());
-		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName) ;
+		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName());
+		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName);
 		String projectName = transformedProjectName;
 		//TODO : Remove the branch name search
 		/*if(transformedProjectName == null) {
@@ -97,7 +96,7 @@ public class TransformerServiceImpl implements  TransformerService{
 				cxOneConfig.setIsNewProject(true);
 			}
 		} else if (cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
-			throw new CxClientException(DENY_NEW_PROJECT_ERROR);
+			throw new CxClientException(DENY_NEW_PROJECT_ERROR.replace("{projectName}", cxConfig.getProjectName()));
 		} else if (cxConfig.getAvoidDuplicateProjectScans()) {
 			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, "running,queued");
 			if(scanQueueResponse != null && scanQueueResponse.getTotalCount() > 0) {
@@ -164,8 +163,13 @@ public class TransformerServiceImpl implements  TransformerService{
 		}
 		cxOneConfig.setCxOneSastScanTimeoutSec(cxConfig.getSastScanTimeoutInMinutes());
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
-		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
-				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
+		ScanConfig scanConfig = null;
+		try {
+			scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, astFilter, tags,
+					cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
+		} catch (Exception e) {
+			throw new CxClientException(e.getMessage());
+		}
 		cxOneConfig.setScanConfig(scanConfig);
 		cxOneConfig.getScanConfig().getProject().setId(projectId);
 		return cxOneConfig;
