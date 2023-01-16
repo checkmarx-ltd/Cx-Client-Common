@@ -39,17 +39,17 @@ public class CxClientDelegator implements Scanner {
 
     Map<ScannerType, Scanner> scannersMap = new EnumMap<>(ScannerType.class);
 
-    public CxClientDelegator(CxScanConfig config, Logger log) throws MalformedURLException {
+	public CxClientDelegator(CxScanConfig config, Logger log) throws MalformedURLException {
 
-        this.config = config;
-        this.log = log;
-        Boolean isAstMigrate = false;
-        Boolean isExceptionFound = false;
+		this.config = config;
+		this.log = log;
+		Boolean isAstMigrate = false;
+		Boolean isExceptionFound = false;
 		if (config.isSubmitToAST()) {
 			MigrationYamlResponse migrationYamlResponse = null;
 			try {
 				migrationYamlResponse = SASTToASTProjectRoutingMapper.isProjectEligibleToMigrateAST(
-							config.getFilePath(), config.getTeamPath(), config.getTeamId(),log);
+						config.getFilePath(), config.getTeamPath(), config.getTeamId(), log);
 			} catch (Exception e) {
 				isExceptionFound = true;
 				e.printStackTrace();
@@ -57,20 +57,24 @@ public class CxClientDelegator implements Scanner {
 			if (migrationYamlResponse != null && migrationYamlResponse.getIsMigrate()) {
 				isAstMigrate = true;
 				scannersMap.put(ScannerType.CXONE_SAST, new CxOneWrapperClient(config, log));
-		    }
-			
-        } if (!isAstMigrate && !isExceptionFound && config.isSastEnabled()) {
-            scannersMap.put(ScannerType.SAST, new CxSASTClient(config, log));
-        }
+			}
 
-        if (config.isOsaEnabled()) {
-            scannersMap.put(ScannerType.OSA, new CxOSAClient(config, log));
-        }
+		}
+		if (!isAstMigrate && !isExceptionFound && config.isSastEnabled()) {
+			scannersMap.put(ScannerType.SAST, new CxSASTClient(config, log));
+		}
 
-        if (config.isAstScaEnabled()) {
-            scannersMap.put(ScannerType.AST_SCA, new AstScaClient(config, log));
-        }
-    }
+		if (config.isOsaEnabled()) {
+			scannersMap.put(ScannerType.OSA, new CxOSAClient(config, log));
+		} else {
+			// TODO : Test OSA with CxOne. Modify this log info
+			log.info("OSA is not enabled.");
+		}
+
+		if (config.isAstScaEnabled()) {
+			scannersMap.put(ScannerType.AST_SCA, new AstScaClient(config, log));
+		}
+	}
 
 
     public CxClientDelegator(String serverUrl, String username, String password, String origin, boolean disableCertificateValidation, Logger log) throws MalformedURLException {

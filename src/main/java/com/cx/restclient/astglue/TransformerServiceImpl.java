@@ -39,7 +39,7 @@ public class TransformerServiceImpl implements  TransformerService{
 	private static final String DENY_NEW_PROJECT_ERROR = "Creation of the new project [{projectName}] is not authorized. " +
 	            "Please use an existing project. \nYou can enable the creation of new projects by disabling" + "" +
 	            " the Deny new Checkmarx projects creation checkbox in the Checkmarx plugin global settings.\n";
-	private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS= "\nAvoid duplicate project scans in queue\n";
+	private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS= "\nScan on this project are already active.\n";
 	
 	public TransformerServiceImpl(CxScanConfig scanConfig, Logger log) {
 		this.cxConfig = scanConfig;
@@ -55,12 +55,16 @@ public class TransformerServiceImpl implements  TransformerService{
 		cxOneConfig.setClientId(cxConfig.getClientId());
 		cxOneConfig.setClientSecret(cxConfig.getClientSecret());
 		cxOneConfig.setTenant(cxConfig.getTenant());
-		
+		/**
+		 * This initialization is partial. The actual initialization is done in CxOneWrapperClient.java
+		 */
 		CxOneClient cxOneClient = new CxOneClient(cxOneConfig);
 		cxOneClient.init();
+		// Teams
 		TeamsTransformer teamTransformer = new TeamsTransformer(cxOneClient);
 		String groupName = teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath());
 		
+		// Proxy
 		ProxyTransformer proxyTransformer = new ProxyTransformer(cxOneClient);
 		ProxyConfig proxyConfig = cxConfig.getProxyConfig();
 		if(proxyConfig != null) {
@@ -68,13 +72,14 @@ public class TransformerServiceImpl implements  TransformerService{
 				proxyConfig.getUsername(), proxyConfig.getPassword(), proxyConfig.getNoproxyHosts(), proxyConfig.getPort()));
 		}
 		
-		
+		// Scan Level custom fields
 		Map<String, String> tags = new HashMap<>();
 		if(!StringUtils.isEmpty(cxConfig.getCustomFields())) 
 			tags = setCustomFieldTags(tags, cxConfig.getCustomFields());
 		List<String> groups = new ArrayList<String>();
 		groups.add(groupName);
 		//TODO : Need to check criticality to be set
+		// Project name match and create project
 		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
 		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(),
 				cxConfig.getBranchName());
@@ -87,7 +92,6 @@ public class TransformerServiceImpl implements  TransformerService{
 		}*/
 		CxOneProjectTransformer projectCreateTransformer = new CxOneProjectTransformer(cxOneClient, transformedProjectName);
 		if (!cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
-			log.info("Project Id :"+projectId);
 			ProjectCreateResponse project = projectCreateTransformer.getProjectObject(groups, cxConfig.getSourceDir(),
 					1, cxConfig.getBranchName(), cxConfig.getCxOrigin(), tags);
 			if (project != null) {
@@ -99,6 +103,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		} else if (cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
 			throw new CxClientException(DENY_NEW_PROJECT_ERROR);
 		} else if (cxConfig.getAvoidDuplicateProjectScans()) {
+			// TODO :Move these queued status to constant class :"running,queued"
 			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, "running,queued");
 			if(scanQueueResponse != null && scanQueueResponse.getTotalCount() > 0) {
 				throw new CxClientException(MSG_AVOID_DUPLICATE_PROJECT_SCANS);
@@ -106,16 +111,12 @@ public class TransformerServiceImpl implements  TransformerService{
 		}
 
 		PathFilter astFilter = new PathFilter(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
-		
-		TransformerServiceImpl transformerServiceImpl = new TransformerServiceImpl(cxConfig, log);
-		//TransformerServiceImpl transformerServiceImpl = new TransformerServiceImpl(cxConfig, LoggerFactory.getLogger(TransformerServiceImpl.class));
+		// Project configuration
 		ProjectConfigurationResponse projectConfigurationResponse = cxOneClient.getProjectConfiguration(projectId);
-		List<ProjectConfiguration> projectConfigurationList = transformerServiceImpl
-				.getProjectConfigurationList(projectConfigurationResponse);
+		List<ProjectConfiguration> projectConfigurationList = getProjectConfigurationList(projectConfigurationResponse);
 		List<ProjectConfiguration> updatedProjectConfigurationList = new ArrayList<>();
 		if (projectConfigurationList != null) {
-			ProjectConfiguration languageModeConfiguration = transformerServiceImpl
-					.getLanguageModeConfiguration(projectConfigurationList);
+			ProjectConfiguration languageModeConfiguration = getLanguageModeConfiguration(projectConfigurationList);
 			if (languageModeConfiguration != null && languageModeConfiguration.getAllowOverride()) {
 				EngineConfigurationTransformer engineConfigurationTransformer = new EngineConfigurationTransformer(
 						cxOneClient);
@@ -127,8 +128,7 @@ public class TransformerServiceImpl implements  TransformerService{
 				cxConfig.setEngineConfigurationName(updatedLanguageModeConfiguration.getValue());
 
 			}
-			ProjectConfiguration presetConfiguration = transformerServiceImpl
-					.getPresetConfiguration(projectConfigurationList);
+			ProjectConfiguration presetConfiguration = getPresetConfiguration(projectConfigurationList);
 			if (presetConfiguration != null && presetConfiguration.getAllowOverride()) {
 				PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
 				ProjectConfiguration updatedPresetConfiguration = presetConfiguration;
@@ -138,18 +138,17 @@ public class TransformerServiceImpl implements  TransformerService{
 				cxConfig.setPresetName(updatedPresetConfiguration.getValue());
 			}
 
-			ProjectConfiguration incrementalConfiguration = transformerServiceImpl.getIncrementalConfiguration(projectConfigurationList);
+			ProjectConfiguration incrementalConfiguration = getIncrementalConfiguration(projectConfigurationList);
 			if(incrementalConfiguration != null && incrementalConfiguration.getAllowOverride()) {
 				ProjectConfiguration updatedIncrementalConfiguration = incrementalConfiguration;
 				updatedIncrementalConfiguration.setValue(String.valueOf(cxConfig.getIncremental()));
 				updatedProjectConfigurationList.add(updatedIncrementalConfiguration);
 			}
 			
-			ProjectConfiguration filterConfiguration = transformerServiceImpl
-					.getFilterConfiguration(projectConfigurationList);
+			ProjectConfiguration filterConfiguration = getFilterConfiguration(projectConfigurationList);
 			if (filterConfiguration != null || filterConfiguration.getAllowOverride()) {
 				ProjectConfiguration updatedFilterConfiguration = filterConfiguration;
-				updatedFilterConfiguration.setValue(transformerServiceImpl.getFilterConfigurationValue(
+				updatedFilterConfiguration.setValue(getFilterConfigurationValue(
 						cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern()));
 				updatedProjectConfigurationList.add(updatedFilterConfiguration);
 			}
@@ -165,7 +164,7 @@ public class TransformerServiceImpl implements  TransformerService{
 		cxOneConfig.setCxOneSastScanTimeoutSec(cxConfig.getSastScanTimeoutInMinutes());
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
 		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
-				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName());
+				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName(), null);
 		cxOneConfig.setScanConfig(scanConfig);
 		cxOneConfig.getScanConfig().getProject().setId(projectId);
 		return cxOneConfig;
