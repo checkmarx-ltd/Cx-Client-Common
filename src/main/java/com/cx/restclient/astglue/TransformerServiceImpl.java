@@ -81,9 +81,8 @@ public class TransformerServiceImpl implements  TransformerService{
 		//TODO : Need to check criticality to be set
 		// Project name match and create project
 		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
-		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName(),
-				cxConfig.getBranchName());
-		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName) ;
+		String transformedProjectName = projectNameTransformer.getProjectName(cxConfig.getProjectName());
+		String projectId = projectNameTransformer.getProjectIdForProjectName(transformedProjectName);
 		String projectName = transformedProjectName;
 		//TODO : Remove the branch name search
 		/*if(transformedProjectName == null) {
@@ -101,7 +100,7 @@ public class TransformerServiceImpl implements  TransformerService{
 				cxOneConfig.setIsNewProject(true);
 			}
 		} else if (cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
-			throw new CxClientException(DENY_NEW_PROJECT_ERROR);
+			throw new CxClientException(DENY_NEW_PROJECT_ERROR.replace("{projectName}", cxConfig.getProjectName()));
 		} else if (cxConfig.getAvoidDuplicateProjectScans()) {
 			// TODO :Move these queued status to constant class :"running,queued"
 			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, "running,queued");
@@ -163,10 +162,14 @@ public class TransformerServiceImpl implements  TransformerService{
 		}
 		cxOneConfig.setCxOneSastScanTimeoutSec(cxConfig.getSastScanTimeoutInMinutes());
 		ScanConfigTransformer scanConfigTransformer = new ScanConfigTransformer(cxOneClient);
-		ScanConfig scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups,
-				astFilter, tags, cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName(), null);
+		ScanConfig scanConfig = null;
+		try {
+			scanConfig = scanConfigTransformer.constructScanConfig(projectId, projectName, groups, astFilter, tags,
+					cxConfig.getSourceDir(), cxConfig.getIncremental(), cxConfig.getPresetName(), null);
+		} catch (Exception e) {
+			throw new CxClientException(e.getMessage());
+		}
 		cxOneConfig.setScanConfig(scanConfig);
-		cxOneConfig.getScanConfig().getProject().setId(projectId);
 		return cxOneConfig;
 		}
 
