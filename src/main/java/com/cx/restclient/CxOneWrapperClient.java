@@ -37,6 +37,7 @@ import com.cx.restclient.ast.dto.sast.AstSastResults;
 import com.cx.restclient.ast.dto.sast.AstSastUtils;
 import com.cx.restclient.astglue.CxConfigParamsTransformerServiceFactory;
 import com.cx.restclient.astglue.TransformerService;
+import com.cx.restclient.common.CxOneConstants;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.Results;
@@ -57,7 +58,6 @@ public class CxOneWrapperClient implements Scanner{
     private String scanId;
     private String projectId;
     private AstSastResults astSastResults = new AstSastResults();
-    private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS= "\nAvoid duplicate project scans in queue\n";
     private String language = "en-US";
     
 	CxOneWrapperClient(CxScanConfig config, Logger log) throws MalformedURLException {
@@ -93,7 +93,7 @@ public class CxOneWrapperClient implements Scanner{
 		} catch (CxClientException e) {
 		     setState(State.FAILED);
             initAstSastResults.setException(e);
-        	log.error("error while initializing AST scanner");
+        	log.error("Error occurred while initializing CxOne SAST scanner.");
         	log.error(e.getMessage());
         } 
         return initAstSastResults;
@@ -132,11 +132,11 @@ public class CxOneWrapperClient implements Scanner{
 			try {
 				log.info(
 						"------------------------------------Get CxOne SAST Results:-----------------------------------");
-				log.info("Waiting for AST scan to finish.");
+				log.info("Waiting for CxOne SAST scan to finish.");
 				ScanStatusResponse scanStatusRes = cxOneClient.waitForScanToResolve(scanId);
-				log.info("Retrieving AST scan results");
+				log.info("Retrieving CxOne SAST scan results.");
 				astSastResults = retrieveAstSastResults(scanStatusRes.getId(), projectId);
-				log.info("Retrieved AST scan results.");
+				log.info("Retrieved CxOne SAST scan results.");
 			} catch (TaskWaiterException e) {
 
 				if (!errorToBeSuppressed(e)) {
@@ -289,7 +289,7 @@ public class CxOneWrapperClient implements Scanner{
 			} else if (error.getMessage() != null && error.getMessage().contains("No files to zip")) {
 				suppressed = true;
 			} else if (error.getMessage() != null
-					&& error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
+					&& error.getMessage().equalsIgnoreCase(CxOneConstants.MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
 				suppressed = true;
 			}
 

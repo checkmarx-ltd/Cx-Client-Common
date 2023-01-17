@@ -27,6 +27,7 @@ import com.checkmarx.one.sast.ScanConfigTransformer;
 import com.checkmarx.one.sast.TeamsTransformer;
 import com.checkmarx.one.util.zip.PathFilter;
 import com.checkmarx.one.util.zip.ZipUtil;
+import com.cx.restclient.common.CxOneConstants;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.ProxyConfig;
 import com.cx.restclient.exception.CxClientException;
@@ -36,11 +37,6 @@ public class TransformerServiceImpl implements TransformerService {
 
 	private CxScanConfig cxConfig;
 	private Logger log;
-	private static final String DENY_NEW_PROJECT_ERROR = "Creation of the new project [{projectName}] is not authorized. "
-			+ "Please use an existing project. \nYou can enable the creation of new projects by disabling" + ""
-			+ " the Deny new Checkmarx projects creation checkbox in the Checkmarx plugin global settings.\n";
-	private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS = "\nScan on this project are already active.\n";
-
 	public TransformerServiceImpl(CxScanConfig scanConfig, Logger log) {
 		this.cxConfig = scanConfig;
 		this.log = log;
@@ -84,12 +80,11 @@ public class TransformerServiceImpl implements TransformerService {
 				cxOneConfig.setIsNewProject(true);
 			}
 		} else if (cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
-			throw new CxClientException(DENY_NEW_PROJECT_ERROR.replace("{projectName}", cxConfig.getProjectName()));
+			throw new CxClientException(CxOneConstants.DENY_NEW_PROJECT_ERROR.replace("{projectName}", cxConfig.getProjectName()));
 		} else if (cxConfig.getAvoidDuplicateProjectScans()) {
-			// TODO :Move these queued status to constant class :"running,queued"
-			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, "running,queued");
+			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, CxOneConstants.RUNNING_QUEUED);
 			if (scanQueueResponse != null && scanQueueResponse.getTotalCount() > 0) {
-				throw new CxClientException(MSG_AVOID_DUPLICATE_PROJECT_SCANS);
+				throw new CxClientException(CxOneConstants.MSG_AVOID_DUPLICATE_PROJECT_SCANS);
 			}
 		}
 
@@ -134,7 +129,7 @@ public class TransformerServiceImpl implements TransformerService {
 				try {
 					cxOneClient.patchProjectConfiguration(updatedProjectConfigurationList, projectId);
 				} catch (Exception e) {
-					log.error("Exception occured while patching Project Configuration list ", e);
+					log.error("Exception occurred while patching Project Configuration list ", e);
 				}
 			}
 		}
@@ -258,8 +253,8 @@ public class TransformerServiceImpl implements TransformerService {
 
 		ProjectConfiguration projectConfiguration = null;
 		for (ProjectConfiguration configuration : projectConfigurationList) {
-			if (configuration.getName().equalsIgnoreCase("languageMode")
-					&& configuration.getCategory().equalsIgnoreCase("sast"))
+			if (configuration.getName().equalsIgnoreCase(CxOneConstants.LANGUAGE_MODE)
+					&& configuration.getCategory().equalsIgnoreCase(CxOneConstants.SAST))
 				return configuration;
 		}
 		return projectConfiguration;
@@ -268,8 +263,8 @@ public class TransformerServiceImpl implements TransformerService {
 	private ProjectConfiguration getPresetConfiguration(List<ProjectConfiguration> projectConfigurationList) {
 		ProjectConfiguration projectConfiguration = null;
 		for (ProjectConfiguration configuration : projectConfigurationList) {
-			if (configuration.getName().equalsIgnoreCase("presetName")
-					&& configuration.getCategory().equalsIgnoreCase("sast"))
+			if (configuration.getName().equalsIgnoreCase(CxOneConstants.PRESET_NAME)
+					&& configuration.getCategory().equalsIgnoreCase(CxOneConstants.SAST))
 				return configuration;
 		}
 		return projectConfiguration;
@@ -278,8 +273,8 @@ public class TransformerServiceImpl implements TransformerService {
 	private ProjectConfiguration getIncrementalConfiguration(List<ProjectConfiguration> projectConfigurationList) {
 		ProjectConfiguration projectConfiguration = null;
 		for (ProjectConfiguration configuration : projectConfigurationList) {
-			if (configuration.getName().equalsIgnoreCase("incremental")
-					&& configuration.getCategory().equalsIgnoreCase("sast"))
+			if (configuration.getName().equalsIgnoreCase(CxOneConstants.INCREMENTAL)
+					&& configuration.getCategory().equalsIgnoreCase(CxOneConstants.SAST))
 				return configuration;
 		}
 		return projectConfiguration;
@@ -288,8 +283,8 @@ public class TransformerServiceImpl implements TransformerService {
 	private ProjectConfiguration getFilterConfiguration(List<ProjectConfiguration> projectConfigurationList) {
 		ProjectConfiguration projectConfiguration = null;
 		for (ProjectConfiguration configuration : projectConfigurationList) {
-			if (configuration.getName().equalsIgnoreCase("filter")
-					&& configuration.getCategory().equalsIgnoreCase("sast"))
+			if (configuration.getName().equalsIgnoreCase(CxOneConstants.FILTER)
+					&& configuration.getCategory().equalsIgnoreCase(CxOneConstants.SAST))
 				return configuration;
 		}
 		return projectConfiguration;
