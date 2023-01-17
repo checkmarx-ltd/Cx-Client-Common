@@ -40,8 +40,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
 public class AstSastResults extends Results implements Serializable {
     private String scanId;
     private ScanResponse scanRes;
@@ -74,7 +72,7 @@ public class AstSastResults extends Results implements Serializable {
 	private String cxOneScanLink;
 	private String astSastProjectLink;
 	private String cxOneLanguage = "en-US";
-	private List<SastResultDetails> sastResults = new ArrayList<>();
+	transient private List<SastResultDetails> sastResults = new ArrayList<>();
 	private Map queryToHighCountMap = new HashMap<String, Integer>();
 	private Map queryToMediumCountMap = new HashMap<String, Integer>();
 	private Map queryToLowCountMap = new HashMap<String, Integer>();

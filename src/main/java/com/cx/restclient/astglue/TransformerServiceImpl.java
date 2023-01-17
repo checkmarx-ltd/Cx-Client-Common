@@ -132,7 +132,7 @@ public class TransformerServiceImpl implements  TransformerService{
 			if (presetConfiguration != null && presetConfiguration.getAllowOverride()) {
 				PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
 				ProjectConfiguration updatedPresetConfiguration = presetConfiguration;
-				String presetName = presetTransformer.getPresetTransformer(cxConfig.getPresetId());
+				String presetName = presetTransformer.getMigratedPresetName(cxConfig.getPresetId());
 				updatedPresetConfiguration.setValue(presetName);
 				updatedProjectConfigurationList.add(updatedPresetConfiguration);
 				cxConfig.setPresetName(updatedPresetConfiguration.getValue());
