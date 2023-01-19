@@ -1347,7 +1347,7 @@
 
                                 <#if cxOnesast.cxonesastPDFLink??>
                                     <div id="cxonesast-summary-pdf-link" class="link-to-result">
-                                        <a class="pdf-report" href="${sast.cxonesastPDFLink}">
+                                        <a class="pdf-report" href="${cxonesast.cxonesastPDFLink}">
                                             <div class="link-icon">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="16"
                                                      viewBox="0 0 13 16"><title>PDF icon</title>

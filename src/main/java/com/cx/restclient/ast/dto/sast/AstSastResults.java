@@ -69,10 +69,10 @@ public class AstSastResults extends Results implements Serializable {
     private String pdfFileName;
 
 	private boolean cxoneSastResultsReady = false;
-	private String cxOneScanLink;
+	private String cxOneScanLink= "dummy";
 	private String astSastProjectLink;
 	private String cxOneLanguage = "en-US";
-	transient private List<SastResultDetails> sastResults = new ArrayList<>();
+	private List<SastResultDetails> sastResults = new ArrayList<>();
 	private Map queryToHighCountMap = new HashMap<String, Integer>();
 	private Map queryToMediumCountMap = new HashMap<String, Integer>();
 	private Map queryToLowCountMap = new HashMap<String, Integer>();
