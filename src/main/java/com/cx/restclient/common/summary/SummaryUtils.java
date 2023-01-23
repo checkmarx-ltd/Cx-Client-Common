@@ -47,12 +47,16 @@ public abstract class SummaryUtils {
 
         Map<String, Object> templateData = new HashMap<>();
         templateData.put("config", config);
-        templateData.put("sast", sastResults != null ? sastResults : new SASTResults());
-
-        // TODO: null value for "osa" should be handled inside the template.
-        templateData.put("osa", osaResults != null ? osaResults : new OSAResults());
-        templateData.put("sca", scaResults != null ? scaResults : new AstScaResults());
-        templateData.put("cxOnesast", cxOneSastResults != null ? cxOneSastResults : new AstSastResults());
+        if(sastResults != null){
+        	templateData.put("sast", sastResults);
+        } else if(cxOneSastResults != null) {
+        	templateData.put("cxOnesast", cxOneSastResults);
+        }
+        if(osaResults != null){
+        	templateData.put("osa", osaResults);
+        } else if(scaResults != null) {
+        	templateData.put("sca", scaResults);
+        }
         DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults, scaResults);
 
         if(dependencyScanResult == null) {

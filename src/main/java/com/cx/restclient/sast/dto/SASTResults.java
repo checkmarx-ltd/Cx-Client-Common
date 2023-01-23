@@ -156,14 +156,6 @@ public class SASTResults extends Results implements Serializable {
 		}
 	}
 	
-	 public String encodeXSS(String injection) {
-		 String lt="<";
-		 String gt=">";
-		 String ap="\'";
-		 String ic="\"";
-		 injection=injection.replace(lt, "&lt;").replace(gt, "&gt;").replace(ap, "&#39;").replace(ic,"&#34;");
-		 return injection;
-	 }
     public void setResults(long scanId, SASTStatisticsResponse statisticsResults, String url, long projectId) {
         setScanId(scanId);
         setHigh(statisticsResults.getHighSeverity());

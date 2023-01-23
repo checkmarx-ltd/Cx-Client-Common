@@ -153,7 +153,7 @@ public class CxOneWrapperClient implements Scanner{
 				// DO Nothing . Policy violation feature remains silent
 				log.warn("CxOne does not support Policy Management.");
 			}
-			if (astSastResults.getCxOneSastScanLink() != null)
+			if (astSastResults.getCxOneScanLink() != null)
 				AstSastUtils.printAstSASTResultsToConsole(astSastResults, config.getEnablePolicyViolations(), log);
 
 			// PDF report
@@ -299,7 +299,7 @@ public class CxOneWrapperClient implements Scanner{
 			log.info(additionalMessage);
 			try {
 				astSastResults = getLatestScanResults();
-				if (oneConfig.isIsNewProject() && astSastResults.getCxOneSastScanLink() == null) {
+				if (oneConfig.isIsNewProject() && astSastResults.getCxOneScanLink() == null) {
 					String message = String
 							.format("The project %s is a new project. Hence there is no last scan report to be shown.", config.getProjectName());
 					log.info(message);
