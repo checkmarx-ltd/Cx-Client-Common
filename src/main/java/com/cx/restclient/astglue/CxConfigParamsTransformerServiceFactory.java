@@ -11,7 +11,7 @@ public class CxConfigParamsTransformerServiceFactory implements TransformerFacto
 	public TransformerService create(ScannerType from, ScannerType to, CxScanConfig cxConfig, Logger log) {
 		if (to.getDisplayName().equals(ScannerType.CXONE_SAST.getDisplayName())
 				&& from.getDisplayName().equals(ScannerType.SAST.getDisplayName())) {
-			return new TransformerServiceImpl(cxConfig, log);
+			return new CxOneSastTransformerServiceImpl(cxConfig, log);
 		} 
 		return null;
 	}

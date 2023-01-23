@@ -33,21 +33,30 @@ import com.cx.restclient.dto.ProxyConfig;
 import com.cx.restclient.exception.CxClientException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class TransformerServiceImpl implements TransformerService {
+public class CxOneSastTransformerServiceImpl implements TransformerService {
 
 	private CxScanConfig cxConfig;
 	private Logger log;
-	public TransformerServiceImpl(CxScanConfig scanConfig, Logger log) {
+	private static final String DENY_NEW_PROJECT_ERROR = "Creation of the new project [{projectName}] is not authorized. "
+			+ "Please use an existing project. \nYou can enable the creation of new projects by disabling" + ""
+			+ " the Deny new Checkmarx projects creation checkbox in the Checkmarx plugin global settings.\n";
+	private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS = "\nScan on this project are already active.\n";
+
+	public CxOneSastTransformerServiceImpl(CxScanConfig scanConfig, Logger log) {
 		this.cxConfig = scanConfig;
 		this.log = log;
 	}
 	
 	/**
-	 * This method is used to get cxOneConfig  
+	 * This method is used interact with transformer to get the value and set in cxOneConfig object
+	 *	For filter,preset,languageMode and incremental, the value is updated using patch API on cxOne
+	 *	checks if project is pre-existing, get its project id, else get the project created using transformer
+	 *	It checks for deny new project and duplicate scans
+	 *	Scan custom field  are set into scan tags, which is further set to scan config
+	 * 
 	 * @return cxOneConfig
 	 */
 	
-
 	@Override
 	public CxOneConfig getCxOneConfig() {
 
@@ -73,7 +82,7 @@ public class TransformerServiceImpl implements TransformerService {
 		Map<String, String> tags = new HashMap<>();
 		if (!StringUtils.isEmpty(cxConfig.getCustomFields()))
 			tags = setCustomFieldTags(tags, cxConfig.getCustomFields());
-		//Project Name
+		// Project Name
 		String projectName = getProjectNameFromTransformer(cxOneClient, cxConfig.getProjectName());
 		String projectId = getProjectIdFromProjectName(cxOneClient, projectName);
 
@@ -86,14 +95,15 @@ public class TransformerServiceImpl implements TransformerService {
 				cxOneConfig.setIsNewProject(true);
 			}
 		} else if (cxConfig.getDenyProject() && StringUtils.isEmpty(projectId)) {
-			throw new CxClientException(CxOneConstants.DENY_NEW_PROJECT_ERROR.replace("{projectName}", cxConfig.getProjectName()));
+			throw new CxClientException(
+					CxOneConstants.DENY_NEW_PROJECT_ERROR.replace("{projectName}", cxConfig.getProjectName()));
 		} else if (cxConfig.getAvoidDuplicateProjectScans()) {
 			ScanQueueResponse scanQueueResponse = cxOneClient.getQueueScans(projectId, CxOneConstants.RUNNING_QUEUED);
 			if (scanQueueResponse != null && scanQueueResponse.getTotalCount() > 0) {
 				throw new CxClientException(CxOneConstants.MSG_AVOID_DUPLICATE_PROJECT_SCANS);
 			}
 		}
-
+		//Project Configurations
 		ProjectConfigurationResponse projectConfigurationResponse = cxOneClient.getProjectConfiguration(projectId);
 		List<ProjectConfiguration> projectConfigurationList = getProjectConfigurationList(projectConfigurationResponse);
 		List<ProjectConfiguration> updatedProjectConfigurationList = new ArrayList<>();
@@ -139,6 +149,7 @@ public class TransformerServiceImpl implements TransformerService {
 				}
 			}
 		}
+		//Scan Config
 		cxOneConfig.setCxOneSastScanTimeoutSec(cxConfig.getSastScanTimeoutInMinutes());
 		try {
 			cxOneConfig.setScanConfig(getScanConfigFromTransformer(cxOneClient, projectId, projectName, groups, tags));
@@ -149,14 +160,16 @@ public class TransformerServiceImpl implements TransformerService {
 	}
 
 	// Helper Methods
-	
+
 	/**
-	 * This method is used to call TeamsTransformer to get groupName 
+	 * This method is used to call TeamsTransformer by taking sast teamPath to get
+	 * CxOne groupName
+	 * 
 	 * @param cxOneClient
 	 * @param teamPath
 	 * @return groups
 	 */
-	
+
 	private List<String> getGroupListFromTransformer(CxOneClient cxOneClient, String teamPath) {
 		TeamsTransformer teamTransformer = new TeamsTransformer(cxOneClient);
 		String groupName = teamTransformer.getGroupNameFromTeam(cxConfig.getTeamPath());
@@ -166,12 +179,13 @@ public class TransformerServiceImpl implements TransformerService {
 	}
 
 	/**
-	 * This method is used to call ProxyTransformer to get proxy details 
+	 * This method is used to call ProxyTransformer to get proxy details
+	 * 
 	 * @param cxOneClient
 	 * @param proxyConfig
 	 * @return ProxyConfig
 	 */
-	
+
 	private com.checkmarx.one.dto.ProxyConfig getProxyConfigFromTransformer(CxOneClient cxOneClient,
 			ProxyConfig proxyConfig) {
 		ProxyTransformer proxyTransformer = new ProxyTransformer(cxOneClient);
@@ -183,12 +197,13 @@ public class TransformerServiceImpl implements TransformerService {
 	}
 
 	/**
-	 * This method is used to set scanCustomFields to scan tags 
+	 * This method is used to set scanCustomFields to scan tags in CxOne
+	 * 
 	 * @param tags
 	 * @param customFields
 	 * @return tags
 	 */
-	 
+
 	private Map<String, String> setCustomFieldTags(Map<String, String> tags, String customFields) {
 		String customFieldValue = customFields.substring(1, customFields.length() - 1);
 		String[] keyValuePairs = customFieldValue.split(",");
@@ -205,6 +220,7 @@ public class TransformerServiceImpl implements TransformerService {
 
 	/**
 	 * This method is used to get the cxOneProjectName, if exists
+	 * 
 	 * @param cxOneClient
 	 * @param sastProjectName
 	 * @return projectName
@@ -215,12 +231,13 @@ public class TransformerServiceImpl implements TransformerService {
 	}
 
 	/**
-	 * This method is used to get the projectId using cxOne Project Name, if exists 
+	 * This method is used to get the projectId using cxOne Project Name, if exists
+	 * 
 	 * @param cxOneClient
 	 * @param projectName
 	 * @return projectId
 	 */
-	
+
 	private String getProjectIdFromProjectName(CxOneClient cxOneClient, String projectName) {
 		ProjectNameTransformer projectNameTransformer = new ProjectNameTransformer(cxOneClient);
 		return projectNameTransformer.getProjectIdForProjectName(projectName);
@@ -228,12 +245,13 @@ public class TransformerServiceImpl implements TransformerService {
 
 	/**
 	 * This method is used to create project using CxOneProjectTransformer
+	 * 
 	 * @param cxOneClient
 	 * @param groups
 	 * @param tags
 	 * @return projectObject
 	 */
-	 
+
 	private ProjectCreateResponse createProjectFromTransformer(CxOneClient cxOneClient, List<String> groups,
 			Map<String, String> tags) {
 		/*
@@ -249,29 +267,34 @@ public class TransformerServiceImpl implements TransformerService {
 	}
 
 	/**
-	 * This method is used to get languageMode from EngineConfigurationTransformer
+	 * This method is used to get corresponding CxOne languageMode from sast
+	 * EngineConfiguration
+	 * 
 	 * @param cxOneClient
 	 * @return languageMode
 	 */
-	
+
 	private String getLanguageModeFromTransformer(CxOneClient cxOneClient) {
 		EngineConfigurationTransformer engineConfigurationTransformer = new EngineConfigurationTransformer(cxOneClient);
 		return engineConfigurationTransformer.getEngineConfigurationTransformer(cxConfig.getEngineConfigurationId());
 	}
 
 	/**
-	 * This method is used to get presetName from PresetTransformer
+	 * This method is used to get corresponding CxOne presetName from sast
+	 * PresetTransformer
+	 * 
 	 * @param cxOneClient
 	 * @return presetName
 	 */
-	
+
 	private String getPresetNameFromTransformer(CxOneClient cxOneClient) {
 		PresetTransformer presetTransformer = new PresetTransformer(cxOneClient);
-		return presetTransformer.getPresetTransformer(cxConfig.getPresetId());
+		return presetTransformer.getMigratedPresetName(cxConfig.getPresetId());
 	}
 
 	/**
 	 * This method is used to get scan configurations from ScanConfigTransformer
+	 * 
 	 * @param cxOneClient
 	 * @param projectId
 	 * @param projectName
@@ -279,7 +302,7 @@ public class TransformerServiceImpl implements TransformerService {
 	 * @param tags
 	 * @return scanConfig
 	 */
-	
+
 	private ScanConfig getScanConfigFromTransformer(CxOneClient cxOneClient, String projectId, String projectName,
 			List<String> groups, Map<String, String> tags) {
 		PathFilter astFilter = new PathFilter(cxConfig.getSastFolderExclusions(), cxConfig.getSastFilterPattern());
@@ -297,6 +320,7 @@ public class TransformerServiceImpl implements TransformerService {
 
 	/**
 	 * This method is used to get the list of all projectConfigurations
+	 * 
 	 * @param projectConfigurationResponse
 	 */
 	private List<ProjectConfiguration> getProjectConfigurationList(
@@ -315,11 +339,13 @@ public class TransformerServiceImpl implements TransformerService {
 	}
 
 	/**
-	 * This method is used to get languageModeConfiguration from ProjectConfigurations
+	 * This method is used to get languageModeConfiguration from
+	 * ProjectConfigurations
+	 * 
 	 * @param projectConfigurationList
 	 * @return projectConfigurationList
 	 */
-	
+
 	private ProjectConfiguration getLanguageModeConfiguration(List<ProjectConfiguration> projectConfigurationList) {
 
 		ProjectConfiguration projectConfiguration = null;
@@ -330,12 +356,14 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 		return projectConfiguration;
 	}
+
 	/**
-	 * This method is used to get presetConfiguration from ProjectConfigurations 
+	 * This method is used to get presetConfiguration from ProjectConfigurations
+	 * 
 	 * @param projectConfigurationList
 	 * @return projectConfigurationList
 	 */
-	
+
 	private ProjectConfiguration getPresetConfiguration(List<ProjectConfiguration> projectConfigurationList) {
 		ProjectConfiguration projectConfiguration = null;
 		for (ProjectConfiguration configuration : projectConfigurationList) {
@@ -345,13 +373,15 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 		return projectConfiguration;
 	}
-	
+
 	/**
-	 * This method is used to get incrementalConfiguration from ProjectConfigurations 
+	 * This method is used to get incrementalConfiguration from
+	 * ProjectConfigurations
+	 * 
 	 * @param projectConfigurationList
 	 * @return projectConfigurationList
 	 */
-	
+
 	private ProjectConfiguration getIncrementalConfiguration(List<ProjectConfiguration> projectConfigurationList) {
 		ProjectConfiguration projectConfiguration = null;
 		for (ProjectConfiguration configuration : projectConfigurationList) {
@@ -361,13 +391,14 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 		return projectConfiguration;
 	}
-	
+
 	/**
-	 * This method is used to get filterConfiguration from ProjectConfigurations 
+	 * This method is used to get filterConfiguration from ProjectConfigurations
+	 * 
 	 * @param projectConfigurationList
 	 * @return projectConfigurationList
 	 */
-	
+
 	private ProjectConfiguration getFilterConfiguration(List<ProjectConfiguration> projectConfigurationList) {
 		ProjectConfiguration projectConfiguration = null;
 		for (ProjectConfiguration configuration : projectConfigurationList) {
@@ -377,14 +408,16 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 		return projectConfiguration;
 	}
-	
+
 	/**
-	 * This method is used to get a single filter value using sastFolderExclusions and sastFilterPattern
+	 * This method is used to get a single filter value using sastFolderExclusions
+	 * and sastFilterPattern
+	 * 
 	 * @param sastFolderExclusions
 	 * @param sastFilterPattern
 	 * @return filter
 	 */
-	
+
 	private String getFilterConfigurationValue(String sastFolderExclusions, String sastFilterPattern) {
 		String filter = "";
 		String excludeFoldersPattern = "";
