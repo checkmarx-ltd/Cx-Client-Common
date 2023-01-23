@@ -428,6 +428,7 @@ public class AstScaClient extends AstClient implements Scanner {
     	String pathToResultJSONFile = "";
         String pathToSASTResultJSONFile = ""; 
         String pathToResultJSONFileNew= "";
+        String pathToSASTResultJSONFileNew= "";
 
         String scaResultPathArgName = getScaResultPathArgumentName(scaConfig);
         if(scaResultPathArgName != "") {
@@ -450,30 +451,33 @@ public class AstScaClient extends AstClient implements Scanner {
                 throw new CxClientException(e.getMessage());
             }
             log.info("SAST result path location configured: " + pathToSASTResultJSONFile);
-            pathToSASTResultJSONFile = createTimestampBasedPath(pathToSASTResultJSONFile, timeStamp, SASTParam.SAST_RESOLVER_RESULT_FILE_NAME);
+            pathToSASTResultJSONFileNew = createTimestampBasedPath(pathToSASTResultJSONFile, timeStamp, SASTParam.SAST_RESOLVER_RESULT_FILE_NAME);
         }
         log.info("Launching dependency resolution by ScaResolver. ScaResolver logs can be viewed in debug level logs of the pipeline."); 
-        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFileNew,pathToSASTResultJSONFile, log);
+        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFileNew,pathToSASTResultJSONFileNew, log);
         if (exitCode == 0) {
         	log.info("Dependency resolution completed."); 
-        	String parentDir = pathToResultJSONFileNew.substring(0, pathToResultJSONFileNew.lastIndexOf(File.separator));   
+        	String parentDir = pathToResultJSONFileNew.substring(0, pathToResultJSONFileNew.lastIndexOf(File.separator)); 
+        	String parentDirSast = pathToSASTResultJSONFileNew.substring(0, pathToSASTResultJSONFileNew.lastIndexOf(File.separator)); 
             String tempDirectory = parentDir +  File.separator + "tmp";
             String tempResultFile =  tempDirectory + File.separator + SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
             String tempSASTResultFile =  tempDirectory + File.separator + SASTParam.SAST_RESOLVER_RESULT_FILE_NAME;
             log.debug("Copying ScaResolver result files to temporary location.");
             File destTempDir = new File(tempDirectory);
 			File destParentDir = new File(parentDir);
+			File destPartentSastDir = new File(parentDirSast);
 			if (!destTempDir.exists()) {
 				Files.createDirectory(destTempDir.toPath());
 			}
 
-			Files.copy(new File(pathToResultJSONFile).toPath(), new File(tempResultFile).toPath(),
+			Files.copy(new File(pathToResultJSONFileNew).toPath(), new File(tempResultFile).toPath(),
 					StandardCopyOption.REPLACE_EXISTING);
-            if(!StringUtils.isEmpty(pathToSASTResultJSONFile)) 
-            	Files.copy(new File(pathToSASTResultJSONFile).toPath(), new File(tempSASTResultFile).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            if(!StringUtils.isEmpty(pathToSASTResultJSONFileNew)) 
+            	Files.copy(new File(pathToSASTResultJSONFileNew).toPath(), new File(tempSASTResultFile).toPath(), StandardCopyOption.REPLACE_EXISTING);
             
             log.info("Completed File copy to "+tempDirectory);
             zipFile = zipEvidenceFile(destTempDir);
+            
 			if (!pathToResultJSONFileNew.equals(pathToResultJSONFile)) {
 				log.info("Deleting directory of result file {}", destParentDir.getAbsolutePath());
 				FileUtils.deleteDirectory(destParentDir);
@@ -483,7 +487,13 @@ public class AstScaClient extends AstClient implements Scanner {
 				FileUtils.deleteDirectory(destTempDir);
 				log.info("Deleted temp directory " + destTempDir.getAbsolutePath());
 			}
-        }else{
+			if (!pathToSASTResultJSONFileNew.equals(pathToSASTResultJSONFile)) {
+				log.info("Deleting directory of result file {}", destPartentSastDir.getAbsolutePath());
+				FileUtils.deleteDirectory(destPartentSastDir);
+				log.info("Deleted directory of result file " + destPartentSastDir.getAbsolutePath());
+			}
+
+		}else{
             throw new CxClientException("Error while running sca resolver executable. Exit code: "+exitCode);
         }
     	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
