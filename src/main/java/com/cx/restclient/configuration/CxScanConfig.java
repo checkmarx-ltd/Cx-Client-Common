@@ -65,6 +65,7 @@ public class CxScanConfig implements Serializable {
 
     private String osaFolderExclusions;
     private boolean submitToAST;
+    private boolean isAstMigrate = false;
     private String branchName;
 	private String accessControlBaseUrl;
     private String apiBaseUrl;
@@ -137,8 +138,15 @@ public class CxScanConfig implements Serializable {
 		this.submitToAST = submitToAST;
 	}
 
+    public boolean isAstMigrate() {
+		return isAstMigrate;
+	}
 
-    public String getEngineConfigurationName() {
+	public void setAstMigrate(boolean isAstMigrate) {
+		this.isAstMigrate = isAstMigrate;
+	}
+
+	public String getEngineConfigurationName() {
 
         return engineConfigurationName;
     }

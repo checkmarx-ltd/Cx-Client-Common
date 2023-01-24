@@ -943,7 +943,7 @@
                     Checkmarx scan found the following issues:
                 </p>
                 <ul>
-                    <#if config.isSastEnabled() && !sast.sastResultsReady && !config.isSubmitToAST()>
+                    <#if config.isSastEnabled() && !sast.sastResultsReady && !config.isAstMigrate()>
                         <li>SAST Scan Failed</li>
                     </#if>
                     <#if config.isOsaEnabled() && !dependencyResult.resultReady>
@@ -955,16 +955,16 @@
                     <#if policyViolated>
                         <li>${policyViolatedCount} ${sast.encodeXSS(policyLabel)}  Violated</li>
                     </#if>
-					<#if config.isSubmitToAST() && !cxOnesast.cxoneSastResultsReady>
+					<#if config.isAstMigrate() && !cxOnesast.cxoneSastResultsReady>
                         <li>CxOne SAST Scan Failed</li>
                     </#if>
                     <#if config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
                     <#elseif config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded)>
                         <li>Exceeded CxSAST Vulnerability Threshold</li>
-					<#elseif config.isSubmitToAST() && cxOnesast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
+					<#elseif config.isAstMigrate() && cxOnesast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxOneSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
-                    <#elseif config.isSubmitToAST() && cxOnesast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded)>
+                    <#elseif config.isAstMigrate() && cxOnesast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded)>
                         <li>Exceeded CxOneSAST Vulnerability Threshold</li>
                     <#elseif config.isOsaEnabled() && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxOSA Vulnerability Threshold</li>
@@ -1026,7 +1026,7 @@
         <div class="summary-section">
             <div id="summary-results" class="summary-results">
 
-            <#if config.isSastEnabled() && !config.isSubmitToAST()>
+            <#if config.isSastEnabled() && !config.isAstMigrate()>
                 <div class="sast-summary <#if !(config.isOsaEnabled() || config.isAstScaEnabled()) >chart-large</#if>" id="sast-summary">
                     <div class="summary-report-title sast">
                         <div class="summary-title-text sast">CxSAST Vulnerabilities Status</div>
@@ -1321,7 +1321,7 @@
                         </div>
                     </#if>
                 </div>
-				<#elseif config.isSubmitToAST()>
+				<#elseif config.isAstMigrate()>
 				<div class="cxonesast-summary <#if !(config.isOsaEnabled() || config.isAstScaEnabled()) >chart-large</#if>" id="cxonesast-summary">
                     <div class="summary-report-title cxonesast">
                         <div class="summary-title-text cxonesast">CxOne SAST Vulnerabilities Status</div>
@@ -1347,7 +1347,7 @@
 
                                 <#if cxOnesast.cxonesastPDFLink??>
                                     <div id="cxonesast-summary-pdf-link" class="link-to-result">
-                                        <a class="pdf-report" href="${cxonesast.cxonesastPDFLink}">
+                                        <a class="pdf-report" href="${cxOnesast.cxonesastPDFLink}">
                                             <div class="link-icon">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="16"
                                                      viewBox="0 0 13 16"><title>PDF icon</title>
@@ -2165,7 +2165,7 @@
         </#if>
     </div>
 </div>-->
-<#if !config.isSubmitToAST()>
+<#if !config.isAstMigrate()>
     <#if config.isSastEnabled() && config.generateXmlReport &&sast.sastResultsReady>
         <#if sast.high gt 0 || sast.medium gt 0 || sast.low gt 0>
             <div id="sast-full" class="sast-full full-results-section">
@@ -2549,7 +2549,7 @@
             </div>
         </#if>
 		</#if>
-		<#elseif config.isSubmitToAST() && config.generateXmlReport && cxOnesast.cxoneSastResultsReady>
+		<#elseif config.isAstMigrate() && config.generateXmlReport && cxOnesast.cxoneSastResultsReady>
         <#if cxOnesast.high gt 0 || cxOnesast.medium gt 0 || cxOnesast.low gt 0>
             <div id="cxonesast-full" class="sast-full full-results-section">
                 <div class="summary-table-row cxsast-full">

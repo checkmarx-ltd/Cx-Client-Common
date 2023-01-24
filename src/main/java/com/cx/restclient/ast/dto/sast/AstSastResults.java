@@ -393,36 +393,39 @@ public class AstSastResults extends Results implements Serializable {
     public void setInformation(int information) {
         this.information = information;
     }
-
-	public void setRawXMLReport(byte[] cxReport) {
-		this.rawXMLReport = rawXMLReport;		
+    
+ public String getCxonesastPDFLink() {
+		return cxonesastPDFLink;
 	}
 
-	public void setPDFReport(byte[] pdfReport2) {
-		this.PDFReport = PDFReport;		
+	public void setCxonesastPDFLink(String cxonesastPDFLink) {
+		this.cxonesastPDFLink = cxonesastPDFLink;
 	}
 
-	public void setCxOneSastPDFLink(String pdfLink) {
-		this.cxonesastPDFLink = cxonesastPDFLink;		
-	}
-	
-	public String getCxOneSastPDFLink(String pdfLink) {
-		return cxonesastPDFLink;		
-	}
-	
-	public void setPdfFileName(String pdfFileName2) {
-		this.pdfFileName = pdfFileName;		
-	}
 	public byte[] getRawXMLReport() {
-        return rawXMLReport;
-    }
+		return rawXMLReport;
+	}
 
-    public String getPdfFileName() {
-        return pdfFileName;
-    }
-    public byte[] getPDFReport() {
-        return PDFReport;
-    }
+	public void setRawXMLReport(byte[] rawXMLReport) {
+		this.rawXMLReport = rawXMLReport;
+	}
+
+	public byte[] getPDFReport() {
+		return PDFReport;
+	}
+
+	public void setPDFReport(byte[] pDFReport) {
+		PDFReport = pDFReport;
+	}
+
+	public String getPdfFileName() {
+		return pdfFileName;
+	}
+
+	public void setPdfFileName(String pdfFileName) {
+		this.pdfFileName = pdfFileName;
+	}
+
 /**
  * Updated scan start and end time
  * @param scanDetails
