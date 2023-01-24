@@ -37,11 +37,6 @@ import com.cx.restclient.sast.dto.SupportedLanguage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
 public class AstSastResults extends Results implements Serializable {
     private String scanId;
     private ScanResponse scanRes;
@@ -61,7 +56,7 @@ public class AstSastResults extends Results implements Serializable {
     private String cxonesastPDFLink;
 
     private String scanStartTime = "";
-    private String scanEndTime = "";
+	private String scanEndTime = "";
     
     private int filesScanned = 0;
 	private int LOC = 0;
@@ -71,7 +66,7 @@ public class AstSastResults extends Results implements Serializable {
     private String pdfFileName;
 
 	private boolean cxoneSastResultsReady = false;
-	private String cxOneScanLink;
+	private String cxOneScanLink= "dummy";
 	private String astSastProjectLink;
 	private String cxOneLanguage = "en-US";
 	private List<SastResultDetails> sastResults = new ArrayList<>();
@@ -94,6 +89,62 @@ public class AstSastResults extends Results implements Serializable {
     public int getFilesScanned() {
 		return filesScanned;
 	}
+    public String getCxOneScanLink() {
+		return cxOneScanLink;
+	}
+
+	public void setCxOneScanLink(String cxOneScanLink) {
+		this.cxOneScanLink = cxOneScanLink;
+	}
+
+	public String getScanStartTime() {
+		return scanStartTime;
+	}
+
+	public void setScanStartTime(String scanStartTime) {
+		this.scanStartTime = scanStartTime;
+	}
+
+	public String getScanEndTime() {
+		return scanEndTime;
+	}
+
+	public void setScanEndTime(String scanEndTime) {
+		this.scanEndTime = scanEndTime;
+	}
+	public Map getQueryToHighCountMap() {
+		return queryToHighCountMap;
+	}
+
+	public void setQueryToHighCountMap(Map queryToHighCountMap) {
+		this.queryToHighCountMap = queryToHighCountMap;
+	}
+
+	public Map getQueryToMediumCountMap() {
+		return queryToMediumCountMap;
+	}
+
+	public void setQueryToMediumCountMap(Map queryToMediumCountMap) {
+		this.queryToMediumCountMap = queryToMediumCountMap;
+	}
+
+	public Map getQueryToLowCountMap() {
+		return queryToLowCountMap;
+	}
+
+	public void setQueryToLowCountMap(Map queryToLowCountMap) {
+		this.queryToLowCountMap = queryToLowCountMap;
+	}
+
+	public Map getQueryToInfoCountMap() {
+		return queryToInfoCountMap;
+	}
+
+	public void setQueryToInfoCountMap(Map queryToInfoCountMap) {
+		this.queryToInfoCountMap = queryToInfoCountMap;
+	}
+
+
     public int getLOC() {
 		return LOC;
 	}
@@ -112,13 +163,6 @@ public class AstSastResults extends Results implements Serializable {
     }
     public ScanResponse getScanResponse() {
         return scanRes;
-    }
-    public String getCxOneSastScanLink() {
-        return cxOneScanLink;
-    }
-
-    public void setCxOneSastScanLink(String astScanLink) {
-        this.cxOneScanLink = astScanLink;
     }
     public int getNewHigh() {
         return newHigh;

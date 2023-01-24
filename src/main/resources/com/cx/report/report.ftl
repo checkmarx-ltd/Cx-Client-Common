@@ -1347,7 +1347,7 @@
 
                                 <#if cxOnesast.cxonesastPDFLink??>
                                     <div id="cxonesast-summary-pdf-link" class="link-to-result">
-                                        <a class="pdf-report" href="${sast.cxonesastPDFLink}">
+                                        <a class="pdf-report" href="${cxonesast.cxonesastPDFLink}">
                                             <div class="link-icon">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="16"
                                                      viewBox="0 0 13 16"><title>PDF icon</title>
@@ -1624,7 +1624,7 @@
                 <#if dependencyResult.scannerType=="AST_SCA">
                 <div class="summary-title-text osa">CxSCA Vulnerabilities & Libraries</div>
                 <#else>
-                <div class="summary-title-text osa">Cx${sast.encodeXSS(dependencyResult.scannerType)} Vulnerabilities & Libraries</div>
+                <div class="summary-title-text osa">Cx${dependencyResult.encodeXSS(dependencyResult.scannerType)} Vulnerabilities & Libraries</div>
                 </#if>
                 <#if dependencyResult.resultReady>
                     <div id="osa-title-links" class="title-links">
@@ -2165,7 +2165,7 @@
         </#if>
     </div>
 </div>-->
-
+<#if !config.isSubmitToAST()>
     <#if config.isSastEnabled() && config.generateXmlReport &&sast.sastResultsReady>
         <#if sast.high gt 0 || sast.medium gt 0 || sast.low gt 0>
             <div id="sast-full" class="sast-full full-results-section">
@@ -2548,6 +2548,7 @@
                 </div>
             </div>
         </#if>
+		</#if>
 		<#elseif config.isSubmitToAST() && config.generateXmlReport && cxOnesast.cxoneSastResultsReady>
         <#if cxOnesast.high gt 0 || cxOnesast.medium gt 0 || cxOnesast.low gt 0>
             <div id="cxonesast-full" class="sast-full full-results-section">
@@ -2629,7 +2630,7 @@
                                         Start:
                                     </div>
                                     <div class="full-start-end-date"
-                                         id="sast-full-start-date">${sast.encodeXSS(cxOnesast.scanStartTime)}</div>
+                                         id="sast-full-start-date">${cxOnesast.encodeXSS(cxOnesast.scanStartTime)}</div>
                                 </div>
                             </div>
 
@@ -2677,7 +2678,7 @@
                                     <div class="full-start-end-text">
                                         End:
                                     </div>
-                                    <div class="full-start-end-date" id="sast-full-end-date">${sast.encodeXSS(cxOnesast.scanEndTime)}</div>
+                                    <div class="full-start-end-date" id="sast-full-end-date">${cxOnesast.encodeXSS(cxOnesast.scanEndTime)}</div>
                                 </div>
                             </div>
 
@@ -2811,7 +2812,7 @@
                                     <#list cxOnesast.queryToHighCountMap?keys as result>
 									    
                                             <tr>
-                                                <td>${sast.encodeXSS(result)}</td>
+                                                <td>${cxOnesast.encodeXSS(result)}</td>
                                                 <td>${cxOnesast.getQueryHighCount(result)}</td>
                                             </tr>
                                         
@@ -2864,7 +2865,7 @@
                                     <#list cxOnesast.queryToMediumCountMap?keys as result>
 									    
                                             <tr>
-                                                <td>${sast.encodeXSS(result)}</td>
+                                                <td>${cxOnesast.encodeXSS(result)}</td>
                                                 <td>${cxOnesast.getQueryMediumCount(result)}</td>
                                             </tr>
                                         
@@ -2920,7 +2921,7 @@
                                     <#list cxOnesast.queryToLowCountMap?keys as result>
 									
                                             <tr>
-                                                <td>${sast.encodeXSS(result)}</td>
+                                                <td>${cxOnesast.encodeXSS(result)}</td>
                                                 <td>${cxOnesast.getQueryLowCount(result)}</td>
                                             </tr>
                                         
@@ -2945,7 +2946,7 @@
                         <#if dependencyResult.scannerType=="AST_SCA">
                             <div class="sum1">CxSCA</div>
                             <#else>
-                                <div class="sum1">Cx${sast.encodeXSS(dependencyResult.scannerType)}</div>
+                                <div class="sum1">Cx${dependencyResult.encodeXSS(dependencyResult.scannerType)}</div>
                         </#if>
                             <div class="sum1">Full Report</div>
                         </div>
@@ -3018,7 +3019,7 @@
                                     <div class="full-start-end-text">
                                         Start:
                                     </div>
-                                    <div class="full-start-end-date" id="osa-full-start-date">${sast.encodeXSS(dependencyResult.scanStartTime)}</div>
+                                    <div class="full-start-end-date" id="osa-full-start-date">${dependencyResult.encodeXSS(dependencyResult.scanStartTime)}</div>
                                 </div>
                             </div>
 
@@ -3152,9 +3153,9 @@
                                         <#else>
                                         <tr>
                                         </#if>
-                                        <td>${sast.encodeXSS(cve.name)}</td>
-                                        <td>${sast.encodeXSS(cve.publishDate)}</td>
-                                        <td>${sast.encodeXSS(cve.libraryName)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.name)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.publishDate)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.libraryName)}</td>
                                     </tr>
                                     </#list>
                                 </table>
@@ -3208,9 +3209,9 @@
                                         <#else>
                                         <tr>
                                         </#if>
-                                        <td>${sast.encodeXSS(cve.name)}</td>
-                                        <td>${sast.encodeXSS(cve.publishDate)}</td>
-                                        <td>${sast.encodeXSS(cve.libraryName)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.name)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.publishDate)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.libraryName)}</td>
                                     </tr>
                                     </#list>
                                 </table>
@@ -3266,9 +3267,9 @@
                                         <#else>
                                         <tr>
                                         </#if>
-                                        <td>${sast.encodeXSS(cve.name)}</td>
-                                        <td>${sast.encodeXSS(cve.publishDate)}</td>
-                                        <td>${sast.encodeXSS(cve.libraryName)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.name)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.publishDate)}</td>
+                                        <td>${dependencyResult.encodeXSS(cve.libraryName)}</td>
                                     </tr>
                                     </#list>
                                 </table>
@@ -3368,7 +3369,7 @@
                             </g>
                         </svg>
                     </div>
-                    <div class="severity-title-name">Violated ${sast.encodeXSS(policyLabel)}</div>
+                    <div class="severity-title-name">Violated ${dependencyResult.encodeXSS(policyLabel)}</div>
                     <div class="severity-count">${policyViolatedCount}</div>
                 </div>
                 <table id="policy-violations-table" class="cve-table sast-cve-table osa-policy-violations">
@@ -3394,11 +3395,11 @@
                         <#list osa.osaPolicies as osaPolicy>
                        
                             <tr>
-                                <td>${sast.encodeXSS(osaPolicy.policyName)}</td>
-                                <td id="ruleName">${sast.encodeXSS(osaPolicy.ruleName)}</td>
+                                <td>${dependencyResult.encodeXSS(osaPolicy.policyName)}</td>
+                                <td id="ruleName">${dependencyResult.encodeXSS(osaPolicy.ruleName)}</td>
                                 <td>OSA</td>
                                 <td>${osaPolicy.violations?size}</td>
-                                <td>${sast.encodeXSS(osaPolicy.firstDetectionDate)}</td>
+                                <td>${dependencyResult.encodeXSS(osaPolicy.firstDetectionDate)}</td>
                             </tr>
                         </#list>
                     </#if>
@@ -3408,9 +3409,9 @@
 	                        <#list sca.policyEvaluations as scaPolicy>
 	                        	<#if scaPolicy.isViolated>
 		                            <tr>
-		                                <td>${sast.encodeXSS(scaPolicy.name)}</td>
+		                                <td>${dependencyResult.encodeXSS(scaPolicy.name)}</td>
 		                                <td id="ruleName">
-		                                	<#list scaPolicy.rules as rule>${sast.encodeXSS(rule.name)}<#sep>,</#list>
+		                                	<#list scaPolicy.rules as rule>${dependencyResult.encodeXSS(rule.name)}<#sep>,</#list>
 		                                </td>
 		                                <td>SCA</td>
 		                                <td>${scaPolicy.rules?size}</td>

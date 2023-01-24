@@ -1,6 +1,5 @@
 package com.cx.restclient.configuration;
 
-import com.cx.restclient.ast.dto.sast.AstSastConfig;
 import com.cx.restclient.ast.dto.sca.AstScaConfig;
 import com.cx.restclient.dto.*;
 import com.cx.restclient.sast.dto.ReportType;
@@ -186,7 +185,6 @@ public class CxScanConfig implements Serializable {
     private String scaJsonReport;
 
     private AstScaConfig astScaConfig;
-    private AstSastConfig astSastConfig;
 
     private final Set<ScannerType> scannerTypes = new HashSet<>();
     private final List<Cookie> sessionCookies = new ArrayList<>();
@@ -902,14 +900,6 @@ public class CxScanConfig implements Serializable {
 
     public void setAstScaConfig(AstScaConfig astScaConfig) {
         this.astScaConfig = astScaConfig;
-    }
-
-    public AstSastConfig getAstSastConfig() {
-        return astSastConfig;
-    }
-
-    public void setAstSastConfig(AstSastConfig astConfig) {
-        this.astSastConfig = astConfig;
     }
 
     public Set<ScannerType> getScannerTypes() {
