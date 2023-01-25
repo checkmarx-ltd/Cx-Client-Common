@@ -423,7 +423,6 @@ public class AstScaClient extends AstClient implements Scanner {
     private HttpResponse submitScaResolverEvidenceFile(AstScaConfig scaConfig) throws IOException,CxClientException {
         log.info("Executing SCA Resolver flow.");
     	log.info("Path to Sca Resolver: {}", scaConfig.getPathToScaResolver());
-    	log.info("Sca Resolver Additional Parameters: {}", scaConfig.getScaResolverAddParameters());
     	File zipFile;
     	String pathToResultJSONFile = "";
         String pathToSASTResultJSONFile = ""; 
