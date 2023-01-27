@@ -276,7 +276,7 @@ public class CxOneSastTransformerServiceImpl implements TransformerService {
 
 	private String getLanguageModeFromTransformer(CxOneClient cxOneClient) {
 		EngineConfigurationTransformer engineConfigurationTransformer = new EngineConfigurationTransformer(cxOneClient);
-		return engineConfigurationTransformer.getEngineConfigurationTransformer(cxConfig.getEngineConfigurationId());
+		return engineConfigurationTransformer.getMigratedEngineConfigurationTransformer(cxConfig.getEngineConfigurationId());
 	}
 
 	/**
