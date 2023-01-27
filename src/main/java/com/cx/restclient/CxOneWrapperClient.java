@@ -166,7 +166,7 @@ public class CxOneWrapperClient implements Scanner{
 					String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
 					String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
 					String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
-					astSastResults.setCxOneSastPDFLink(pdfLink);
+					astSastResults.setCxonesastPDFLink(pdfLink);
 					astSastResults.setPdfFileName(pdfFileName);
 				}
 
