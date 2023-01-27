@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import com.checkmarx.one.CxOneClient;
 import com.checkmarx.one.dto.CxOneConfig;
 import com.checkmarx.one.dto.configuration.ProjectConfiguration;
-import com.checkmarx.one.dto.configuration.ApiResponse;
+import com.checkmarx.one.dto.configuration.ProjectSettingResponse;
 import com.checkmarx.one.dto.configuration.ProjectConfigurationResults;
 import com.checkmarx.one.dto.project.ProjectCreateResponse;
 import com.checkmarx.one.dto.scan.ScanConfig;
@@ -104,7 +104,7 @@ public class CxOneSastTransformerServiceImpl implements TransformerService {
 			}
 		}
 		//Project Configurations
-		ApiResponse projectConfigurationResponse = cxOneClient.getProjectConfiguration(projectId);
+		ProjectSettingResponse projectConfigurationResponse = cxOneClient.getProjectConfiguration(projectId);
 		List<ProjectConfiguration> projectConfigurationList = getProjectConfigurationList(projectConfigurationResponse);
 		List<ProjectConfiguration> updatedProjectConfigurationList = new ArrayList<>();
 		if (projectConfigurationList != null) {
@@ -324,7 +324,7 @@ public class CxOneSastTransformerServiceImpl implements TransformerService {
 	 * @param projectConfigurationResponse
 	 */
 	private List<ProjectConfiguration> getProjectConfigurationList(
-			ApiResponse projectConfigurationResponse) {
+			ProjectSettingResponse projectConfigurationResponse) {
 		try {
 			if (projectConfigurationResponse != null) {
 				ObjectMapper mapper = new ObjectMapper();
