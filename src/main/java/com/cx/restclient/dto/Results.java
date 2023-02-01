@@ -17,7 +17,6 @@ public abstract class Results implements Serializable{
 		 String gt=">";
 		 String ap="\'";
 		 String ic="\"";
-		 System.out.println( "  TEST FOR NPE "+ injection);
 		 injection=injection.replace(lt, "&lt;").replace(gt, "&gt;").replace(ap, "&#39;").replace(ic,"&#34;");
 		 return injection;
 	 }
