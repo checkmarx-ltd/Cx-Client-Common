@@ -21,6 +21,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 import freemarker.template.Version;
+import com.cx.restclient.dto.DummyResults;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -44,8 +45,13 @@ public abstract class SummaryUtils {
 		Configuration cfg = new Configuration(new Version("2.3.23"));
         cfg.setClassForTemplateLoading(SummaryUtils.class, "/com/cx/report");
         Template template = cfg.getTemplate("report.ftl");
-
+        
         Map<String, Object> templateData = new HashMap<>();
+        // Below condition is to check if pipeline is migrated to AST.Setting the boolean to true for further use in report ftl file
+        // Based on the flag set, the respective sections in report.ftl are being displayed
+        if(cxOneSastResults != null) {
+        	config.setIsAstMigrate(true);
+        }
         templateData.put("config", config);
         if(sastResults != null){
         	templateData.put("sast", sastResults);
@@ -66,10 +72,11 @@ public abstract class SummaryUtils {
         	else if(config.isOsaEnabled())
         		dependencyScanResult.setScannerType(ScannerType.OSA);
         }
-        		
         templateData.put("dependencyResult", dependencyScanResult);
-
-        
+        // Following dummy result object is being put in the template data has to be used in report.ftl in scenarios when encodeXSS is called in a scenario, 
+        // when the type of result is unknown
+        DummyResults dummyResults = new DummyResults();
+        templateData.put("dummyResults", dummyResults);
         ScanSummary scanSummary = null; 
 		if (cxOneSastResults != null) {
 			scanSummary = new ScanSummary(config, sastResults, osaResults, scaResults, cxOneSastResults);

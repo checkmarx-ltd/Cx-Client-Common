@@ -65,7 +65,7 @@ public class CxScanConfig implements Serializable {
 
     private String osaFolderExclusions;
     private boolean submitToAST;
-    private boolean isAstMigrate = false;
+    private Boolean isAstMigrate = false;
     private String branchName;
 	private String accessControlBaseUrl;
     private String apiBaseUrl;
@@ -138,14 +138,14 @@ public class CxScanConfig implements Serializable {
 		this.submitToAST = submitToAST;
 	}
 
-    public boolean isAstMigrate() {
+    /*public boolean isAstMigrate() {
 		return isAstMigrate;
-	}
+	}*/
 
-	public void setAstMigrate(boolean isAstMigrate) {
+	/*public void setAstMigrate(boolean isAstMigrate) {
 		this.isAstMigrate = isAstMigrate;
 	}
-
+*/
 	public String getEngineConfigurationName() {
 
         return engineConfigurationName;
@@ -518,11 +518,15 @@ public class CxScanConfig implements Serializable {
     public Boolean getSastThresholdsEnabled() {
         return sastThresholdsEnabled;
     }
-
+    public Boolean getIsAstMigrate() {
+        return isAstMigrate;
+    }
     public void setSastThresholdsEnabled(Boolean sastThresholdsEnabled) {
         this.sastThresholdsEnabled = sastThresholdsEnabled;
     }
-
+    public void setIsAstMigrate(Boolean isAstMigrate) {
+        this.isAstMigrate = isAstMigrate;
+    }
     public Integer getSastHighThreshold() {
         return sastHighThreshold;
     }

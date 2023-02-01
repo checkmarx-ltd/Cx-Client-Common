@@ -54,18 +54,18 @@ public class CxClientDelegator implements Scanner {
 				e.printStackTrace();
 			}
 			if (migrationYamlResponse != null && migrationYamlResponse.getIsMigrate()) {
-				config.setAstMigrate(true);
+				config.setIsAstMigrate(true);
 				scannersMap.put(ScannerType.CXONE_SAST, new CxOneWrapperClient(config, log));
 			}
 
 		}
-		if (!config.isAstMigrate() && !isExceptionFound && config.isSastEnabled()) {
+		if (!config.getIsAstMigrate() && !isExceptionFound && config.isSastEnabled()) {
 			scannersMap.put(ScannerType.SAST, new CxSASTClient(config, log));
 		}
 
-		if (config.isOsaEnabled() && !config.isAstMigrate() ) {
+		if (config.isOsaEnabled() && !config.getIsAstMigrate() ) {
 			scannersMap.put(ScannerType.OSA, new CxOSAClient(config, log));
-		} else if(config.isOsaEnabled() && config.isAstMigrate() ) {
+		} else if(config.isOsaEnabled() && config.getIsAstMigrate() ) {
 			log.info("Scan is being submitted to CxOne. OSA scan will be ignored");
 		}
 
