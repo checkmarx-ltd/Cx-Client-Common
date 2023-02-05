@@ -58,12 +58,12 @@ public abstract class SummaryUtils {
         } else if(cxOneSastResults != null) {
         	templateData.put("cxOnesast", cxOneSastResults);
         }
-        if(osaResults != null){
+        if(osaResults != null && config.isOsaEnabled()){
         	templateData.put("osa", osaResults);
         } else if(scaResults != null) {
         	templateData.put("sca", scaResults);
         }
-        DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults, scaResults);
+        DependencyScanResult dependencyScanResult = resolveDependencyResult(osaResults, scaResults, config);
 
         if(dependencyScanResult == null) {
         	dependencyScanResult = new DependencyScanResult();
@@ -261,9 +261,9 @@ public abstract class SummaryUtils {
 
         return generateSummaryHelper(sastResults, osaResults, scaResults, astSastResults, config);
     }
-    private static DependencyScanResult resolveDependencyResult(OSAResults osaResults, AstScaResults scaResults) {
+    private static DependencyScanResult resolveDependencyResult(OSAResults osaResults, AstScaResults scaResults, CxScanConfig config) {
         DependencyScanResult dependencyScanResult;
-        if (osaResults != null) {
+        if (osaResults != null && config.isOsaEnabled()) {
             dependencyScanResult = new DependencyScanResult(osaResults);
         } else if (scaResults != null) {
             dependencyScanResult = new DependencyScanResult(scaResults);

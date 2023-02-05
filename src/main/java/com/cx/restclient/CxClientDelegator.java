@@ -66,6 +66,7 @@ public class CxClientDelegator implements Scanner {
 		if (config.isOsaEnabled() && !config.getIsAstMigrate() ) {
 			scannersMap.put(ScannerType.OSA, new CxOSAClient(config, log));
 		} else if(config.isOsaEnabled() && config.getIsAstMigrate() ) {
+			config.setOsaEnabled(false);
 			log.info("Scan is being submitted to CxOne. OSA scan will be ignored");
 		}
 

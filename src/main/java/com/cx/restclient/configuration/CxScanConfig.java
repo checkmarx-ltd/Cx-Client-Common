@@ -250,6 +250,14 @@ public class CxScanConfig implements Serializable {
     public boolean isOsaEnabled() {
         return scannerTypes.contains(ScannerType.OSA);
     }
+    
+    public void setOsaEnabled(boolean osaEnabled) {
+        if (osaEnabled) {
+            scannerTypes.add(ScannerType.OSA);
+        } else {
+            scannerTypes.remove(ScannerType.OSA);
+        }
+    }
 
     public boolean isAstScaEnabled() {
         return scannerTypes.contains(ScannerType.AST_SCA);
