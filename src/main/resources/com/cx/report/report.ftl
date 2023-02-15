@@ -943,7 +943,7 @@
                     Checkmarx scan found the following issues:
                 </p>
                 <ul>
-                    <#if config.isSastEnabled() && !sast.sastResultsReady && !config.isAstMigrate>
+                    <#if !config.isAstMigrate && config.isSastEnabled() && !sast.sastResultsReady >
                         <li>SAST Scan Failed</li>
                     </#if>
                     <#if config.isOsaEnabled() && !dependencyResult.resultReady>
@@ -958,9 +958,9 @@
 					<#if config.isAstMigrate && !cxOnesast.cxoneSastResultsReady>
                         <li>CxOne SAST Scan Failed</li>
                     </#if>
-                    <#if config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
+                    <#if !config.isAstMigrate && config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
-                    <#elseif config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded)>
+                    <#elseif !config.isAstMigrate && config.isSastEnabled() && sast.sastResultsReady && (sastThresholdExceeded || sastNewResultsExceeded)>
                         <li>Exceeded CxSAST Vulnerability Threshold</li>
 					<#elseif config.isAstMigrate && cxOnesast.cxoneSastResultsReady && (cxonesastThresholdExceeded || cxonesastNewResultsExceeded) && (config.isOsaEnabled() || config.isAstScaEnabled()) && dependencyResult.resultReady && dependencyThresholdExceeded>
                         <li>Exceeded CxOneSAST and CxOSA/CxSCA Vulnerability Thresholds</li>
@@ -1026,7 +1026,7 @@
         <div class="summary-section">
             <div id="summary-results" class="summary-results">
 
-            <#if config.isSastEnabled() && !config.isAstMigrate>
+            <#if !config.isAstMigrate && config.isSastEnabled()>
                 <div class="sast-summary <#if !(config.isOsaEnabled() || config.isAstScaEnabled()) >chart-large</#if>" id="sast-summary">
                     <div class="summary-report-title sast">
                         <div class="summary-title-text sast">CxSAST Vulnerabilities Status</div>
