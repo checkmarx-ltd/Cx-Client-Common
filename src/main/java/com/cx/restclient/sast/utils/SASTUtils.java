@@ -7,17 +7,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
 import org.apache.commons.io.FileUtils;
+import org.glassfish.jaxb.runtime.v2.ContextFactory;
 import org.slf4j.Logger;
 
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sast.dto.CxXMLResults;
 import com.cx.restclient.sast.dto.SASTResults;
-import com.sun.xml.bind.v2.ContextFactory;
+
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
+
 
 /**
  * Created by Galn on 07/02/2018.
