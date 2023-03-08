@@ -189,13 +189,13 @@ public abstract class OSAUtils {
                 }
                 name = name.endsWith(JSON_EXTENSION) ? name : name + JSON_EXTENSION;
                 File jsonFile = new File(workDirectory + File.separator + name);
-                FileUtils.writeStringToFile(jsonFile, json);
+                FileUtils.writeStringToFile(jsonFile, json, Charset.defaultCharset());
                 log.info(name + " saved under location: " + jsonFile);
             } else {
                 String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
                 String fileName = name + "_" + now + JSON_EXTENSION;
                 File jsonFile = new File(workDirectory + CX_REPORT_LOCATION, fileName);
-                FileUtils.writeStringToFile(jsonFile, json);
+                FileUtils.writeStringToFile(jsonFile, json, Charset.defaultCharset());
                 log.info(name + " saved under location: " + workDirectory + CX_REPORT_LOCATION + File.separator + fileName);
             }
         } catch (Exception ex) {

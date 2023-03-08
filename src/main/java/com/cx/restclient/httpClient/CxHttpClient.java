@@ -9,9 +9,9 @@ import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.exception.CxTokenExpiredException;
 import com.cx.restclient.osa.dto.ClientType;
 import com.google.gson.Gson;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.*;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
@@ -24,7 +24,6 @@ import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
-import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -53,7 +52,6 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
@@ -214,7 +212,7 @@ public class CxHttpClient implements Closeable {
                 .setProxyAuthenticationStrategy(ProxyAuthenticationStrategy.INSTANCE)
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setAuthenticationEnabled(true)
-                        .setProxyPreferredAuthSchemes(Arrays.asList(AuthPolicy.NTLM))
+                        .setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM))
                         .build()
                 )
                 .build();

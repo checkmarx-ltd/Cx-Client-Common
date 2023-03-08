@@ -7,7 +7,6 @@ package com.cx.restclient.sast.utils.zip;
 
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.zip.ZipEntry;
 import org.apache.tools.zip.ZipOutputStream;
@@ -17,6 +16,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 public class Zipper {
     private final Logger log;
@@ -78,6 +78,8 @@ public class Zipper {
     }
 
     private DirectoryScanner createDirectoryScanner(File baseDir, String[] filterIncludePatterns, String[] filterExcludePatterns) {
+        log.info("[DEBUG] - Dir to scan for zip: {}, include: '{}'. exclude: '{}'",
+                baseDir.getAbsolutePath(), Arrays.toString(filterIncludePatterns), Arrays.toString(filterExcludePatterns));
         DirectoryScanner ds = new DirectoryScanner();
         ds.setBasedir(baseDir);
         ds.setCaseSensitive(false);
@@ -97,37 +99,38 @@ public class Zipper {
     private void printDebug(DirectoryScanner ds) {
         if (log.isDebugEnabled()) {
             log.debug("Base Directory: " + ds.getBasedir());
-            String[] arr$ = ds.getIncludedFiles();
-            int len$ = arr$.length;
+            String[] arr = ds.getIncludedFiles();
+            int len = arr.length;
+            log.info("[DEBUG] - Include files to zip count: '{}', filed: '{}'", len, Arrays.toString(arr));
 
-            int i$;
+            int i;
             String file;
-            for (i$ = 0; i$ < len$; ++i$) {
-                file = arr$[i$];
+            for (i = 0; i < len; ++i) {
+                file = arr[i];
                 log.debug("Included: " + file);
             }
 
-            arr$ = ds.getExcludedFiles();
-            len$ = arr$.length;
+            arr = ds.getExcludedFiles();
+            len = arr.length;
 
-            for (i$ = 0; i$ < len$; ++i$) {
-                file = arr$[i$];
+            for (i = 0; i < len; ++i) {
+                file = arr[i];
                 log.debug("Excluded File: " + file);
             }
 
-            arr$ = ds.getExcludedDirectories();
-            len$ = arr$.length;
+            arr = ds.getExcludedDirectories();
+            len = arr.length;
 
-            for (i$ = 0; i$ < len$; ++i$) {
-                file = arr$[i$];
+            for (i = 0; i < len; ++i) {
+                file = arr[i];
                 log.debug("Excluded Dir: " + file);
             }
 
-            arr$ = ds.getNotFollowedSymlinks();
-            len$ = arr$.length;
+            arr = ds.getNotFollowedSymlinks();
+            len = arr.length;
 
-            for (i$ = 0; i$ < len$; ++i$) {
-                file = arr$[i$];
+            for (i = 0; i < len; ++i) {
+                file = arr[i];
                 log.debug("Not followed symbolic link: " + file);
             }
 

@@ -5,9 +5,7 @@ import com.cx.restclient.exception.CxClientException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,6 +73,18 @@ public class SpawnScaResolver {
             }
         }
         log.debug("Finished created CMD command");
+/*        Map<String, String> env = System.getenv();
+        Iterator<Map.Entry<String, String>> iterator = env.entrySet().iterator();
+        String[] envVars = new String[env.size()];
+        for (int i = 0; i < env.size(); i++) {
+            Map.Entry<String, String> entry = iterator.next();
+            envVars[i] = entry.getKey() + "=" + entry.getValue();
+        }*/
+/*        log.info("##### Environment variables #####");
+        Map<String, String> env = System.getenv();
+        for (Map.Entry entry : env.entrySet()){
+            log.info(entry.getKey() + "=" + entry.getValue());
+        }*/
         try {
             log.info("Executing next command: " + Arrays.toString(scaResolverCommand));
             Process process;

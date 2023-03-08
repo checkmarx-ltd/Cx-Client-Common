@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Semaphore;
 
 import static com.cx.restclient.cxArm.dto.CxProviders.OPEN_SOURCE;
 import static com.cx.restclient.cxArm.utils.CxARMUtils.getProjectViolatedPolicies;
@@ -38,6 +39,8 @@ import static com.cx.restclient.osa.utils.OSAUtils.writeJsonToFile;
  * Created by Galn on 05/02/2018.
  */
 public class CxOSAClient extends LegacyClient implements Scanner {
+
+    private static final Semaphore semaphore = new Semaphore(1);
 
     private Waiter<OSAScanStatus> osaWaiter;
 
@@ -167,10 +170,21 @@ public class CxOSAClient extends LegacyClient implements Scanner {
                     log);
         }
         ObjectMapper mapper = new ObjectMapper();
+        String osaDependenciesJson = null;
         log.info("Scanner properties: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(scannerProperties.toString()));
-        ComponentScan componentScan = new ComponentScan(scannerProperties);
-        String osaDependenciesJson = componentScan.scan();
-        OSAUtils.writeToOsaListToFile(OSAUtils.getWorkDirectory(config.getReportsDir(), config.getOsaGenerateJsonReport()), osaDependenciesJson, log);
+        try {
+            semaphore.acquire();
+            ComponentScan componentScan = new ComponentScan(scannerProperties);
+            Thread thread = Thread.currentThread();
+//            log.info("[CHECKMARX] Thread: " + thread.getName() + ", Thread id: " + thread.getId());
+            osaDependenciesJson = componentScan.scan();
+            OSAUtils.writeToOsaListToFile(OSAUtils.getWorkDirectory(config.getReportsDir(), config.getOsaGenerateJsonReport()), osaDependenciesJson, log);
+        } catch (InterruptedException e) {
+            log.error("Fail to acquire lock", e);
+        } finally {
+            semaphore.release();
+        }
+
         return osaDependenciesJson;
     }
 
