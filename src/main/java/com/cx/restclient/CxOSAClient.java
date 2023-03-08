@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Semaphore;
 
 import static com.cx.restclient.cxArm.dto.CxProviders.OPEN_SOURCE;
 import static com.cx.restclient.cxArm.utils.CxARMUtils.getProjectViolatedPolicies;
@@ -38,6 +39,8 @@ import static com.cx.restclient.osa.utils.OSAUtils.writeJsonToFile;
  * Created by Galn on 05/02/2018.
  */
 public class CxOSAClient extends LegacyClient implements Scanner {
+
+    private static final Semaphore semaphore = new Semaphore(1);
 
     private Waiter<OSAScanStatus> osaWaiter;
 
@@ -166,12 +169,23 @@ public class CxOSAClient extends LegacyClient implements Scanner {
                     config.getOsaScanDepth(),
                     log);
         }
-        ObjectMapper mapper = new ObjectMapper();
-        log.info("Scanner properties: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(scannerProperties.toString()));
-        ComponentScan componentScan = new ComponentScan(scannerProperties);
-        String osaDependenciesJson = componentScan.scan();
-        OSAUtils.writeToOsaListToFile(OSAUtils.getWorkDirectory(config.getReportsDir(), config.getOsaGenerateJsonReport()), osaDependenciesJson, log);
-        return osaDependenciesJson;
+        try {
+            semaphore.acquire();
+            ObjectMapper mapper = new ObjectMapper();
+            String osaDependenciesJson = null;
+            log.info("Scanner properties: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(scannerProperties.toString()));
+            Thread thread = Thread.currentThread();
+            log.info("[CHECKMARX] Thread: " + thread.getName() + ", Thread id: " + thread.getId());
+            ComponentScan componentScan = new ComponentScan(scannerProperties, log);
+            osaDependenciesJson = componentScan.scan();
+            OSAUtils.writeToOsaListToFile(OSAUtils.getWorkDirectory(config.getReportsDir(), config.getOsaGenerateJsonReport()), osaDependenciesJson, log);
+            return osaDependenciesJson;
+        } catch (InterruptedException e) {
+            log.error("Fail to acquire lock", e);
+            return null;
+        } finally {
+            semaphore.release();
+        }
     }
 
     @Override

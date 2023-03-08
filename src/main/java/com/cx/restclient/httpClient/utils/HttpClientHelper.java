@@ -118,7 +118,7 @@ public abstract class HttpClientHelper {
 
     public static String extractResponseBody(HttpResponse response) {
         try {
-            return IOUtils.toString(response.getEntity().getContent());
+            return IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
         } catch (Exception e) {
             return "";
         }

@@ -79,6 +79,9 @@ public abstract class ShragaUtils {
             if (StringUtils.isNotEmpty(filter)) {
                 if (!filter.startsWith("!")) {
                     inclusions.add(filter.trim());
+                    if (!filter.trim().equals("**/*")) {
+                        exclusions.add("!" + filter.trim());
+                    }
                 } else if (filter.length() > 1) {
                     filter = filter.substring(1); // Trim the "!"
                     exclusions.add(filter.trim());

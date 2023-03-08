@@ -1,58 +1,10 @@
 package com.cx.restclient;
 
-import static com.cx.restclient.cxArm.dto.CxProviders.SAST;
-import static com.cx.restclient.cxArm.utils.CxARMUtils.getProjectViolatedPolicies;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_XML_V1;
-import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
-import static com.cx.restclient.sast.utils.SASTParam.LINK_FORMAT;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REMOTE_SOURCE_SCAN;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REPORT;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_SCAN;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_RETENTION_RATE;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_EXCLUDE_FOLDERS_FILES_PATTERNS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_PROJECT_SCANS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_QUEUED_SCANS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_REPORT;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_SCAN_SETTINGS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_QUEUE_SCAN_STATUS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_SCAN_RESULTS_STATISTICS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_SCAN_STATUS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_UPDATE_SCAN_SETTINGS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_ZIP_ATTACHMENTS;
-import static com.cx.restclient.sast.utils.SASTUtils.convertToXMLResult;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.InputStreamBody;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.PathFilter;
-import com.cx.restclient.dto.RemoteSourceRequest;
-import com.cx.restclient.dto.RemoteSourceTypes;
-import com.cx.restclient.dto.Results;
-import com.cx.restclient.dto.Status;
+import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.sast.dto.*;
@@ -68,6 +20,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
+import org.awaitility.core.ConditionTimeoutException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
@@ -86,7 +39,6 @@ import static com.cx.restclient.httpClient.utils.ContentType.*;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 import static com.cx.restclient.sast.utils.SASTParam.*;
 import static com.cx.restclient.sast.utils.SASTUtils.*;
-import org.awaitility.core.ConditionTimeoutException;
 
 
 /**
@@ -101,18 +53,17 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     private Waiter<ResponseQueueScanStatus> sastWaiter;
     private static final String SCAN_ID_PATH_PARAM = "{scanId}";
     private static final String PROJECT_ID_PATH_PARAM = "{projectId}";
-
     private static final String SCAN_WITH_SETTINGS_URL = "sast/scanWithSettings";
     private static final String ENGINE_CONFIGURATION_ID_DEFAULT = "0";
     private long scanId;
     private SASTResults sastResults = new SASTResults();
     private static final String SWAGGER_LOCATION = "help/swagger/docs/v1.1";
     private static final String ZIPPED_SOURCE = "zippedSource";
-    private static final String SAST_SCAN= "SAST scan status";
-    private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS= "\nAvoid duplicate project scans in queue\n";
-    
+    private static final String SAST_SCAN = "SAST scan status";
+    private static final String MSG_AVOID_DUPLICATE_PROJECT_SCANS = "\nAvoid duplicate project scans in queue\n";
+
     private String language = "en-US";
-    
+
     private Waiter<ReportStatus> reportWaiter = new Waiter<ReportStatus>("Scan report", 10, 3) {
         @Override
         public ReportStatus getStatus(String id) throws IOException {
@@ -221,7 +172,6 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     CxSASTClient(CxScanConfig config, Logger log) throws MalformedURLException {
         super(config, log);
 
-
         int interval = config.getProgressInterval() != null ? config.getProgressInterval() : 20;
         int retry = config.getConnectionRetries() != null ? config.getConnectionRetries() : 3;
         sastWaiter = new Waiter<ResponseQueueScanStatus>("CxSAST scan", interval, retry) {
@@ -234,8 +184,8 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                     try {
                         ResponseSastScanStatus statusResponseTemp = getSASTScanOutOfQueueStatus(id);
                         statusResponse = statusResponseTemp.convertResponseSastScanStatusToResponseQueueScanStatus(statusResponseTemp);
-                    }catch (MalformedURLException exception){
-                        throw new MalformedURLException ("Failed with next error: " + exception);
+                    } catch (MalformedURLException exception) {
+                        throw new MalformedURLException("Failed with next error: " + exception);
                     }
                 }
                 return statusResponse;
@@ -272,10 +222,10 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     //CREATE SAST scan
     private void createSASTScan(long projectId) {
-    	boolean dupScanFound = false;
+        boolean dupScanFound = false;
         try {
             log.info("-----------------------------------Create CxSAST Scan:------------------------------------");
-            if (config.isAvoidDuplicateProjectScans() != null && config.isAvoidDuplicateProjectScans() && projectHasQueuedScans(projectId)) {            	
+            if (config.isAvoidDuplicateProjectScans() != null && config.isAvoidDuplicateProjectScans() && projectHasQueuedScans(projectId)) {
                 throw new CxClientException(MSG_AVOID_DUPLICATE_PROJECT_SCANS);
             }
             if (config.getRemoteType() == null) { //scan is local
@@ -287,10 +237,10 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             sastResults.setScanId(scanId);
             log.info("SAST scan created successfully: Scan ID is {}", scanId);
             sastResults.setSastScanLink(config.getUrl(), scanId, projectId);
-        } catch (Exception e) {            
-            setState(State.FAILED);            
-            if(!errorToBeSuppressed(e)) {
-               sastResults.setException(new CxClientException(e));
+        } catch (Exception e) {
+            setState(State.FAILED);
+            if (!errorToBeSuppressed(e)) {
+                sastResults.setException(new CxClientException(e));
             }
         }
     }
@@ -394,60 +344,59 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         defineScanSetting(scanSettingRequest);
     }
 
-    
     /*
      * Suppress only those conditions for which it is generally acceptable
      * to have plugin not error out so that rest of the pipeline can continue.
      */
-	private boolean errorToBeSuppressed(Exception error) {
+    private boolean errorToBeSuppressed(Exception error) {
 
-		final String additionalMessage = "Build status will be marked successfull as this error is benign. Results from last scan will be displayed, if available."; 
-		boolean suppressed = false;
-		
-		//log actual error as it is first.
-		log.error(error.getMessage());
-	
-		if (error instanceof ConditionTimeoutException && config.getContinueBuild()) {	
-			suppressed = true;		
-		}
-		//Plugins will control if errors handled here will be ignored.
-		else if(config.isIgnoreBenignErrors()) {
-			
-			if (error.getMessage().contains("source folder is empty,") || (sastResults.getException() != null
-					&& sastResults.getException().getMessage().contains("No files to zip"))) {
-				
-				suppressed = true;
-			} else if (error.getMessage().contains("No files to zip")) {
-				suppressed = true;
-			} else if (error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
-				suppressed = true;
-			}
-		}
-		
-		if(suppressed) {			
-			log.info(additionalMessage);
-			try {
-				sastResults = getLatestScanResults();
-				if (super.isIsNewProject() && sastResults.getSastScanLink() == null) {
-					String message = String
-							.format("The project %s is a new project. Hence there is no last scan report to be shown.", config.getProjectName());
-					log.info(message);
-				}
-			}catch(Exception okayToNotHaveResults){
-				sastResults = null;
-			}
-			
-			if(sastResults == null)
-				sastResults = new SASTResults();
-			
-			sastResults.setException(null);
-			setState(State.SKIPPED);						
-			
-		}		
-		return suppressed;
-	}
+        final String additionalMessage = "Build status will be marked successfull as this error is benign. Results from last scan will be displayed, if available.";
+        boolean suppressed = false;
 
-   
+        //log actual error as it is first.
+        log.error(error.getMessage());
+
+        if (error instanceof ConditionTimeoutException && config.getContinueBuild()) {
+            suppressed = true;
+        }
+        //Plugins will control if errors handled here will be ignored.
+        else if (config.isIgnoreBenignErrors()) {
+
+            if (error.getMessage().contains("source folder is empty,") || (sastResults.getException() != null
+                    && sastResults.getException().getMessage().contains("No files to zip"))) {
+
+                suppressed = true;
+            } else if (error.getMessage().contains("No files to zip")) {
+                suppressed = true;
+            } else if (error.getMessage().equalsIgnoreCase(MSG_AVOID_DUPLICATE_PROJECT_SCANS)) {
+                suppressed = true;
+            }
+        }
+
+        if (suppressed) {
+            log.info(additionalMessage);
+            try {
+                sastResults = getLatestScanResults();
+                if (super.isIsNewProject() && sastResults.getSastScanLink() == null) {
+                    String message = String
+                            .format("The project %s is a new project. Hence there is no last scan report to be shown.", config.getProjectName());
+                    log.info(message);
+                }
+            } catch (Exception okayToNotHaveResults) {
+                sastResults = null;
+            }
+
+            if (sastResults == null)
+                sastResults = new SASTResults();
+
+            sastResults.setException(null);
+            setState(State.SKIPPED);
+
+        }
+        return suppressed;
+    }
+
+
     //GET SAST results + reports
     @Override
     public Results waitForScanResults() {
@@ -456,28 +405,27 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             //wait for SAST scan to finish
             log.info("Waiting for CxSAST scan to finish.");
             try {
-            	
-				sastWaiter.waitForTaskToFinish(Long.toString(scanId), config.getSastScanTimeoutInMinutes() * 60, log);
-				log.info("Retrieving SAST scan results");
-				//retrieve SAST scan results
-				sastResults = retrieveSASTResults(scanId, projectId);
-			} catch (ConditionTimeoutException e) {
-				
-				if (!errorToBeSuppressed(e)) {
-					// throw the exception so that caught by outer catch
-					throw new Exception(e.getMessage());
-				}
-			} catch (CxClientException | IOException  e) {
-				if (!errorToBeSuppressed(e)) {
-					// throw the exception so that caught by outer catch
-					throw new Exception(e.getMessage());
-				}
-			} 
+                sastWaiter.waitForTaskToFinish(Long.toString(scanId), config.getSastScanTimeoutInMinutes() * 60, log);
+                log.info("Retrieving SAST scan results");
+                //retrieve SAST scan results
+                sastResults = retrieveSASTResults(scanId, projectId);
+            } catch (ConditionTimeoutException e) {
+
+                if (!errorToBeSuppressed(e)) {
+                    // throw the exception so that caught by outer catch
+                    throw new Exception(e.getMessage());
+                }
+            } catch (CxClientException | IOException e) {
+                if (!errorToBeSuppressed(e)) {
+                    // throw the exception so that caught by outer catch
+                    throw new Exception(e.getMessage());
+                }
+            }
             if (config.getEnablePolicyViolations()) {
                 resolveSASTViolation(sastResults, projectId);
             }
-			if (sastResults.getSastScanLink() != null)
-				SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
+            if (sastResults.getSastScanLink() != null)
+                SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
 
             //PDF report
             if (config.getGeneratePDFReport()) {
@@ -506,9 +454,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                     }
                 }
             }
-        } catch (Exception e) {            
-            if(!errorToBeSuppressed(e))
-            	sastResults.setException(new CxClientException(e));
+        } catch (Exception e) {
+            if (!errorToBeSuppressed(e))
+                sastResults.setException(new CxClientException(e));
         }
 
         return sastResults;
@@ -535,7 +483,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         if (config.getGenerateXmlReport() == null || config.getGenerateXmlReport()) {
             byte[] cxReport = getScanReport(sastResults.getScanId(), ReportType.XML, CONTENT_TYPE_APPLICATION_XML_V1);
             CxXMLResults reportObj = convertToXMLResult(cxReport);
-            sastResults.setScanDetailedReport(reportObj,config);
+            sastResults.setScanDetailedReport(reportObj, config);
             sastResults.setRawXMLReport(cxReport);
         }
         sastResults.setSastResultsReady(true);
@@ -635,11 +583,10 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         log.info("Sending SAST scan request");
         StringEntity entity = new StringEntity(convertToJson(scanRequest), StandardCharsets.UTF_8);
         CxID createScanResponse = httpClient.postRequest(SAST_CREATE_SCAN, CONTENT_TYPE_APPLICATION_JSON_V1, entity, CxID.class, 201, "create new SAST Scan");
-        log.info(String.format("SAST Scan created successfully. Link to project state: "  + config.getUrl() + LINK_FORMAT + projectId + LINK_FORMAL_SUMMARY));
+        log.info(String.format("SAST Scan created successfully. Link to project state: " + config.getUrl() + LINK_FORMAT + projectId + LINK_FORMAL_SUMMARY));
 
         return createScanResponse.getId();
     }
-
 
     private CxID createRemoteSourceRequest(long projectId, HttpEntity entity, String sourceType, boolean isSSH) throws IOException {
         return httpClient.postRequest(String.format(SAST_CREATE_REMOTE_SOURCE_SCAN, projectId, sourceType, isSSH ? "ssh" : ""), isSSH ? null : CONTENT_TYPE_APPLICATION_JSON_V1,
@@ -761,10 +708,10 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             }
         }
         builder.addTextBody("projectId", Long.toString(projectId), ContentType.APPLICATION_JSON);
-        if(config.getIsOverrideProjectSetting()){
-        	builder.addTextBody("overrideProjectSetting",config.getIsOverrideProjectSetting()+"", ContentType.APPLICATION_JSON);
-        }else{
-        	builder.addTextBody("overrideProjectSetting", super.isIsNewProject() ? "true" : "false", ContentType.APPLICATION_JSON);
+        if (config.getIsOverrideProjectSetting()) {
+            builder.addTextBody("overrideProjectSetting", config.getIsOverrideProjectSetting() + "", ContentType.APPLICATION_JSON);
+        } else {
+            builder.addTextBody("overrideProjectSetting", super.isIsNewProject() ? "true" : "false", ContentType.APPLICATION_JSON);
         }
         builder.addTextBody("isIncremental", config.getIncremental().toString(), ContentType.APPLICATION_JSON);
         builder.addTextBody("isPublic", config.getPublic().toString(), ContentType.APPLICATION_JSON);
@@ -774,12 +721,12 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         builder.addTextBody("engineConfigurationId", config.getEngineConfigurationId() != null ? config.getEngineConfigurationId().toString() : ENGINE_CONFIGURATION_ID_DEFAULT, ContentType.APPLICATION_JSON);
 
         builder.addTextBody("postScanActionId",
-        		config.getPostScanActionId() != null && config.getPostScanActionId() != 0 ?
-        				config.getPostScanActionId().toString() : "",
-        				ContentType.APPLICATION_JSON);
+                config.getPostScanActionId() != null && config.getPostScanActionId() != 0 ?
+                        config.getPostScanActionId().toString() : "",
+                ContentType.APPLICATION_JSON);
 
-        builder.addTextBody("customFields", config.getCustomFields() != null?
-                config.getCustomFields() : "", ContentType.APPLICATION_JSON);   
+        builder.addTextBody("customFields", config.getCustomFields() != null ?
+                config.getCustomFields() : "", ContentType.APPLICATION_JSON);
 
         HttpEntity entity = builder.build();
         return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");

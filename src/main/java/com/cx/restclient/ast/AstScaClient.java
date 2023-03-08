@@ -1,63 +1,11 @@
 package com.cx.restclient.ast;
-import static com.cx.restclient.sast.utils.SASTParam.MAX_ZIP_SIZE_BYTES;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REPORT;
-import static com.cx.restclient.sast.utils.SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
-import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP;
-import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
-import static com.cx.restclient.common.CxPARAM.CX_REPORT_LOCATION;
-import static com.cx.restclient.httpClient.utils.ContentType.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileAttribute;
-import java.sql.Timestamp;
-import java.util.Date;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.velocity.runtime.parser.node.SetExecutor;
-import org.awaitility.core.ConditionTimeoutException;
-import org.json.JSONObject;
-import org.slf4j.Logger;
 
 import com.cx.restclient.ast.dto.common.HandlerRef;
 import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
 import com.cx.restclient.ast.dto.common.ScanConfig;
 import com.cx.restclient.ast.dto.common.ScanConfigValue;
-import com.cx.restclient.ast.dto.sca.AstScaConfig;
-import com.cx.restclient.ast.dto.sca.AstScaResults;
-import com.cx.restclient.ast.dto.sca.CreateProjectRequest;
-import com.cx.restclient.ast.dto.sca.Project;
-import com.cx.restclient.ast.dto.sca.ScaScanConfigValue;
 import com.cx.restclient.ast.dto.sca.Team;
+import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
 import com.cx.restclient.ast.dto.sca.report.Finding;
 import com.cx.restclient.ast.dto.sca.report.Package;
@@ -66,11 +14,7 @@ import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.LoginSettings;
-import com.cx.restclient.dto.PathFilter;
-import com.cx.restclient.dto.Results;
-import com.cx.restclient.dto.ScannerType;
-import com.cx.restclient.dto.SourceLocationType;
+import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
@@ -84,9 +28,7 @@ import com.cx.restclient.sast.utils.State;
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.cx.restclient.sast.utils.zip.NewCxZipFile;
 import com.cx.restclient.sast.utils.zip.Zipper;
-
 import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
-
 import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
 import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
 import com.cx.restclient.sca.utils.fingerprints.FingerprintCollector;
@@ -95,6 +37,33 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.StringEntity;
+import org.awaitility.core.ConditionTimeoutException;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.file.*;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.cx.restclient.common.CxPARAM.CX_REPORT_LOCATION;
+import static com.cx.restclient.sast.utils.SASTParam.*;
 
 /**
  * SCA - Software Composition Analysis - is the successor of OSA.
@@ -144,7 +113,6 @@ public class AstScaClient extends AstClient implements Scanner {
 
         this.astScaConfig = config.getAstScaConfig();
         validate(astScaConfig);
-        
 
         httpClient = createHttpClient(astScaConfig.getApiUrl());
         this.resolvingConfiguration = null;
@@ -205,10 +173,8 @@ public class AstScaClient extends AstClient implements Scanner {
      */
     @Override
     protected URL getEffectiveRepoUrl(RemoteRepositoryInfo repoInfo) {
-    	
         URL result;
         URL initialUrl = repoInfo.getUrl();
-    
 
         // Otherwise we may get something like "https://mytoken:null@github.com".
         String username = StringUtils.defaultString(repoInfo.getUsername());
@@ -236,7 +202,6 @@ public class AstScaClient extends AstClient implements Scanner {
     public Results init() {
         log.debug("Initializing {} client.", getScannerDisplayName());
         AstScaResults scaResults = new AstScaResults();
-        
         try {
             login();
         } catch (Exception e) {
@@ -257,31 +222,33 @@ public class AstScaClient extends AstClient implements Scanner {
                 false);
     }
 
-    
-	private byte[] getReport(String scanId, String contentType) throws IOException {
-		String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
 
-		return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
-				contentType, byte[].class, 200, " scan report: " + reportId, false);
-	}
-	//cli reports
-	 public static void writeReport(byte[] scanReport, String reportName, Logger log) {
-	        try {
-	            File reportFile = new File(reportName);
-	            if (!reportFile.isAbsolute()) {
-	                reportFile = new File(System.getProperty("user.dir") + CX_REPORT_LOCATION + File.separator + reportFile);
-	            }
+    private byte[] getReport(String scanId, String contentType) throws IOException {
+        String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
 
-	            if (!reportFile.getParentFile().exists()) {
-	                reportFile.getParentFile().mkdirs();
-	            }
+        return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
+                contentType, byte[].class, 200, " scan report: " + reportId, false);
+    }
 
-	            FileUtils.writeByteArrayToFile(reportFile, scanReport);
-	            log.info("Report location: " + reportFile.getAbsolutePath());
-	        } catch (Exception e) {
-	            log.error("Failed to write report: ", e.getMessage());
-	        }
-	    }
+    //cli reports
+    public static void writeReport(byte[] scanReport, String reportName, Logger log) {
+        try {
+            File reportFile = new File(reportName);
+            if (!reportFile.isAbsolute()) {
+                reportFile = new File(System.getProperty("user.dir") + CX_REPORT_LOCATION + File.separator + reportFile);
+            }
+
+            if (!reportFile.getParentFile().exists()) {
+                reportFile.getParentFile().mkdirs();
+            }
+
+            FileUtils.writeByteArrayToFile(reportFile, scanReport);
+            log.info("Report location: " + reportFile.getAbsolutePath());
+        } catch (Exception e) {
+            log.error("Failed to write report: ", e.getMessage());
+        }
+    }
+
     /**
      * Waits for SCA scan to finish, then gets scan results.
      *
@@ -298,42 +265,41 @@ public class AstScaClient extends AstClient implements Scanner {
                 OSAUtils.writeJsonToFile(REPORT_SCA_PACKAGES + JSON_EXTENSION, scaResults.getPackages(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
                 OSAUtils.writeJsonToFile(REPORT_SCA_SUMMARY + JSON_EXTENSION, scaResults.getSummary(), config.getReportsDir(), config.getOsaGenerateJsonReport(), log);
             }
-            
-			if (config.isGenerateScaReport()) {
-				String reportFormat = config.getScaReportFormat();
-				log.info("Generating SCA report. Report type: " + reportFormat);
-				byte[] scanReport = getReport(scaResults.getScanId(), reportFormat);
-				scaResults.setPDFReport(scanReport);
-				String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
-				String PDF_REPORT_NAME = "AstScaReport";
-				String fileName = "";
-				if (reportFormat.equalsIgnoreCase("CSV")) {
-					reportFormat = "zip";
-				}
 
-				fileName = PDF_REPORT_NAME + "_" + now + "." + reportFormat.toLowerCase();
-				String pdfLink = SASTUtils.writePDFReport(scanReport, config.getReportsDir(), fileName, log);
-				if (reportFormat.toLowerCase().equals("pdf")) {
-					scaResults.setScaPDFLink(pdfLink);
-					scaResults.setPdfFileName(fileName);
-				}
+            if (config.isGenerateScaReport()) {
+                String reportFormat = config.getScaReportFormat();
+                log.info("Generating SCA report. Report type: " + reportFormat);
+                byte[] scanReport = getReport(scaResults.getScanId(), reportFormat);
+                scaResults.setPDFReport(scanReport);
+                String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
+                String PDF_REPORT_NAME = "AstScaReport";
+                String fileName = "";
+                if (reportFormat.equalsIgnoreCase("CSV")) {
+                    reportFormat = "zip";
+                }
 
-			}
+                fileName = PDF_REPORT_NAME + "_" + now + "." + reportFormat.toLowerCase();
+                String pdfLink = SASTUtils.writePDFReport(scanReport, config.getReportsDir(), fileName, log);
+                if (reportFormat.toLowerCase().equals("pdf")) {
+                    scaResults.setScaPDFLink(pdfLink);
+                    scaResults.setPdfFileName(fileName);
+                }
+
+            }
             return scaResults;
         } catch (CxClientException e) {
             log.error(e.getMessage());
             scaResults = new AstScaResults();
             scaResults.setException(e);
-        }
-        catch(IOException e) {
-        	log.error(e.getMessage());
-        } catch(ConditionTimeoutException e) {
-        	log.error(e.getMessage());
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        } catch (ConditionTimeoutException e) {
+            log.error(e.getMessage());
             scaResults = new AstScaResults();
-        	scaResults.setException(new CxClientException(e));
-        } 
+            scaResults.setException(new CxClientException(e));
+        }
         return new AstScaResults();
-       // return scaResults;
+        // return scaResults;
     }
 
     @Override
@@ -348,12 +314,12 @@ public class AstScaClient extends AstClient implements Scanner {
             // Relative path is empty, because we use the whole upload URL as the base URL for the HTTP client.
             // Content type is empty, because the server at uploadUrl throws an error if Content-Type is non-empty.
             uploader.putRequest("", "", request, JsonNode.class, HttpStatus.SC_OK, "upload ZIP file");
-        }finally {
+        } finally {
             Optional.ofNullable(uploader).ifPresent(CxHttpClient::close);
         }
 
     }
-    
+
     @Override
     public Results initiateScan() {
         log.info("----------------------------------- Initiating {} Scan:------------------------------------",
@@ -379,25 +345,24 @@ public class AstScaClient extends AstClient implements Scanner {
             } else {
                 if (scaConfig.isIncludeSources()) {
                     response = submitAllSourcesFromLocalDir(projectId, astScaConfig.getZipFilePath());
-                } else if(scaConfig.isEnableScaResolver()) {	
-                	response = submitScaResolverEvidenceFile(scaConfig);
-                }else {
+                } else if (scaConfig.isEnableScaResolver()) {
+                    response = submitScaResolverEvidenceFile(scaConfig);
+                } else {
                     response = submitManifestsAndFingerprintsFromLocalDir(projectId);
                 }
             }
             this.scanId = extractScanIdFrom(response);
             scaResults.setScanId(scanId);
-            if(scaConfig.isEnableScaResolver() && tempUploadFile != null){
+            if (scaConfig.isEnableScaResolver() && tempUploadFile != null) {
                 log.info("Deleting uploaded file for scan {}", tempUploadFile.getAbsolutePath());
-                if(!tempUploadFile.delete())
-                {
+                if (!tempUploadFile.delete()) {
                     log.error("Error while deleting uploaded file for scan {}", tempUploadFile.getAbsolutePath());
                 }
             }
         } catch (Exception e) {
             log.error("Error occurred while initiating scan.", e);
             setState(State.FAILED);
-            scaResults.setException(new CxClientException("Error creating scan.", e));         
+            scaResults.setException(new CxClientException("Error creating scan.", e));
         }
         return scaResults;
     }
@@ -412,7 +377,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
 
-        
+
         FileUtils.deleteDirectory(configFileDestination.toFile());
 
         return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig());
@@ -420,164 +385,167 @@ public class AstScaClient extends AstClient implements Scanner {
 
     /**
      * This method
-     *  1) executes sca resolver to generate result json file.
-     *  2) create ScaResolverResultsxxxx.zip file with sca resolver result json file to be uploaded for scan
-     *  3) Execute initiateScan method to generate SCA scan.
+     * 1) executes sca resolver to generate result json file.
+     * 2) create ScaResolverResultsxxxx.zip file with sca resolver result json file to be uploaded for scan
+     * 3) Execute initiateScan method to generate SCA scan.
+     *
      * @param scaConfig - AST Sca config object
      * @return - Returns the response
      * @throws IOException
      */
-    private HttpResponse submitScaResolverEvidenceFile(AstScaConfig scaConfig) throws IOException,CxClientException {
+    private HttpResponse submitScaResolverEvidenceFile(AstScaConfig scaConfig) throws IOException, CxClientException {
         log.info("Executing SCA Resolver flow.");
-    	log.info("Path to Sca Resolver: {}", scaConfig.getPathToScaResolver());
-    	File zipFile;
-    	String pathToResultJSONFile = "";
-        String pathToSASTResultJSONFile = ""; 
-        String pathToResultJSONFileNew= "";
-        String pathToSASTResultJSONFileNew= "";
+        log.info("Path to Sca Resolver: {}", scaConfig.getPathToScaResolver());
+        File zipFile;
+        String pathToResultJSONFile = "";
+        String pathToSASTResultJSONFile = "";
+        String pathToResultJSONFileNew = "";
+        String pathToSASTResultJSONFileNew = "";
 
         String scaResultPathArgName = getScaResultPathArgumentName(scaConfig);
-        if(scaResultPathArgName != "") {
-        	try {
-        		pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters(), scaResultPathArgName);     
+        if (scaResultPathArgName != "") {
+            try {
+                pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters(), scaResultPathArgName);
             } catch (ParseException e) {
                 throw new CxClientException(e.getMessage());
             }
         }
-        
+
         log.info("SCA resolver result path configured: " + pathToResultJSONFile);
 
         String timeStamp = getTimestampFolder();
         pathToResultJSONFileNew = createTimestampBasedPath(pathToResultJSONFile, timeStamp, SASTParam.SCA_RESOLVER_RESULT_FILE_NAME);
         if (checkSastResultPath(scaConfig)) {
-        	try {
-        		pathToSASTResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters(), "--sast-result-path");                
-                
+            try {
+                pathToSASTResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters(), "--sast-result-path");
+
             } catch (ParseException e) {
                 throw new CxClientException(e.getMessage());
             }
             log.info("SAST result path location configured: " + pathToSASTResultJSONFile);
             pathToSASTResultJSONFileNew = createTimestampBasedPath(pathToSASTResultJSONFile, timeStamp, SASTParam.SAST_RESOLVER_RESULT_FILE_NAME);
         }
-        log.info("Launching dependency resolution by ScaResolver. ScaResolver logs can be viewed in debug level logs of the pipeline."); 
-        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(),pathToResultJSONFileNew,pathToSASTResultJSONFileNew, log);
+        log.info("Launching dependency resolution by ScaResolver. ScaResolver logs can be viewed in debug level logs of the pipeline.");
+        int exitCode = SpawnScaResolver.runScaResolver(scaConfig.getPathToScaResolver(), scaConfig.getScaResolverAddParameters(), pathToResultJSONFileNew, pathToSASTResultJSONFileNew, log);
         if (exitCode == 0) {
-        	log.info("Dependency resolution completed."); 
-			String parentDir = pathToResultJSONFileNew.substring(0, pathToResultJSONFileNew.lastIndexOf(File.separator));
-			String parentDirSast = "";
-			File destPartentSastDir = null;
-			if (!StringUtils.isEmpty(pathToSASTResultJSONFileNew)) {
-				parentDirSast = pathToSASTResultJSONFileNew.substring(0,
-						pathToSASTResultJSONFileNew.lastIndexOf(File.separator));
-				destPartentSastDir = new File(parentDirSast);
-			}
+            log.info("Dependency resolution completed.");
+            String parentDir = pathToResultJSONFileNew.substring(0, pathToResultJSONFileNew.lastIndexOf(File.separator));
+            String parentDirSast = "";
+            File destPartentSastDir = null;
+            if (!StringUtils.isEmpty(pathToSASTResultJSONFileNew)) {
+                parentDirSast = pathToSASTResultJSONFileNew.substring(0,
+                        pathToSASTResultJSONFileNew.lastIndexOf(File.separator));
+                destPartentSastDir = new File(parentDirSast);
+            }
 
-            String tempDirectory = parentDir +  File.separator + "tmp";
-            String tempResultFile =  tempDirectory + File.separator + SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
-            String tempSASTResultFile =  tempDirectory + File.separator + SASTParam.SAST_RESOLVER_RESULT_FILE_NAME;
+            String tempDirectory = parentDir + File.separator + "tmp";
+            String tempResultFile = tempDirectory + File.separator + SASTParam.SCA_RESOLVER_RESULT_FILE_NAME;
+            String tempSASTResultFile = tempDirectory + File.separator + SASTParam.SAST_RESOLVER_RESULT_FILE_NAME;
             log.debug("Copying ScaResolver result files to temporary location.");
             File destTempDir = new File(tempDirectory);
-			File destParentDir = new File(parentDir);
-			if (!destTempDir.exists()) {
-				Files.createDirectory(destTempDir.toPath());
-			}
+            File destParentDir = new File(parentDir);
+            if (!destTempDir.exists()) {
+                Files.createDirectory(destTempDir.toPath());
+            }
 
-			Files.copy(new File(pathToResultJSONFileNew).toPath(), new File(tempResultFile).toPath(),
-					StandardCopyOption.REPLACE_EXISTING);
-            if(!StringUtils.isEmpty(pathToSASTResultJSONFileNew)) 
-            	Files.copy(new File(pathToSASTResultJSONFileNew).toPath(), new File(tempSASTResultFile).toPath(), StandardCopyOption.REPLACE_EXISTING);
-            
-            log.info("Completed File copy to "+tempDirectory);
+            Files.copy(new File(pathToResultJSONFileNew).toPath(), new File(tempResultFile).toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+            if (!StringUtils.isEmpty(pathToSASTResultJSONFileNew))
+                Files.copy(new File(pathToSASTResultJSONFileNew).toPath(), new File(tempSASTResultFile).toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+            log.info("Completed File copy to " + tempDirectory);
             zipFile = zipEvidenceFile(destTempDir);
-            
-			if (!pathToResultJSONFileNew.equals(pathToResultJSONFile)) {
-				log.info("Deleting directory of result file {}", destParentDir.getAbsolutePath());
-				FileUtils.deleteDirectory(destParentDir);
-				log.info("Deleted directory of result file " + destParentDir.getAbsolutePath());
-			} else {
-				log.info("Deleting temporary uploaded file for scan {}", destTempDir.getAbsolutePath());
-				FileUtils.deleteDirectory(destTempDir);
-				log.info("Deleted temp directory " + destTempDir.getAbsolutePath());
-			}
-			if (!StringUtils.isEmpty(pathToSASTResultJSONFileNew) && !pathToSASTResultJSONFileNew.equals(pathToSASTResultJSONFile)) {
-				log.info("Deleting directory of result file {}", destPartentSastDir.getAbsolutePath());
-				FileUtils.deleteDirectory(destPartentSastDir);
-				log.info("Deleted directory of result file " + destPartentSastDir.getAbsolutePath());
-			}
 
-		}else{
-            throw new CxClientException("Error while running sca resolver executable. Exit code: "+exitCode);
+            if (!pathToResultJSONFileNew.equals(pathToResultJSONFile)) {
+                log.info("Deleting directory of result file {}", destParentDir.getAbsolutePath());
+                FileUtils.deleteDirectory(destParentDir);
+                log.info("Deleted directory of result file " + destParentDir.getAbsolutePath());
+            } else {
+                log.info("Deleting temporary uploaded file for scan {}", destTempDir.getAbsolutePath());
+                FileUtils.deleteDirectory(destTempDir);
+                log.info("Deleted temp directory " + destTempDir.getAbsolutePath());
+            }
+            if (!StringUtils.isEmpty(pathToSASTResultJSONFileNew) && !pathToSASTResultJSONFileNew.equals(pathToSASTResultJSONFile)) {
+                log.info("Deleting directory of result file {}", destPartentSastDir.getAbsolutePath());
+                FileUtils.deleteDirectory(destPartentSastDir);
+                log.info("Deleted directory of result file " + destPartentSastDir.getAbsolutePath());
+            }
+
+        } else {
+            throw new CxClientException("Error while running sca resolver executable. Exit code: " + exitCode);
         }
-    	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
+        return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
     }
 
     public boolean checkSastResultPath(AstScaConfig scaConfig) {
-    	if (scaConfig.getScaResolverAddParameters().contains("--sast-result-path")) {
+        if (scaConfig.getScaResolverAddParameters().contains("--sast-result-path")) {
             return true;
         }
         return false;
-	}
-	private String createTimestampBasedPath(String inputResultFilePath, String timeStamp,
-			String targetFileName) {
-    	 if(inputResultFilePath.isEmpty()) 
-             return inputResultFilePath;
+    }
 
-             String lastPathComponent = "";
-             if (!inputResultFilePath.endsWith(File.separator)) {
-                 lastPathComponent = inputResultFilePath.substring(inputResultFilePath.lastIndexOf(File.separator)+1, inputResultFilePath.length());
-             }
-             if (inputResultFilePath.endsWith(File.separator) || lastPathComponent.indexOf(".") == -1) {                     
-                     //if so, it's a directory
-                     if(!inputResultFilePath.endsWith(File.separator))
-                         inputResultFilePath = inputResultFilePath + File.separator ;
-                     inputResultFilePath = inputResultFilePath + timeStamp + File.separator + targetFileName;  
-	}else {
-        //Honor user's choice to create file at given absolute path
+    private String createTimestampBasedPath(String inputResultFilePath, String timeStamp,
+                                            String targetFileName) {
+        if (inputResultFilePath.isEmpty())
+            return inputResultFilePath;
+
+        String lastPathComponent = "";
+        if (!inputResultFilePath.endsWith(File.separator)) {
+            lastPathComponent = inputResultFilePath.substring(inputResultFilePath.lastIndexOf(File.separator) + 1, inputResultFilePath.length());
+        }
+        if (inputResultFilePath.endsWith(File.separator) || lastPathComponent.indexOf(".") == -1) {
+            //if so, it's a directory
+            if (!inputResultFilePath.endsWith(File.separator))
+                inputResultFilePath = inputResultFilePath + File.separator;
+            inputResultFilePath = inputResultFilePath + timeStamp + File.separator + targetFileName;
+        } else {
+            //Honor user's choice to create file at given absolute path
+            return inputResultFilePath;
+        }
         return inputResultFilePath;
     }
-             return inputResultFilePath;
-    }
-	private String getTimestampFolder() {
-    	SimpleDateFormat sd = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
+
+    private String getTimestampFolder() {
+        SimpleDateFormat sd = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
         Date date = new Date();
         Timestamp tt = new Timestamp(System.currentTimeMillis());
-       
-        
-        String ss =(sd.format(tt));
+
+
+        String ss = (sd.format(tt));
         String res = ss.replace(".", "");
         return res;
-	}
+    }
 
-	private String getScaResultPathArgumentName(AstScaConfig scaConfig) {
-    	String scaResolverResultPathArgName = "";
-        
-        
-		if (scaConfig.getScaResolverAddParameters().contains("--resolver-result-path")) {
+    private String getScaResultPathArgumentName(AstScaConfig scaConfig) {
+        String scaResolverResultPathArgName = "";
+
+
+        if (scaConfig.getScaResolverAddParameters().contains("--resolver-result-path")) {
             scaResolverResultPathArgName = "--resolver-result-path";
-        }else if (scaConfig.getScaResolverAddParameters().contains("-r")) {
+        } else if (scaConfig.getScaResolverAddParameters().contains("-r")) {
             scaResolverResultPathArgName = "-r";
         }
         return scaResolverResultPathArgName;
-	}
+    }
 
-	/**
+    /**
      * This method returns SCA Resolver execution result file path. SCA Resolver additional
      * parameter has result file location. Appending result directory path with file name
      * .cxsca-results.json
+     *
      * @param scaResolverAddParams - SCA resolver additional parameters
      * @return - SCA resolver execution result file path.
      */
-	public String getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams,String arg)throws ParseException {
+    public String getScaResolverResultFilePathFromAdditionalParams(String scaResolverAddParams, String arg) throws ParseException {
         String[] argument;
         String resolverResultPath = "";
         argument = scaResolverAddParams.split(" ");
         for (int i = 0; i < argument.length; i++) {
             if (arg.equals(argument[i])) {
                 if (argument.length - 1 == i) {
-                resolverResultPath = argument[i];
-                }
-                else {
-                    resolverResultPath = argument[i + 1] ;
+                    resolverResultPath = argument[i];
+                } else {
+                    resolverResultPath = argument[i + 1];
                 }
                 break;
             }
@@ -590,14 +558,14 @@ public class AstScaClient extends AstClient implements Scanner {
         String sourceDir = config.getEffectiveSourceDirForDependencyScan();
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
         String additinalFilters = getAdditionalManifestFilters();
-        String finalFilters =  additinalFilters + getManifestsIncludePattern();
+        String finalFilters = additinalFilters + getManifestsIncludePattern();
         PathFilter userFilter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
         if (ArrayUtils.isNotEmpty(userFilter.getIncludes()) && !ArrayUtils.contains(userFilter.getIncludes(), "**")) {
             userFilter.addToIncludes("**");
         }
         Set<String> scannedFileSet = new HashSet<>(Arrays.asList(CxSCAFileSystemUtils.scanAndGetIncludedFiles(sourceDir, userFilter)));
 
-        PathFilter manifestIncludeFilter = new PathFilter(null,finalFilters , log);
+        PathFilter manifestIncludeFilter = new PathFilter(null, finalFilters, log);
         if (manifestIncludeFilter.getIncludes().length == 0) {
             throw new CxClientException(String.format("Using manifest only mode requires include filter. Resolving config does not have include patterns defined: %s", getManifestsIncludePattern()));
         }
@@ -609,7 +577,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         List<String> filesToFingerprint =
                 Arrays.stream(CxSCAFileSystemUtils.scanAndGetIncludedFiles(sourceDir,
-                        new PathFilter(null, getFingerprintsIncludePattern(), log)))
+                                new PathFilter(null, getFingerprintsIncludePattern(), log)))
                         .filter(scannedFileSet::contains).
                         collect(Collectors.toList());
 
@@ -628,23 +596,24 @@ public class AstScaClient extends AstClient implements Scanner {
 
     /**
      * This file create zip file to
+     *
      * @param filePath - SCA Resolver evidence/result file path
      * @return - Zipped file
      * @throws IOException
      */
-	private File zipEvidenceFile(File filePath) throws IOException {
+    private File zipEvidenceFile(File filePath) throws IOException {
 
         tempUploadFile = File.createTempFile(TEMP_FILE_NAME_TO_SCA_RESOLVER_RESULTS_ZIP, ".zip");
-		String sourceDir = filePath.getAbsolutePath();
+        String sourceDir = filePath.getAbsolutePath();
 
         log.info("Collecting files to zip archive: {}", tempUploadFile.getAbsolutePath());
 
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
-        
+
         List<String> paths = Arrays.asList(filePath.list());
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
-            log.info("Added {} files to zip.",  zipper.getFileCount());
+            log.info("Added {} files to zip.", zipper.getFileCount());
             log.info("The sources were zipped to {}", tempUploadFile.getAbsolutePath());
             return tempUploadFile;
         } catch (Zipper.MaxZipSizeReached e) {
@@ -655,27 +624,25 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     /**
-     * 
-     * This method gets the additional config file(from different package manager) manifest filters 
+     * This method gets the additional config file(from different package manager) manifest filters
      * e.g. returns "settings.xml,npmrc"/"
      **/
-	 
-	 
-    
-	private String getAdditionalManifestFilters() {
-		List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
-		String additionalFilters = "";
-		if (configFilePaths != null) {
-			for (String configFileString : configFilePaths) {
-				if (StringUtils.isNotEmpty(configFileString)) {
-					if (configFileString.lastIndexOf("\\") != -1)
-						configFileString = configFileString.substring(configFileString.lastIndexOf("\\") + 1);
-					additionalFilters = additionalFilters.concat("**/" + configFileString + ",");
-				}
-			}
-		}
-		return additionalFilters;
-	}
+
+
+    private String getAdditionalManifestFilters() {
+        List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
+        String additionalFilters = "";
+        if (configFilePaths != null) {
+            for (String configFileString : configFilePaths) {
+                if (StringUtils.isNotEmpty(configFileString)) {
+                    if (configFileString.lastIndexOf("\\") != -1)
+                        configFileString = configFileString.substring(configFileString.lastIndexOf("\\") + 1);
+                    additionalFilters = additionalFilters.concat("**/" + configFileString + ",");
+                }
+            }
+        }
+        return additionalFilters;
+    }
 
     private Path copyConfigFileToSourceDir(String sourceDir) throws IOException {
 
@@ -683,45 +650,39 @@ public class AstScaClient extends AstClient implements Scanner {
         log.info("Source Directory : {}", sourceDir);
         List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
 
-        if(configFilePaths != null) {
-        for(String configFileString : configFilePaths) {
+        if (configFilePaths != null) {
+            for (String configFileString : configFilePaths) {
 
-            if (StringUtils.isNotEmpty(configFileString)) {
-                String fileSystemSeparator = FileSystems.getDefault().getSeparator();
-                Path configFilePath = CxSCAFileSystemUtils.checkIfFileExists(sourceDir, configFileString, fileSystemSeparator, log);
+                if (StringUtils.isNotEmpty(configFileString)) {
+                    String fileSystemSeparator = FileSystems.getDefault().getSeparator();
+                    Path configFilePath = CxSCAFileSystemUtils.checkIfFileExists(sourceDir, configFileString, fileSystemSeparator, log);
 
-                if (configFilePath != null) {
-                    configFileDestination = Paths.get(sourceDir, fileSystemSeparator, SCA_CONFIG_FOLDER_NAME);
+                    if (configFilePath != null) {
+                        configFileDestination = Paths.get(sourceDir, fileSystemSeparator, SCA_CONFIG_FOLDER_NAME);
 
-                    if (Files.notExists(configFileDestination)) {
-                        Path destDir = Files.createDirectory(configFileDestination);
-                        Files.copy(configFilePath, destDir.resolve(configFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-                        
-                    } else {
-                        Path r = configFileDestination.resolve(configFilePath.getFileName());
-                        Files.copy(configFilePath,r , StandardCopyOption.REPLACE_EXISTING);
-                        
+                        if (Files.notExists(configFileDestination)) {
+                            Path destDir = Files.createDirectory(configFileDestination);
+                            Files.copy(configFilePath, destDir.resolve(configFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                        } else {
+                            Path r = configFileDestination.resolve(configFilePath.getFileName());
+                            Files.copy(configFilePath, r, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                        log.info("Config file ({}) copied to directory: {}", configFilePath, configFileDestination);
                     }
-                    log.info("Config file ({}) copied to directory: {}", configFilePath, configFileDestination);
                 }
             }
         }
-        }
         return configFileDestination;
     }
-
-    
 
     private File zipDirectoryAndFingerprints(String sourceDir, List<String> paths, CxSCAScanFingerprints fingerprints) throws IOException {
         File result = config.getZipFile();
         if (result != null) {
             return result;
-            
         }
         File tempFile = getZipFile();
         log.debug("Collecting files to zip archive: {}", tempFile.getAbsolutePath());
         long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
-        
 
         try (NewCxZipFile zipper = new NewCxZipFile(tempFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
@@ -863,7 +824,7 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     public void login() throws IOException {
-        log.info("Logging into {}", getScannerDisplayName());        
+        log.info("Logging into {}", getScannerDisplayName());
         AstScaConfig scaConfig = config.getAstScaConfig();
 
         String acUrl = scaConfig.getAccessControlUrl();
@@ -877,10 +838,10 @@ public class AstScaClient extends AstClient implements Scanner {
         ClientTypeResolver resolver = new ClientTypeResolver(config);
         ClientType clientType = resolver.determineClientType(acUrl);
         settings.setClientTypeForPasswordAuth(clientType);
-        
-        httpClient.login(settings);        
+
+        httpClient.login(settings);
     }
-    
+
     public void close() {
         if (httpClient != null) {
             httpClient.close();
@@ -901,20 +862,18 @@ public class AstScaClient extends AstClient implements Scanner {
             throw new CxClientException(e);
         }
     }
-    
+
     private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
         String assignedTeam = config.getAstScaConfig().getTeamPath();
         String assignedTeamId = config.getAstScaConfig().getTeamId();
-                        
-		if (!StringUtils.isEmpty(assignedTeamId)) {
-			assignedTeam = getTeamById(assignedTeamId);
-			
-		} else if(StringUtils.isEmpty(assignedTeam)){
-			
-        	assignedTeam = config.getTeamPath();
+
+        if (!StringUtils.isEmpty(assignedTeamId)) {
+            assignedTeam = getTeamById(assignedTeamId);
+        } else if (StringUtils.isEmpty(assignedTeam)) {
+            assignedTeam = config.getTeamPath();
         }
-		
+
         log.info("Getting project by name: '{}'", projectName);
         String resolvedProjectId = getRiskManagementProjectId(projectName);
         if (resolvedProjectId == null) {
@@ -964,7 +923,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         return result;
     }
-    
+
     private Project sendGetProjectRequest(String projectName) throws IOException {
         Project result;
         try {
@@ -984,12 +943,12 @@ public class AstScaClient extends AstClient implements Scanner {
         }
         return result;
     }
-    
+
     private Team sendGetTeamById(String teamId) throws IOException {
         Team result;
-        try {        	
+        try {
             String teamNameAPI = String.format("%s/%s", TEAMBYID, teamId);
-            result = httpClient.getRequest(this.astScaConfig.getAccessControlUrl()+"/",teamNameAPI,ContentType.CONTENT_TYPE_APPLICATION_JSON,
+            result = httpClient.getRequest(this.astScaConfig.getAccessControlUrl() + "/", teamNameAPI, ContentType.CONTENT_TYPE_APPLICATION_JSON,
                     ContentType.CONTENT_TYPE_APPLICATION_JSON,
                     Team.class,
                     HttpStatus.SC_OK,
@@ -1017,9 +976,9 @@ public class AstScaClient extends AstClient implements Scanner {
     private String createRiskManagementProject(String name, String assignedTeam) throws IOException {
         CreateProjectRequest request = new CreateProjectRequest();
         request.setName(name);
-        if(!StringUtils.isEmpty(assignedTeam)) {
-        	request.addAssignedTeams(assignedTeam);        
-        	log.info("Team name: {}", assignedTeam);
+        if (!StringUtils.isEmpty(assignedTeam)) {
+            request.addAssignedTeams(assignedTeam);
+            log.info("Team name: {}", assignedTeam);
         }
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
@@ -1040,10 +999,10 @@ public class AstScaClient extends AstClient implements Scanner {
         try {
             result = new AstScaResults();
             result.setScanId(this.scanId);
-           
+
             reportId = getReportId(scanId);
             result.setReportId(reportId);
-            
+
             AstScaSummaryResults scanSummary = getSummaryReport(scanId);
             result.setSummary(scanSummary);
             printSummary(scanSummary, this.scanId);
@@ -1052,13 +1011,13 @@ public class AstScaClient extends AstClient implements Scanner {
             result.setFindings(findings);
 
             List<Package> packages = getPackages(scanId);
-            result.setPackages(packages);            
-            
-            if(config.isEnablePolicyViolations()) {
-            	List<PolicyEvaluation> policyEvaluations = getPolicyEvaluation(reportId);
-            	result.setPolicyEvaluations(policyEvaluations);
-            	printPolicyEvaluations(policyEvaluations);
-            	determinePolicyViolations(result);
+            result.setPackages(packages);
+
+            if (config.isEnablePolicyViolations()) {
+                List<PolicyEvaluation> policyEvaluations = getPolicyEvaluation(reportId);
+                result.setPolicyEvaluations(policyEvaluations);
+                printPolicyEvaluations(policyEvaluations);
+                determinePolicyViolations(result);
             }
 
             String reportLink = getWebReportLink(config.getAstScaConfig().getWebAppUrl());
@@ -1121,13 +1080,13 @@ public class AstScaClient extends AstClient implements Scanner {
                 "CxSCA findings",
                 true);
     }
-    
+
     public String getReportId(String scanId) throws IOException {
         log.debug("Getting report id.");
 
         String path = String.format(REPORTID_API, URLEncoder.encode(scanId, ENCODING));
 
-        String resultReportId =  (String) httpClient.getRequest(path,
+        String resultReportId = (String) httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
                 String.class,
                 HttpStatus.SC_OK,
@@ -1135,7 +1094,7 @@ public class AstScaClient extends AstClient implements Scanner {
                 false);
         return StringUtils.strip(resultReportId, "\"");
     }
-    
+
     public List<PolicyEvaluation> getPolicyEvaluation(String reportId) throws IOException {
         log.debug("Getting policy evaluation for the scan report id {}.", reportId);
 
@@ -1150,18 +1109,18 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     private void determinePolicyViolations(AstScaResults result) {
-    
-    	result.getPolicyEvaluations().forEach(p-> { 
-	    		if(p.getIsViolated()) {
-	    			//its enough even one policy is violated
-	    			result.setPolicyViolated(true);
-	    			if(p.getActions().isBreakBuild())
-	    				result.setBreakTheBuild(true);	    			
-	    		}
-    		}
-    	);    	
+
+        result.getPolicyEvaluations().forEach(p -> {
+                    if (p.getIsViolated()) {
+                        //its enough even one policy is violated
+                        result.setPolicyViolated(true);
+                        if (p.getActions().isBreakBuild())
+                            result.setBreakTheBuild(true);
+                    }
+                }
+        );
     }
-    
+
     private void printSummary(AstScaSummaryResults summary, String scanId) {
         if (log.isInfoEnabled()) {
             log.info("----CxSCA risk report summary----");
@@ -1176,24 +1135,24 @@ public class AstScaClient extends AstClient implements Scanner {
             log.info("Total outdated packages: {}", summary.getTotalOutdatedPackages());
         }
     }
-    
+
     private void printPolicyEvaluations(List<PolicyEvaluation> policyEvaulations) {
         if (log.isInfoEnabled()) {
-            log.info("----CxSCA Policy Evaluation Results----");            
-            policyEvaulations.forEach(p-> printPolicyEvaluation(p));
+            log.info("----CxSCA Policy Evaluation Results----");
+            policyEvaulations.forEach(p -> printPolicyEvaluation(p));
             log.info("---------------------------------------");
         }
     }
-    
+
     private void printPolicyEvaluation(PolicyEvaluation p) {
-    	if (log.isInfoEnabled()) {
+        if (log.isInfoEnabled()) {
             log.info("  Policy name: {} | Violated:{} | Policy Description: {}", p.getName(), p.getIsViolated(), p.getDescription());
-        
-        	p.getRules().forEach(r->
-            log.info("    Rule name: {} | Violated: {}", r.getName(), r.getIsViolated())
+
+            p.getRules().forEach(r ->
+                    log.info("    Rule name: {} | Violated: {}", r.getName(), r.getIsViolated())
             );
-        
-    	}
+
+        }
     }
 
     private void validate(AstScaConfig config) {

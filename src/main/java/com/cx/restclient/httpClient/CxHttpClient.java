@@ -24,7 +24,6 @@ import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
-import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -123,7 +122,6 @@ public class CxHttpClient implements Closeable {
 
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
-
         this.log = log;
         this.rootUri = rootUri;
         this.refreshToken = refreshToken;
@@ -220,7 +218,7 @@ public class CxHttpClient implements Closeable {
                 .setProxyAuthenticationStrategy(ProxyAuthenticationStrategy.INSTANCE)
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setAuthenticationEnabled(true)
-                        .setProxyPreferredAuthSchemes(Arrays.asList(AuthPolicy.NTLM))
+                        .setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM))
                         .build()
                 )
                 .build();

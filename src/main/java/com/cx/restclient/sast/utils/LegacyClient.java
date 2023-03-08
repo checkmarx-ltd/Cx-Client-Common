@@ -211,7 +211,7 @@ public abstract class LegacyClient {
         }
     }
 
-    public void initiate() throws CxClientException {
+    public synchronized void initiate() throws CxClientException {
         try {
             if (config.isSastOrOSAEnabled()) {
                 String version = getCxVersion();

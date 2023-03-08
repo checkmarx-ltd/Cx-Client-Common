@@ -107,7 +107,7 @@ public class AstSastClient extends AstClient implements Scanner {
     protected String getScannerDisplayName() {
         return ScannerType.AST_SAST.getDisplayName();
     }
-    
+
     @Override
     protected void uploadArchive(byte[] source, String uploadUrl) throws IOException {
         log.info("Uploading the zipped data.");
@@ -120,12 +120,11 @@ public class AstSastClient extends AstClient implements Scanner {
             // Relative path is empty, because we use the whole upload URL as the base URL for the HTTP client.
             // Content type is empty, because the server at uploadUrl throws an error if Content-Type is non-empty.
             httpClient.putRequest("", "", request, JsonNode.class, HttpStatus.SC_OK, "upload ZIP file");
-        }
-        finally {
+        } finally {
             httpClient.setRootUri(baseAstUri);
         }
     }
-    
+
     @Override
     public Results initiateScan() {
         log.info("----------------------------------- Initiating {} Scan:------------------------------------",

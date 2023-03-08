@@ -28,7 +28,7 @@
         <javax.activation.version>1.2.0</javax.activation.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <lombok.version>1.18.6</lombok.version>
-        <cx.ws.fs.agent.version>23.0.2</cx.ws.fs.agent.version>
+        <cx.ws.fs.agent.version>23.0.4</cx.ws.fs.agent.version>
 
         <!--SonarCloud scan -->
         <sonar.projectKey>checkmarx-ltd_Cx-Client-Common</sonar.projectKey>
