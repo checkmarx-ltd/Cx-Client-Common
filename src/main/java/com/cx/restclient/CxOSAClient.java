@@ -174,7 +174,7 @@ public class CxOSAClient extends LegacyClient implements Scanner {
         log.info("Scanner properties: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(scannerProperties.toString()));
         try {
             semaphore.acquire();
-            ComponentScan componentScan = new ComponentScan(scannerProperties);
+            ComponentScan componentScan = new ComponentScan(scannerProperties, log);
             Thread thread = Thread.currentThread();
 //            log.info("[CHECKMARX] Thread: " + thread.getName() + ", Thread id: " + thread.getId());
             osaDependenciesJson = componentScan.scan();
