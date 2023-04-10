@@ -78,6 +78,7 @@ import com.cx.restclient.httpClient.utils.HttpClientHelper;
 import com.cx.restclient.osa.dto.ClientType;
 import com.cx.restclient.osa.utils.OSAUtils;
 import com.cx.restclient.sast.utils.SASTParam;
+import com.cx.restclient.sast.utils.SASTUtils;
 import com.cx.restclient.sast.utils.State;
 import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import com.cx.restclient.sast.utils.zip.NewCxZipFile;
@@ -301,6 +302,7 @@ public class AstScaClient extends AstClient implements Scanner {
 				String reportFormat = config.getScaReportFormat();
 				log.info("Generating SCA report. Report type: " + reportFormat);
 				byte[] scanReport = getReport(scaResults.getScanId(), reportFormat);
+				scaResults.setPDFReport(scanReport);
 				String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
 				String PDF_REPORT_NAME = "AstScaReport";
 				String fileName = "";
@@ -309,9 +311,9 @@ public class AstScaClient extends AstClient implements Scanner {
 				}
 
 				fileName = PDF_REPORT_NAME + "_" + now + "." + reportFormat.toLowerCase();
-				writeReport(scanReport, fileName, log);
+				String pdfLink = SASTUtils.writePDFReport(scanReport, config.getReportsDir(), fileName, log);
 				if (reportFormat.toLowerCase().equals("pdf")) {
-					scaResults.setPDFReport(scanReport);
+					scaResults.setScaPDFLink(pdfLink);
 					scaResults.setPdfFileName(fileName);
 				}
 

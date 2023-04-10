@@ -1339,6 +1339,28 @@
                                 <div class="link-text">Results</div>
                             </a>
                         </div>
+                        <#if sca.scaPDFLink??>
+                                    <div id="sca-summary-pdf-link" class="link-to-result">
+                                        <a class="pdf-report" href="${sca.scaPDFLink}">
+                                            <div class="link-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="16"
+                                                     viewBox="0 0 13 16"><title>PDF icon</title>
+                                                    <g fill="none" fill-rule="evenodd">
+                                                        <path d="M8.55 0H8v5h5V4L9.097 0H8.55z" fill="#4A90E2"/>
+                                                        <path d="M.5.5h8.387L12.5 4.204V15.5H.5V.5z" stroke="#4A90E2"/>
+                                                        <text font-family="Roboto-Black, Roboto" font-size="5"
+                                                              font-weight="700" fill="#4A90E2">
+                                                            <tspan x="1.889" y="11">PDF</tspan>
+                                                        </text>
+                                                    </g>
+                                                </svg>
+                                            </div>
+                                            <div class="link-text">
+                                                PDF Report
+                                            </div>
+                                        </a>
+                                    </div>
+                                </#if>
                     </div>
                 <#else>
                     <div id="no-scan-message-osa-failed" class="no-scan-message-container osa-scan-failed">

@@ -946,6 +946,10 @@ public class CxScanConfig implements Serializable {
 		this.masterBranchProjName = masterBranchProjName;
 	}
 	
+	public boolean getGenerateScaReport() {
+		return generateScaReport;
+	}
+	
 	public boolean isGenerateScaReport() {
 		return generateScaReport;
 	}
@@ -961,6 +965,6 @@ public class CxScanConfig implements Serializable {
 	public void setScaReportFormat(String scaReportFormat) {
 		this.scaReportFormat = scaReportFormat;
 	}
-
+	
 	
 }
