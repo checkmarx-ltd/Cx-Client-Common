@@ -43,6 +43,7 @@ public class CxScanConfig implements Serializable {
     private Boolean forceScan = false;
     private String presetName;
     private Integer presetId;
+    private String postScanName;
     private String sastFolderExclusions;
     private String sastFilterPattern;
     private Integer sastScanTimeoutInMinutes;
@@ -372,6 +373,13 @@ public class CxScanConfig implements Serializable {
     public String getSastFolderExclusions() {
         return sastFolderExclusions;
     }
+    
+    public String getPostScanName() {
+		return postScanName;
+	}
+    public void setPostScanName(String postScanName) {
+		this.postScanName = postScanName;
+	}
 
     public void setSastFolderExclusions(String sastFolderExclusions) {
         this.sastFolderExclusions = sastFolderExclusions;

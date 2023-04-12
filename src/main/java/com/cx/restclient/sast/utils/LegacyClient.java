@@ -221,6 +221,7 @@ public abstract class LegacyClient {
                 }
                 resolveEngineConfiguration();
                 resolveProjectId();
+                resolvePostScanAction();
             }
         } catch (Exception e) {
             throw new CxClientException(e);
@@ -391,6 +392,15 @@ public abstract class LegacyClient {
         log.info(String.format("preset name: %s preset id: %s", config.getPresetName(), config.getPresetId()));
     }
 
+	private void resolvePostScanAction() throws CxClientException, IOException {
+		if (config.getPostScanActionId() == null && !StringUtils.isEmpty(config.getPostScanName())) {
+			config.setPostScanActionId(getPostScanActionIdByName(config.getPostScanName()));
+			log.info(String.format("post scan action name: %s post scan action id: %s", config.getPostScanName(),
+					config.getPostScanActionId()));
+		} else {
+			log.info(String.format("Could not resolve post scan item ID from post scan action list"));
+		}
+	}
     public int getPresetIdByName(String presetName) throws CxClientException, IOException {
         List<Preset> allPresets = getPresetList();
         for (Preset preset : allPresets) {
@@ -416,7 +426,16 @@ public abstract class LegacyClient {
         configureTeamPath();
         return (List<PostAction>) httpClient.getRequest(SAST_CUSTOM_TASKS, CONTENT_TYPE_APPLICATION_JSON_V1, PostAction.class, 200, "post scan action list", true);
     }
-    
+
+	public int getPostScanActionIdByName(String name) throws CxClientException, IOException {
+		List<PostAction> allPostActionItems = getPostScanActionList();
+		for (PostAction postAction : allPostActionItems) {
+			if (postAction.getName().equalsIgnoreCase(name)) { // TODO caseSenesitive- checkkk
+				return postAction.getId();
+			}
+		}
+		throw new CxClientException("Could not resolve post scan item ID from post scan action list: " + name);
+	}
     private void printTeamPath() {
         try {
             this.teamPath = config.getTeamPath();
