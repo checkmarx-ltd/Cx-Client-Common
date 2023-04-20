@@ -568,6 +568,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     }
 
     //**------ Private Methods  ------**//
+   //**------ Commennts Added  ------**//
     private boolean projectHasQueuedScans(long projectId) throws IOException {
         List<ResponseQueueScanStatus> queuedScans = getQueueScans(projectId);
         for (ResponseQueueScanStatus scan : queuedScans) {
