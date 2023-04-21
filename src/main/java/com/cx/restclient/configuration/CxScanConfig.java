@@ -946,10 +946,6 @@ public class CxScanConfig implements Serializable {
 		this.masterBranchProjName = masterBranchProjName;
 	}
 	
-	public boolean getGenerateScaReport() {
-		return generateScaReport;
-	}
-	
 	public boolean isGenerateScaReport() {
 		return generateScaReport;
 	}
