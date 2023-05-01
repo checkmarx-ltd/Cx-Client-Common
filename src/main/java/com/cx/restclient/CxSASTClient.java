@@ -257,7 +257,6 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 log.debug("[DEBUG] - Source code to zip: '{}', directory exist: '{}', content size: {}",
                         config.getSourceDir(), dir.exists(), numOfFiles);
                 Collection<File> files = FileUtils.listFiles(dir, null, true);
-                files.forEach(file -> log.debug("[DEBUG] - Contained file: " + file.getAbsolutePath()));
             } catch (Exception e) {
                 log.error("Fail to get directory data for: " + config.getSourceDir());
             }

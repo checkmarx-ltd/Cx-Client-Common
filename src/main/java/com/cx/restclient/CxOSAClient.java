@@ -169,23 +169,23 @@ public class CxOSAClient extends LegacyClient implements Scanner {
                     config.getOsaScanDepth(),
                     log);
         }
-        ObjectMapper mapper = new ObjectMapper();
-        String osaDependenciesJson = null;
-        log.info("Scanner properties: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(scannerProperties.toString()));
         try {
             semaphore.acquire();
-            ComponentScan componentScan = new ComponentScan(scannerProperties, log);
+            ObjectMapper mapper = new ObjectMapper();
+            String osaDependenciesJson = null;
+            log.info("Scanner properties: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(scannerProperties.toString()));
             Thread thread = Thread.currentThread();
-//            log.info("[CHECKMARX] Thread: " + thread.getName() + ", Thread id: " + thread.getId());
+            log.info("[CHECKMARX] Thread: " + thread.getName() + ", Thread id: " + thread.getId());
+            ComponentScan componentScan = new ComponentScan(scannerProperties, log);
             osaDependenciesJson = componentScan.scan();
             OSAUtils.writeToOsaListToFile(OSAUtils.getWorkDirectory(config.getReportsDir(), config.getOsaGenerateJsonReport()), osaDependenciesJson, log);
+            return osaDependenciesJson;
         } catch (InterruptedException e) {
             log.error("Fail to acquire lock", e);
+            return null;
         } finally {
             semaphore.release();
         }
-
-        return osaDependenciesJson;
     }
 
     @Override

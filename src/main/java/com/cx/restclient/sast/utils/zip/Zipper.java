@@ -78,8 +78,6 @@ public class Zipper {
     }
 
     private DirectoryScanner createDirectoryScanner(File baseDir, String[] filterIncludePatterns, String[] filterExcludePatterns) {
-        log.info("[DEBUG] - Dir to scan for zip: {}, include: '{}'. exclude: '{}'",
-                baseDir.getAbsolutePath(), Arrays.toString(filterIncludePatterns), Arrays.toString(filterExcludePatterns));
         DirectoryScanner ds = new DirectoryScanner();
         ds.setBasedir(baseDir);
         ds.setCaseSensitive(false);
@@ -101,7 +99,6 @@ public class Zipper {
             log.debug("Base Directory: " + ds.getBasedir());
             String[] arr = ds.getIncludedFiles();
             int len = arr.length;
-            log.info("[DEBUG] - Include files to zip count: '{}', filed: '{}'", len, Arrays.toString(arr));
 
             int i;
             String file;
