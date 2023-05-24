@@ -439,16 +439,16 @@ public abstract class LegacyClient {
 
     private void setRetentionRate(long projectId) throws IOException {
         DataRetentionSettingsDto retentionRequest = new DataRetentionSettingsDto(config.getProjectRetentionRate());
-        log.info("Sending request to set retentionRate for project with id {}",projectId);
+        log.info("Sending request to set scan retention rate for project with id {}",projectId);
         String json = convertToJson(retentionRequest);
         httpClient.setTeamPathHeader(teamPath);
         HttpEntity entity = new StringEntity(json);
         try{
-             httpClient.postRequest(SAST_RETENTION_RATE.replace(ID_PATH_PARAM, Long.toString(projectId)), CONTENT_TYPE_APPLICATION_JSON_V1, entity, CxID.class, 204, "Set retention Rate for project");
-                log.info("Set '{}' Retention Rate for project with project ID : '{}' ",config.getProjectRetentionRate(), projectId);
+             httpClient.postRequest(SAST_RETENTION_RATE.replace(ID_PATH_PARAM, Long.toString(projectId)), CONTENT_TYPE_APPLICATION_JSON_V1, entity, CxID.class, 204, "Set scan retention rate for project");
+                log.info("Set '{}' scan retention rate for project with project ID : '{}' ",config.getProjectRetentionRate(), projectId);
               }catch (CxHTTPClientException exception){
             log.info(exception.getMessage());
-            log.info("Fail to set  Retention Rate for project with project ID {}", projectId);
+            log.info("Fail to set scan retention rate for project with project ID {}", projectId);
             }
     }
     public String getTeamNameById(String teamId) throws CxClientException, IOException {
