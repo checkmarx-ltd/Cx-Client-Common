@@ -126,9 +126,6 @@ public abstract class LegacyClient {
 			}
         } else {
             projectId = projects.get(0).getId();
-            if(config.isEnableDataRetention()){
-                setRetentionRate(projectId);
-            }
             setIsNewProject(false);
             log.info("Project already exists with ID {}", projectId);
         }
