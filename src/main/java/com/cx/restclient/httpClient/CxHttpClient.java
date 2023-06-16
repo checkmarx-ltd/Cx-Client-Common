@@ -9,9 +9,9 @@ import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.exception.CxTokenExpiredException;
 import com.cx.restclient.osa.dto.ClientType;
 import com.google.gson.Gson;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.*;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
@@ -53,7 +53,6 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
@@ -63,6 +62,9 @@ import javax.net.ssl.SSLContext;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.IDN;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
@@ -121,7 +123,7 @@ public class CxHttpClient implements Closeable {
 
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
-    	   	   	
+
         this.log = log;
         this.rootUri = rootUri;
         this.refreshToken = refreshToken;
@@ -151,9 +153,9 @@ public class CxHttpClient implements Closeable {
             cb.setSSLSocketFactory(sslConnectionSocketFactory);
             cb.setConnectionManager(cm);
         } else {
-        	String customTrustStore = System.getProperty("javax.net.ssl.trustStore");
-        	if(!StringUtils.isEmpty(customTrustStore))
-        		this.log.info("Custom truststore is configured. Ensure that trusted certificate for all CxSAST/CxSCA endpoints are imported. Custom store path: " + customTrustStore );
+            String customTrustStore = System.getProperty("javax.net.ssl.trustStore");
+            if (!StringUtils.isEmpty(customTrustStore))
+                this.log.info("Custom truststore is configured. Ensure that trusted certificate for all CxSAST/CxSCA endpoints are imported. Custom store path: " + customTrustStore);
             cb.setConnectionManager(getHttpConnectionManager(false));
         }
         cb.setConnectionManagerShared(true);
@@ -625,6 +627,21 @@ public class CxHttpClient implements Closeable {
     }
 
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
+        //Support unicode characters
+        if (httpMethod.getURI() != null && (StringUtils.isNotEmpty(httpMethod.getURI().getHost()) ||
+                StringUtils.isNotEmpty(httpMethod.getURI().getAuthority()))) {
+            URI tmpUri = httpMethod.getURI();
+            String host = StringUtils.isNotEmpty(tmpUri.getAuthority()) ? tmpUri.getAuthority() : tmpUri.getHost();
+            host = IDN.toASCII(host, IDN.ALLOW_UNASSIGNED);
+            try {
+                URI uri = new URI(tmpUri.getScheme(), tmpUri.getUserInfo(), host, tmpUri.getPort(), tmpUri.getPath(),
+                        tmpUri.getQuery(), tmpUri.getFragment());
+                httpMethod.setURI(uri);
+            } catch (URISyntaxException e) {
+                log.error("Fail to convert URI: " + httpMethod.getURI().toString());
+            }
+        }
+
         if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
         }
