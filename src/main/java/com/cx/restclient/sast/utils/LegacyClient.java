@@ -9,14 +9,10 @@ import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.osa.dto.ClientType;
-import com.cx.restclient.sast.dto.CreateProjectRequest;
-import com.cx.restclient.sast.dto.CxNameObj;
-import com.cx.restclient.sast.dto.PostAction;
-import com.cx.restclient.sast.dto.Preset;
-import com.cx.restclient.sast.dto.Project;
+import com.cx.restclient.sast.dto.*;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -62,7 +58,7 @@ public abstract class LegacyClient {
         }
     }
 
-    public  boolean isIsNewProject() {
+    public boolean isIsNewProject() {
         return isNewProject;
     }
 
@@ -94,16 +90,16 @@ public abstract class LegacyClient {
 
 
     public String configureTeamPath() throws IOException, CxClientException {
-		if (StringUtils.isEmpty(config.getTeamPath())) {
-			List<Team> teamList = populateTeamList();
-			// If there is no chosen teamPath, just add first one from the teams
-			// list as default
-			if (StringUtils.isEmpty(teamPath) && teamList != null && !teamList.isEmpty()) {
-				teamPath = teamList.get(0).getFullName();
-			}
-		} else {
-			teamPath = config.getTeamPath();
-		}
+        if (StringUtils.isEmpty(config.getTeamPath())) {
+            List<Team> teamList = populateTeamList();
+            // If there is no chosen teamPath, just add first one from the teams
+            // list as default
+            if (StringUtils.isEmpty(teamPath) && teamList != null && !teamList.isEmpty()) {
+                teamPath = teamList.get(0).getFullName();
+            }
+        } else {
+            teamPath = config.getTeamPath();
+        }
         httpClient.setTeamPathHeader(teamPath);
         log.debug(String.format("setTeamPathHeader %s", teamPath));
         return teamPath;
@@ -377,7 +373,7 @@ public abstract class LegacyClient {
         configureTeamPath();
         return (List<PostAction>) httpClient.getRequest(SAST_CUSTOM_TASKS, CONTENT_TYPE_APPLICATION_JSON_V1, PostAction.class, 200, "post scan action list", true);
     }
-    
+
     private void printTeamPath() {
         try {
             this.teamPath = config.getTeamPath();

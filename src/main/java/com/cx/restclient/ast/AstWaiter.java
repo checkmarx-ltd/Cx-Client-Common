@@ -8,10 +8,10 @@ import com.cx.restclient.httpClient.utils.ContentType;
 import com.cx.restclient.ast.dto.common.ScanInfoResponse;
 import com.cx.restclient.ast.dto.common.ScanStatus;
 import lombok.RequiredArgsConstructor;
+import org.apache.hc.core5.http.HttpStatus;
 import org.slf4j.Logger;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 

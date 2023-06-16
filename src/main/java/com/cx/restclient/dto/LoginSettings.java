@@ -4,8 +4,10 @@ import com.cx.restclient.osa.dto.ClientType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import org.apache.http.cookie.Cookie;
+import org.apache.hc.client5.http.cookie.Cookie;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,8 +31,16 @@ public class LoginSettings {
         this.accessControlBaseUrl = accessControlBaseUrl;
     }
 
-    public String getAccessControlBaseUrl() {
-        return accessControlBaseUrl;
+    public String getAccessControlBaseUrlStr() {
+        return accessControlBaseUrl.toString();
+    }
+
+    public URI getAccessControlBaseUrl() {
+        try {
+            return new URI(accessControlBaseUrl);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void setUsername(String username) {

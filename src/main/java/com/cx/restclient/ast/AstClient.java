@@ -1,29 +1,6 @@
 package com.cx.restclient.ast;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.entity.StringEntity;
-import org.slf4j.Logger;
-
-import com.cx.restclient.ast.dto.common.ASTConfig;
-import com.cx.restclient.ast.dto.common.GitCredentials;
-import com.cx.restclient.ast.dto.common.HandlerRef;
-import com.cx.restclient.ast.dto.common.ProjectToScan;
-import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
-import com.cx.restclient.ast.dto.common.ScanConfig;
-import com.cx.restclient.ast.dto.common.ScanStartHandler;
-import com.cx.restclient.ast.dto.common.StartScanRequest;
+import com.cx.restclient.ast.dto.common.*;
 import com.cx.restclient.ast.dto.sca.AstScaConfig;
 import com.cx.restclient.common.UrlUtils;
 import com.cx.restclient.configuration.CxScanConfig;
@@ -40,6 +17,21 @@ import com.cx.restclient.sca.dto.CxSCAScanApiConfigEntry;
 import com.cx.restclient.sca.dto.GetUploadUrlRequest;
 import com.cx.restclient.sca.dto.ScanAPIConfigEntry;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public abstract class AstClient {
 
@@ -266,28 +258,27 @@ public abstract class AstClient {
     }
 
     private String getSourcesUploadUrl(ASTConfig scanConfig) throws IOException {
-    	JsonNode response;
-		if (scanConfig instanceof AstScaConfig) {
-			AstScaConfig scaConfig = (AstScaConfig) scanConfig;
-			boolean includeSources = scaConfig.isIncludeSources();
-			CxSCAScanAPIConfig scaApiConfig = CxSCAScanAPIConfig.builder()
-					.includeSourceCode(includeSources ? "true" : "false").build();
-			CxSCAScanApiConfigEntry configentry = CxSCAScanApiConfigEntry.builder().type("sca").value(scaApiConfig)
-					.build();
-			List<ScanAPIConfigEntry> scanconfigEntry = Collections.singletonList(configentry);
+        JsonNode response;
+        if (scanConfig instanceof AstScaConfig) {
+            AstScaConfig scaConfig = (AstScaConfig) scanConfig;
+            boolean includeSources = scaConfig.isIncludeSources();
+            CxSCAScanAPIConfig scaApiConfig = CxSCAScanAPIConfig.builder()
+                    .includeSourceCode(includeSources ? "true" : "false").build();
+            CxSCAScanApiConfigEntry configentry = CxSCAScanApiConfigEntry.builder().type("sca").value(scaApiConfig)
+                    .build();
+            List<ScanAPIConfigEntry> scanconfigEntry = Collections.singletonList(configentry);
 
-			GetUploadUrlRequest request = GetUploadUrlRequest.builder().
-					config(scanconfigEntry).
-					build();
+            GetUploadUrlRequest request = GetUploadUrlRequest.builder().
+                    config(scanconfigEntry).
+                    build();
 
-			StringEntity entity = HttpClientHelper.convertToStringEntity(request);
-			response = httpClient.postRequest(GET_UPLOAD_URL, null, entity, JsonNode.class, HttpStatus.SC_OK,
-					"get upload URL for sources");
-  		}
-    	else {
-    		response = httpClient.postRequest(GET_UPLOAD_URL, null, null, JsonNode.class,
+            StringEntity entity = HttpClientHelper.convertToStringEntity(request);
+            response = httpClient.postRequest(GET_UPLOAD_URL, null, entity, JsonNode.class, HttpStatus.SC_OK,
+                    "get upload URL for sources");
+        } else {
+            response = httpClient.postRequest(GET_UPLOAD_URL, null, null, JsonNode.class,
                     HttpStatus.SC_OK, "get upload URL for sources");
-    	}
+        }
 
         if (response == null || response.get("url") == null) {
             throw new CxClientException("Unable to get the upload URL.");
@@ -298,7 +289,6 @@ public abstract class AstClient {
 
     protected abstract void uploadArchive(byte[] source, String uploadUrl) throws IOException;
 
-  
 
     public State getState() {
         return state;

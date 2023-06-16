@@ -8,8 +8,9 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -23,7 +24,7 @@ public abstract class HttpClientHelper {
     private HttpClientHelper() {
     }
 
-    public static <T> T convertToObject(HttpResponse response, Class<T> responseType, boolean isCollection) throws IOException, CxClientException {
+    public static <T> T convertToObject(ClassicHttpResponse response, Class<T> responseType, boolean isCollection) throws IOException, CxClientException {
 
         if (responseType != null && responseType.isInstance(response)) {
             return (T) response;
@@ -52,7 +53,7 @@ public abstract class HttpClientHelper {
         return convertToStrObject(response, responseType);
     }
 
-    private static <T> T convertToStrObject(HttpResponse response, Class<T> valueType) throws CxClientException {
+    private static <T> T convertToStrObject(ClassicHttpResponse response, Class<T> valueType) throws CxClientException {
         ObjectMapper mapper = getObjectMapper();
         try {
             if (response.getEntity() == null) {
@@ -82,7 +83,7 @@ public abstract class HttpClientHelper {
         return new StringEntity(convertToJson(o));
     }
 
-    private static <T> T convertToCollectionObject(HttpResponse response, JavaType javaType) throws CxClientException {
+    private static <T> T convertToCollectionObject(ClassicHttpResponse response, JavaType javaType) throws CxClientException {
         ObjectMapper mapper = getObjectMapper();
         try {
             String json = IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
@@ -100,8 +101,8 @@ public abstract class HttpClientHelper {
         return result;
     }
 
-    public static void validateResponse(HttpResponse response, int expectedStatus, String message) throws CxClientException {
-        int actualStatusCode = response.getStatusLine().getStatusCode();
+    public static void validateResponse(ClassicHttpResponse response, int expectedStatus, String message) throws CxClientException {
+        int actualStatusCode = response.getCode();
         if (actualStatusCode != expectedStatus) {
             String responseBody = extractResponseBody(response);
             String readableBody = responseBody.replace("{", "")
@@ -116,7 +117,7 @@ public abstract class HttpClientHelper {
         }
     }
 
-    public static String extractResponseBody(HttpResponse response) {
+    public static String extractResponseBody(ClassicHttpResponse response) {
         try {
             return IOUtils.toString(response.getEntity().getContent());
         } catch (Exception e) {

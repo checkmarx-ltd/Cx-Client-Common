@@ -5,7 +5,7 @@ import com.cx.restclient.ast.dto.sca.AstScaConfig;
 import com.cx.restclient.dto.*;
 import com.cx.restclient.sast.dto.ReportType;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.cookie.Cookie;
+import org.apache.hc.client5.http.cookie.Cookie;
 
 import java.io.File;
 import java.io.Serializable;
@@ -222,14 +222,14 @@ public class CxScanConfig implements Serializable {
     }
 
     public String getCustomFields() {
-		return customFields;
-	}
+        return customFields;
+    }
 
-	public void setCustomFields(String customFields) {
-		this.customFields = customFields;
-	}
+    public void setCustomFields(String customFields) {
+        this.customFields = customFields;
+    }
 
-	public String getOsaLocationPath() {
+    public String getOsaLocationPath() {
         return osaLocationPath;
     }
 
@@ -379,11 +379,11 @@ public class CxScanConfig implements Serializable {
     public Integer getSastScanTimeoutInMinutes() {
         return sastScanTimeoutInMinutes == null ? -1 : sastScanTimeoutInMinutes;
     }
-    
+
     public Integer getSCAScanTimeoutInMinutes() {
         return scaScanTimeoutInMinutes == null ? -1 : scaScanTimeoutInMinutes;
     }
-    
+
     public void setSCAScanTimeoutInMinutes(Integer scaScanTimeoutInMinutes) {
         this.scaScanTimeoutInMinutes = scaScanTimeoutInMinutes;
     }
@@ -630,7 +630,7 @@ public class CxScanConfig implements Serializable {
     public void setContinueBuild(Boolean continueBuild) {
         this.continueBuild = continueBuild;
     }
-    
+
 
     public Boolean isAvoidDuplicateProjectScans() {
         return avoidDuplicateProjectScans;
@@ -845,9 +845,13 @@ public class CxScanConfig implements Serializable {
         isProxy = proxy;
     }
 
-    public Boolean isScaProxy() {return isScaProxy;}
+    public Boolean isScaProxy() {
+        return isScaProxy;
+    }
 
-    public void setScaProxy(Boolean scaProxy) {isScaProxy = scaProxy;}
+    public void setScaProxy(Boolean scaProxy) {
+        isScaProxy = scaProxy;
+    }
 
     public ProxyConfig getProxyConfig() {
         return proxyConfig;
@@ -889,12 +893,12 @@ public class CxScanConfig implements Serializable {
         useNTLM = ntlm;
     }
 
-	public Integer getPostScanActionId() {
-		return postScanActionId;
-	}
+    public Integer getPostScanActionId() {
+        return postScanActionId;
+    }
 
-	public void setPostScanActionId(Integer postScanActionId) {
-		this.postScanActionId = postScanActionId;
-	}
-    
+    public void setPostScanActionId(Integer postScanActionId) {
+        this.postScanActionId = postScanActionId;
+    }
+
 }

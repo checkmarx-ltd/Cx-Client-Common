@@ -21,10 +21,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.*;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -107,12 +107,12 @@ public class AstSastClient extends AstClient implements Scanner {
     protected String getScannerDisplayName() {
         return ScannerType.AST_SAST.getDisplayName();
     }
-    
+
     @Override
     protected void uploadArchive(byte[] source, String uploadUrl) throws IOException {
         log.info("Uploading the zipped data.");
 
-        HttpEntity request = new ByteArrayEntity(source);
+        HttpEntity request = new ByteArrayEntity(source, org.apache.hc.core5.http.ContentType.MULTIPART_FORM_DATA);
         String baseAstUri = httpClient.getRootUri();
         httpClient.setRootUri(uploadUrl);
 
@@ -120,12 +120,11 @@ public class AstSastClient extends AstClient implements Scanner {
             // Relative path is empty, because we use the whole upload URL as the base URL for the HTTP client.
             // Content type is empty, because the server at uploadUrl throws an error if Content-Type is non-empty.
             httpClient.putRequest("", "", request, JsonNode.class, HttpStatus.SC_OK, "upload ZIP file");
-        }
-        finally {
+        } finally {
             httpClient.setRootUri(baseAstUri);
         }
     }
-    
+
     @Override
     public Results initiateScan() {
         log.info("----------------------------------- Initiating {} Scan:------------------------------------",

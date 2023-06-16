@@ -9,51 +9,43 @@ import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.exception.CxTokenExpiredException;
 import com.cx.restclient.osa.dto.ClientType;
 import com.google.gson.Gson;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.*;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.auth.AuthSchemeProvider;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.*;
-import org.apache.http.client.params.AuthPolicy;
-import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.routing.HttpRoute;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustAllStrategy;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.NoConnectionReuseStrategy;
-import org.apache.http.impl.auth.BasicSchemeFactory;
-import org.apache.http.impl.auth.DigestSchemeFactory;
-import org.apache.http.impl.auth.win.WindowsCredentialsProvider;
-import org.apache.http.impl.auth.win.WindowsNTLMSchemeFactory;
-import org.apache.http.impl.auth.win.WindowsNegotiateSchemeFactory;
-import org.apache.http.impl.client.*;
-import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
-import org.apache.http.ssl.TrustStrategy;
-import org.json.JSONException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.HttpRoute;
+import org.apache.hc.client5.http.auth.*;
+import org.apache.hc.client5.http.classic.methods.*;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.cookie.BasicCookieStore;
+import org.apache.hc.client5.http.cookie.Cookie;
+import org.apache.hc.client5.http.cookie.CookieStore;
+import org.apache.hc.client5.http.cookie.StandardCookieSpec;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy;
+import org.apache.hc.client5.http.impl.DefaultClientConnectionReuseStrategy;
+import org.apache.hc.client5.http.impl.auth.*;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.routing.DefaultProxyRoutePlanner;
+import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.TrustAllStrategy;
+import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.config.Registry;
+import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.hc.core5.ssl.TrustStrategy;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
@@ -101,7 +93,7 @@ public class CxHttpClient implements Closeable {
     private static final String KEY_USER = "user";
     private static final String KEY_DOMAIN = "domain";
 
-    private HttpClient apacheClient;
+    private CloseableHttpClient apacheClient;
 
     private Logger log;
     private TokenLoginResponse token;
@@ -128,7 +120,7 @@ public class CxHttpClient implements Closeable {
         this.useSSo = isSSO;
         this.useNTLM = useNTLM;
         //create httpclient
-        cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
+        cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(StandardCookieSpec.STRICT).build());
         setSSLTls("TLSv1.2", log);
         SSLContextBuilder builder = new SSLContextBuilder();
         SSLConnectionSocketFactory sslConnectionSocketFactory = null;
@@ -147,7 +139,6 @@ public class CxHttpClient implements Closeable {
             } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                 log.error(e.getMessage());
             }
-            cb.setSSLSocketFactory(sslConnectionSocketFactory);
             cb.setConnectionManager(cm);
         } else {
             cb.setConnectionManager(getHttpConnectionManager(false));
@@ -161,10 +152,10 @@ public class CxHttpClient implements Closeable {
         }
 
         if (Boolean.TRUE.equals(useSSo)) {
-            cb.setDefaultCredentialsProvider(new WindowsCredentialsProvider(new SystemDefaultCredentialsProvider()));
+            cb.setDefaultCredentialsProvider(new SystemDefaultCredentialsProvider());
             cb.setDefaultCookieStore(cookieStore);
         } else {
-            cb.setConnectionReuseStrategy(new NoConnectionReuseStrategy());
+            cb.setConnectionReuseStrategy(new DefaultClientConnectionReuseStrategy());
         }
         cb.setDefaultAuthSchemeRegistry(getAuthSchemeProviderRegistry());
 
@@ -198,23 +189,23 @@ public class CxHttpClient implements Closeable {
         }
 
         log.info("Setting NTLM proxy for Checkmarx http client");
-        HttpHost proxy = new HttpHost(proxyConfig.getHost(), proxyConfig.getPort(), "http");
+        HttpHost proxy = new HttpHost("http", proxyConfig.getHost(), proxyConfig.getPort());
 
         HashMap<String, String> userDomainMap = splitDomainAndTheUserName(proxyConfig.getUsername());
         String user = userDomainMap.get(KEY_USER);
         String domain = userDomainMap.get(KEY_DOMAIN);
 
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        final NTCredentials credentials = new NTCredentials(user, proxyConfig.getPassword(), null, domain);
-        credsProvider.setCredentials(AuthScope.ANY, credentials);
+        BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
+        final NTCredentials credentials = new NTCredentials(user, proxyConfig.getPassword().toCharArray(), null, domain);
+        credsProvider.setCredentials(new AuthScope(null, null, -1, null, null), credentials);
 
         apacheClient = HttpClientBuilder.create()
                 .setDefaultCredentialsProvider(credsProvider)
                 .setProxy(proxy)
-                .setProxyAuthenticationStrategy(ProxyAuthenticationStrategy.INSTANCE)
+                .setProxyAuthenticationStrategy(DefaultAuthenticationStrategy.INSTANCE)
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setAuthenticationEnabled(true)
-                        .setProxyPreferredAuthSchemes(Arrays.asList(AuthPolicy.NTLM))
+                        .setProxyPreferredAuthSchemes(Arrays.asList(StandardAuthScheme.NTLM))
                         .build()
                 )
                 .build();
@@ -260,11 +251,11 @@ public class CxHttpClient implements Closeable {
         }
 
         String scheme = proxyConfig.isUseHttps() ? HTTPS : "http";
-        HttpHost proxy = new HttpHost(proxyConfig.getHost(), proxyConfig.getPort(), scheme);
+        HttpHost proxy = new HttpHost(scheme, proxyConfig.getHost(), proxyConfig.getPort());
         if (StringUtils.isNotEmpty(proxyConfig.getUsername()) &&
                 StringUtils.isNotEmpty(proxyConfig.getPassword())) {
-            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword());
-            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(proxyConfig.getUsername(), proxyConfig.getPassword().toCharArray());
+            BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
             credsProvider.setCredentials(new AuthScope(proxy), credentials);
             cb.setDefaultCredentialsProvider(credsProvider);
         }
@@ -272,7 +263,7 @@ public class CxHttpClient implements Closeable {
         logi.info("Setting proxy for Checkmarx http client");
         cb.setProxy(proxy);
         cb.setRoutePlanner(getRoutePlanner(proxyConfig, proxy, logi));
-        cb.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
+        cb.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
         return true;
     }
 
@@ -297,7 +288,7 @@ public class CxHttpClient implements Closeable {
                         }
                     }
                 }
-                return super.determineRoute(host, request, context);
+                return super.determineRoute(host, context);
             }
         };
     }
@@ -347,12 +338,12 @@ public class CxHttpClient implements Closeable {
         return connManager;
     }
 
-    private static Registry<AuthSchemeProvider> getAuthSchemeProviderRegistry() {
-        return RegistryBuilder.<AuthSchemeProvider>create()
-                .register(AuthSchemes.DIGEST, new DigestSchemeFactory())
-                .register(AuthSchemes.BASIC, new BasicSchemeFactory())
-                .register(AuthSchemes.NTLM, new WindowsNTLMSchemeFactory(null))
-                .register(AuthSchemes.SPNEGO, new WindowsNegotiateSchemeFactory(null))
+    private static Registry<AuthSchemeFactory> getAuthSchemeProviderRegistry() {
+        return RegistryBuilder.<AuthSchemeFactory>create()
+                .register(StandardAuthScheme.DIGEST, DigestSchemeFactory.INSTANCE)
+                .register(StandardAuthScheme.BASIC, BasicSchemeFactory.INSTANCE)
+                .register(StandardAuthScheme.NTLM, NTLMSchemeFactory.INSTANCE)
+                .register(StandardAuthScheme.SPNEGO, SPNegoSchemeFactory.DEFAULT)
                 .build();
     }
 
@@ -381,24 +372,30 @@ public class CxHttpClient implements Closeable {
     }
 
     public ArrayList<Cookie> ssoLegacyLogin() {
-        HttpUriRequest request;
-        HttpResponse loginResponse = null;
+        HttpPost request;
+        CloseableHttpResponse loginResponse = null;
 
         try {
-            request = RequestBuilder.post()
-                    .setUri(rootUri + "auth/ssologin")
-                    .setConfig(RequestConfig.DEFAULT)
-                    .setEntity(new StringEntity("", StandardCharsets.UTF_8))
-                    .build();
+            request = new HttpPost(rootUri + "auth/ssologin");
+            request.setConfig(RequestConfig.DEFAULT);
+            request.setEntity(new StringEntity("", StandardCharsets.UTF_8));
 
-            loginResponse = apacheClient.execute(request);
-
+            loginResponse = (CloseableHttpResponse) apacheClient.execute(request);
         } catch (IOException e) {
             String message = LOGIN_FAILED_MSG + e.getMessage();
             log.error(message);
             throw new CxClientException(message);
         } finally {
-            HttpClientUtils.closeQuietly(loginResponse);
+            if (loginResponse != null) {
+                HttpEntity entity = loginResponse.getEntity();
+                if (entity != null) {
+                    try {
+                        EntityUtils.consume(entity);
+                    } catch (IOException ex) {
+                        log.error("Fail to perform SSO login", ex);
+                    }
+                }
+            }
         }
         setSessionCookies(cookieStore.getCookies());
 
@@ -431,48 +428,43 @@ public class CxHttpClient implements Closeable {
     }
 
     private TokenLoginResponse ssoLogin() {
-        HttpUriRequest request;
         HttpResponse response;
         final String BASE_URL = "/auth/identity/";
 
         RequestConfig requestConfig = RequestConfig.custom()
                 .setRedirectsEnabled(false)
                 .setAuthenticationEnabled(true)
-                .setCookieSpec(CookieSpecs.STANDARD)
+                .setCookieSpec(StandardCookieSpec.RELAXED)
                 .build();
         try {
             //Request1
-            request = RequestBuilder.post()
-                    .setUri(rootUri + SSO_AUTHENTICATION)
-                    .setConfig(requestConfig)
-                    .setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
-                    .setEntity(generateSSOEntity())
-                    .build();
+            HttpPost firstReq = new HttpPost(rootUri + SSO_AUTHENTICATION);
+            firstReq.setConfig(requestConfig);
+            firstReq.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString());
+            firstReq.setEntity(generateSSOEntity());
 
-            response = apacheClient.execute(request);
+            response = apacheClient.execute(firstReq);
 
             //Request2
             String cookies = retrieveCookies();
             String redirectURL = response.getHeaders(LOCATION_HEADER)[0].getValue();
-            request = RequestBuilder.get()
-                    .setUri(rootUri + BASE_URL + redirectURL)
-                    .setConfig(requestConfig)
-                    .setHeader("Cookie", cookies)
-                    .setHeader("Upgrade-Insecure-Requests", "1")
-                    .build();
-            response = apacheClient.execute(request);
+            HttpGet secondReq = new HttpGet(rootUri + BASE_URL + redirectURL);
+            secondReq.setConfig(requestConfig);
+            secondReq.setHeader("Cookie", cookies);
+            secondReq.setHeader("Upgrade-Insecure-Requests", "1");
+
+            response = apacheClient.execute(secondReq);
 
             //Request3
             cookies = retrieveCookies();
             redirectURL = response.getHeaders(LOCATION_HEADER)[0].getValue();
             redirectURL = rootUri + redirectURL.replace("/CxRestAPI/", "");
-            request = RequestBuilder.get()
-                    .setUri(redirectURL)
-                    .setConfig(requestConfig)
-                    .setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString())
-                    .setHeader("Cookie", cookies)
-                    .build();
-            response = apacheClient.execute(request);
+            HttpGet thirdReq = new HttpGet(redirectURL);
+            thirdReq.setConfig(requestConfig);
+            thirdReq.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.toString());
+            thirdReq.setHeader("Cookie", cookies);
+
+            response = apacheClient.execute(thirdReq);
             return extractToken(response);
         } catch (IOException e) {
             throw new CxClientException(LOGIN_FAILED_MSG + e.getMessage());
@@ -579,7 +571,7 @@ public class CxHttpClient implements Closeable {
         parameters.add(new BasicNameValuePair(CLIENT_SECRET_PROP, clientType.getClientSecret()));
         parameters.add(new BasicNameValuePair(REFRESH_TOKEN_PROP, settings.getRefreshToken()));
 
-        return new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8.name());
+        return new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8);
     }
 
     //GET REQUEST
@@ -620,7 +612,7 @@ public class CxHttpClient implements Closeable {
         customHeaders.put(name, value);
     }
 
-    public HttpResponse request(HttpRequestBase httpMethod) {
+    public HttpResponse request(HttpUriRequestBase httpMethod) {
         try {
             return apacheClient.execute(httpMethod);
         } catch (IOException e) {
@@ -629,14 +621,16 @@ public class CxHttpClient implements Closeable {
         }
     }
 
-    private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
+    private <T> T request(HttpUriRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
         if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
         }
-        if (entity != null && httpMethod instanceof HttpEntityEnclosingRequestBase) { //Entity for Post methods
-            ((HttpEntityEnclosingRequestBase) httpMethod).setEntity(entity);
+        if (entity != null && (httpMethod instanceof HttpPost || httpMethod instanceof HttpPut
+                || httpMethod instanceof HttpDelete || httpMethod instanceof HttpOptions
+                || httpMethod instanceof HttpPatch)) { //Entity for Post methods
+            httpMethod.setEntity(entity);
         }
-        HttpResponse response = null;
+        ClassicHttpResponse response = null;
         int statusCode = 0;
 
         try {
@@ -652,7 +646,7 @@ public class CxHttpClient implements Closeable {
             }
 
             response = apacheClient.execute(httpMethod);
-            statusCode = response.getStatusLine().getStatusCode();
+            statusCode = response.getCode();
 
             if (statusCode == HttpStatus.SC_UNAUTHORIZED) { // Token has probably expired
                 throw new CxTokenExpiredException(extractResponseBody(response));
@@ -675,13 +669,10 @@ public class CxHttpClient implements Closeable {
                 }
             }
             throw ex;
-        } finally {
-            httpMethod.releaseConnection();
-            HttpClientUtils.closeQuietly(response);
         }
     }
 
-    private void removeHeaders(HttpRequestBase httpMethod) {
+    private void removeHeaders(HttpUriRequestBase httpMethod) {
         httpMethod.removeHeaders("Content-type");
         httpMethod.removeHeaders(ORIGIN_HEADER);
         httpMethod.removeHeaders(ORIGIN_URL_HEADER);
@@ -690,7 +681,13 @@ public class CxHttpClient implements Closeable {
     }
 
     public void close() {
-        HttpClientUtils.closeQuietly(apacheClient);
+        if (apacheClient != null && apacheClient instanceof Closeable) {
+            try {
+                ((Closeable) apacheClient).close();
+            } catch (IOException ex) {
+                log.error("Fail to close apache http client", ex);
+            }
+        }
     }
 
     private void setSSLTls(String protocol, Logger log) {
@@ -725,8 +722,8 @@ public class CxHttpClient implements Closeable {
             List<NameValuePair> urlParameters = new ArrayList<>();
             urlParameters.add(new BasicNameValuePair("redirectUrl", redirectUrl));
             urlParameters.add(new BasicNameValuePair("providerid", providerId));
-            return new UrlEncodedFormEntity(urlParameters, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
+            return new UrlEncodedFormEntity(urlParameters, StandardCharsets.UTF_8);
+        } catch (Exception e) {
             throw new CxClientException(e.getMessage());
         }
     }
@@ -735,10 +732,10 @@ public class CxHttpClient implements Closeable {
         this.token = token;
     }
 
-    private void logTokenError(HttpRequestBase httpMethod, int statusCode, CxTokenExpiredException ex) {
+    private void logTokenError(HttpUriRequestBase httpMethod, int statusCode, CxTokenExpiredException ex) {
         String message = String.format("Received status code %d for URL: %s with the message: %s",
                 statusCode,
-                httpMethod.getURI(),
+                httpMethod.getRequestUri(),
                 ex.getMessage());
 
         log.warn(message);
