@@ -18,7 +18,8 @@ public class CxScanConfig implements Serializable {
 
     private String cxOrigin;
     private CxVersion cxVersion;
-
+    private boolean overrideProjectSettings;
+    private boolean isExestingProject;
     private boolean disableCertificateValidation = false;
     private boolean useSSOLogin = false;
 
@@ -224,6 +225,13 @@ public class CxScanConfig implements Serializable {
         this.url = url;
     }
 
+    public boolean isOverrideProjectSettings() {
+        return overrideProjectSettings;
+    }
+
+    public void setOverrideProjectSettings(boolean overrideProjectSettings) {
+        this.overrideProjectSettings = overrideProjectSettings;
+    }
     public String getProjectName() {
         return projectName;
     }
@@ -387,6 +395,13 @@ public class CxScanConfig implements Serializable {
         this.sastNewResultsThresholdSeverity = sastNewResultsThresholdSeverity;
     }
 
+    public boolean isExestingProject() {
+        return isExestingProject;
+    }
+
+    public void setExestingProject(boolean exestingProject) {
+        isExestingProject = exestingProject;
+    }
     public Boolean getSastNewResultsThresholdEnabled() {
         return sastNewResultsThresholdEnabled;
     }

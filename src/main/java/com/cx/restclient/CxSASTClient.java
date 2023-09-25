@@ -3,10 +3,7 @@ package com.cx.restclient;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.PathFilter;
-import com.cx.restclient.dto.RemoteSourceRequest;
-import com.cx.restclient.dto.RemoteSourceTypes;
-import com.cx.restclient.dto.Status;
+import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.sast.dto.*;
@@ -23,9 +20,7 @@ import org.apache.http.entity.mime.content.InputStreamBody;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -53,6 +48,9 @@ class CxSASTClient {
     private Waiter<ResponseQueueScanStatus> sastWaiter;
     private static final String SCAN_ID_PATH_PARAM = "{scanId}";
     private static final String PROJECT_ID_PATH_PARAM = "{projectId}";
+
+    private static final String ZIPPED_SOURCE = "zippedSource";
+    private static final String ENGINE_CONFIGURATION_ID_DEFAULT = "0";
 
     private Waiter<ReportStatus> reportWaiter = new Waiter<ReportStatus>("Scan report", 10, 3) {
         @Override
@@ -128,14 +126,15 @@ class CxSASTClient {
     }
 
     private long createLocalSASTScan(long projectId) throws IOException, CxClientException {
-        configureScanSettings(projectId);
+
         //prepare sources for scan
         PathFilter filter = new PathFilter(config.getSastFolderExclusions(), config.getSastFilterPattern(), log);
-        File zipFile = CxZipUtils.getZippedSources(config, filter, config.getSourceDir(), log);
-        uploadZipFile(zipFile, projectId);
-        CxZipUtils.deleteZippedSources(zipFile, config, log);
-
-        return createScan(projectId);
+        byte[] zipFile = CxZipUtils.getZippedSourcesbyte(config, filter, config.getSourceDir(), log);
+        if(config.isOverrideProjectSettings()){
+            configureScanSettings(projectId);
+        }
+        ScanWithSettingsResponse scanWithSettingsResponse= scanWithSettings(zipFile,projectId,false);
+        return scanWithSettingsResponse.getId();
     }
 
     private long createRemoteSourceScan(long projectId) throws IOException, CxClientException {
@@ -349,6 +348,28 @@ class CxSASTClient {
         log.info("Exclude folders pattern: " + excludeFoldersPattern);
         log.info("Exclude files pattern: " + excludeFilesPattern);
         httpClient.putRequest(String.format(SAST_EXCLUDE_FOLDERS_FILES_PATTERNS, projectId), CONTENT_TYPE_APPLICATION_JSON_V1, entity, null, 200, "exclude project's settings");
+    }
+    private ScanWithSettingsResponse scanWithSettings(byte[] zipFile, long projectId, boolean isRemote) throws IOException {
+        log.info("Uploading zip file");
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        if (!isRemote) {
+            try (InputStream is = new ByteArrayInputStream(zipFile)) {
+                InputStreamBody streamBody = new InputStreamBody(is, ContentType.APPLICATION_OCTET_STREAM, ZIPPED_SOURCE);
+                builder.addPart(ZIPPED_SOURCE, streamBody);
+            }
+        }
+        builder.addTextBody("projectId", Long.toString(projectId), ContentType.APPLICATION_JSON);
+        builder.addTextBody("overrideProjectSetting", "false", ContentType.APPLICATION_JSON);
+        builder.addTextBody("isIncremental", config.getIncremental().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("isPublic", config.getPublic().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("forceScan", config.getForceScan().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("presetId", config.getPresetId().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("comment", config.getScanComment() == null ? "" : config.getScanComment(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("engineConfigurationId", config.getEngineConfigurationId() != null ? config.getEngineConfigurationId().toString() : ENGINE_CONFIGURATION_ID_DEFAULT, ContentType.APPLICATION_JSON);
+
+        HttpEntity entity = builder.build();
+        return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
     }
 
     private void uploadZipFile(File zipFile, long projectId) throws CxClientException, IOException {

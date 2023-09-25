@@ -11,6 +11,8 @@ public class SASTParam {
     public static final String SAST_CREATE_SCAN = "sast/scans"; //Run a new Scan
     public static final String SAST_SCAN = "sast/scans/{scanId}"; //Get Scan status (by scan ID)
     public static final String SAST_QUEUE_SCAN_STATUS = "sast/scansQueue/{scanId}";
+
+    public static final String SCAN_WITH_SETTINGS_URL = "sast/scanWithSettings";
     public static final String SAST_GET_PROJECT_BY_ID = "projects/{projectId}";
     public static final String SAST_GET_PROJECT = "projects?projectname={name}&teamid={teamId}";// Get  project)
     public static final String SAST_GET_ALL_PROJECTS = "projects";// Get  project)
