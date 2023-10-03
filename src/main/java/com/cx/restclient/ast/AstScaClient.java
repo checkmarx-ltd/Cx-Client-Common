@@ -238,10 +238,21 @@ public class AstScaClient extends AstClient implements Scanner {
         AstScaResults scaResults = new AstScaResults();
         
         try {
+        	log.debug("ASC init before login.");
+        	System.out.println("ASC init before login.");
             login();
+            log.debug("ASC init after login.");
+            System.out.println("ASC init after login.");
         } catch (Exception e) {
+        	log.error("ASC init exception:"+e.getMessage());
+        	System.out.println("ASC init exception:"+e.getMessage());
+        	e.printStackTrace();
             super.handleInitError(e, scaResults);
+            log.debug("ASC init after super handleInitError: scaResults:"+scaResults);
+            System.out.println("ASC init after super handleInitError: scaResults:"+scaResults);
         }
+        log.debug("ASC init completed successfully");
+        System.out.println("ASC init completed successfully");
         return scaResults;
     }
 
@@ -863,7 +874,8 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
     public void login() throws IOException {
-        log.info("Logging into {}", getScannerDisplayName());        
+        log.info("Logging into {}", getScannerDisplayName());
+        System.out.println("Logging into "+ getScannerDisplayName());
         AstScaConfig scaConfig = config.getAstScaConfig();
 
         String acUrl = scaConfig.getAccessControlUrl();
@@ -873,12 +885,16 @@ public class AstScaClient extends AstClient implements Scanner {
                 .password(scaConfig.getPassword())
                 .tenant(scaConfig.getTenant())
                 .build();
-
+        log.info("ASC login acUrl"+acUrl);
+        System.out.println("ASC login acUrl"+acUrl);
         ClientTypeResolver resolver = new ClientTypeResolver(config);
         ClientType clientType = resolver.determineClientType(acUrl);
         settings.setClientTypeForPasswordAuth(clientType);
-        
-        httpClient.login(settings);        
+        log.info("ASC login before httpClient login");
+        System.out.println("ASC login before httpClient login");
+        httpClient.login(settings);
+        log.info("ASC login httpClient login successful");
+        System.out.println("ASC login httpClient login successful");
     }
     
     public void close() {

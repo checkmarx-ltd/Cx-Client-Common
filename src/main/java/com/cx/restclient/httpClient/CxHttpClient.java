@@ -365,22 +365,40 @@ public class CxHttpClient implements Closeable {
 
         if (!settings.getSessionCookies().isEmpty()) {
             setSessionCookies(settings.getSessionCookies());
+            log.debug("CHC login : setting session cookies.");
+            System.out.println("CHC login : setting session cookies.");
             return;
         }
 
         if (settings.getRefreshToken() != null) {
             token = getAccessTokenFromRefreshToken(settings);
+            log.debug("CHC login : getting refresh token.");
+            System.out.println("CHC login : getting refresh token.");
         } else if (Boolean.TRUE.equals(useSSo)) {
+        	log.debug("CHC login : useSSO");
+            System.out.println("CHC login : useSSO");
             if (settings.getVersion().equals("lower than 9.0")) {
+            	log.debug("CHC login: version lower than 9.0");
+                System.out.println("CHC login: version lower than 9.0");
                 ssoLegacyLogin();
+                log.debug("CHC login: ssoLegacyLogin");
+                System.out.println("CHC login: ssoLegacyLogin");
             } else {
+            	log.debug("CHC login: version NOT lower than 9.0");
+                System.out.println("CHC login: version NOT lower than 9.0");
                 token = ssoLogin();
+                log.debug("CHC login: ssoLogin");
+                System.out.println("CHC login: ssoLogin");
                 // Don't delete this print. VS Code plugin relies on CxCLI output to work properly.
                 // Also we don't want the token to appear in regular logs.
                 System.out.printf("Access Token: %s%n", token.getAccess_token());   // NOSONAR: we need standard output here.
             }
         } else {
+        	log.debug("CHC login: generating token");
+            System.out.println("CHC login: generating token");
             token = generateToken(settings);
+            log.debug("CHC login: Token generated");
+            System.out.println("CHC login: Token generated");
         }
     }
 
@@ -400,6 +418,7 @@ public class CxHttpClient implements Closeable {
         } catch (IOException e) {
             String message = LOGIN_FAILED_MSG + e.getMessage();
             log.error(message);
+            e.printStackTrace();
             throw new CxClientException(message);
         } finally {
             HttpClientUtils.closeQuietly(loginResponse);
@@ -411,6 +430,8 @@ public class CxHttpClient implements Closeable {
     }
 
     private void setSessionCookies(List<Cookie> cookies) {
+    	log.debug("CHC setSessionCookies");
+    	System.out.println("CHC setSessionCookies");
         String cxCookie = null;
         String csrfToken = null;
 
@@ -432,6 +453,8 @@ public class CxHttpClient implements Closeable {
         System.out.printf("cookie: CXCSRFToken=%s; cxCookie=%s%n", csrfToken, cxCookie);
 
         apacheClient = cb.setDefaultHeaders(headers).build();
+        log.debug("CHC session Cookies are set");
+    	System.out.println("CHC session Cookies are set");
     }
 
     private TokenLoginResponse ssoLogin() {
@@ -479,6 +502,9 @@ public class CxHttpClient implements Closeable {
             response = apacheClient.execute(request);
             return extractToken(response);
         } catch (IOException e) {
+        	log.error(e.getMessage());
+        	System.out.println(e.getMessage());
+        	e.printStackTrace();
             throw new CxClientException(LOGIN_FAILED_MSG + e.getMessage());
         }
     }
@@ -512,13 +538,18 @@ public class CxHttpClient implements Closeable {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
+        	log.error("CHC generateToken: error occurred while generating token:"+e.getMessage());
+            System.out.println("CHC generateToken: error occurred while generating token:"+e.getMessage());
+            e.printStackTrace();            
             if (!e.getMessage().contains("invalid_scope")) {
-                throw new CxClientException(String.format("Failed to generate access token, failure error was: %s", e.getMessage()), e);
+            	throw new CxClientException(String.format("Failed to generate access token, failure error was: %s", e.getMessage()), e);
             }
             ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
             settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
             UrlEncodedFormEntity requestEntityForSecondLoginRetry = getAuthRequest(settings);
             HttpPost post_1 = new HttpPost(settings.getAccessControlBaseUrl());
+            log.debug("CHC generateToken: retrying second login:"+settings.getAccessControlBaseUrl());
+            System.out.println("CHC generateToken: retrying second login:"+settings.getAccessControlBaseUrl());
             return request(post_1, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntityForSecondLoginRetry,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         }
@@ -531,6 +562,9 @@ public class CxHttpClient implements Closeable {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
+        	log.error(e.getMessage());
+        	System.out.println(e.getMessage());
+        	e.printStackTrace();
             throw new CxClientException(String.format("Failed to generate access token from refresh token. The error was: %s", e.getMessage()), e);
         }
     }
