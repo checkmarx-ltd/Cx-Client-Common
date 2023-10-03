@@ -534,7 +534,9 @@ public class CxHttpClient implements Closeable {
     public TokenLoginResponse generateToken(LoginSettings settings) throws IOException {
         UrlEncodedFormEntity requestEntity = getAuthRequest(settings);
         HttpPost post = new HttpPost(settings.getAccessControlBaseUrl());
+        log.debug("CHC generateToken login settings:"+settings.getAccessControlBaseUrl() +":version:"+settings.getVersion());
         try {
+        	log.debug("CHC generateToken before request");
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
@@ -552,6 +554,13 @@ public class CxHttpClient implements Closeable {
             System.out.println("CHC generateToken: retrying second login:"+settings.getAccessControlBaseUrl());
             return request(post_1, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntityForSecondLoginRetry,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
+        }
+        catch(Exception e)
+        {
+        	log.error("Error while generating token :",e);
+        	System.out.println("Error while generating token :"+e.getMessage());
+        	e.printStackTrace();
+        	throw e;
         }
     }
 
@@ -659,12 +668,15 @@ public class CxHttpClient implements Closeable {
     }
 
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
-        if (contentType != null) {
+        log.debug("CHC request:HTTP method="+httpMethod.getMethod()+":contentType="+contentType+":expectStatus="+expectStatus+":isCollection="+isCollection+":retry="+retry);
+    	if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
         }
+    	log.debug("CHC request after HTTPMethod addHeader");
         if (entity != null && httpMethod instanceof HttpEntityEnclosingRequestBase) { //Entity for Post methods
             ((HttpEntityEnclosingRequestBase) httpMethod).setEntity(entity);
         }
+        log.debug("CHC request after HTTPMethod setEntity");
         HttpResponse response = null;
         int statusCode = 0;
 
@@ -672,22 +684,28 @@ public class CxHttpClient implements Closeable {
             httpMethod.addHeader(ORIGIN_HEADER, cxOrigin);
             httpMethod.addHeader(ORIGIN_URL_HEADER, cxOriginUrl);
             httpMethod.addHeader(TEAM_PATH, this.teamPath);
+            log.debug("CHC request after HTTPMethod add teampath in header");
             if (token != null) {
                 httpMethod.addHeader(HttpHeaders.AUTHORIZATION, token.getToken_type() + " " + token.getAccess_token());
             }
+            log.debug("CHC request after HTTPMethod add authorization token in header");
 
             for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
                 httpMethod.addHeader(entry.getKey(), entry.getValue());
             }
-
+            log.debug("CHC request after HTTPMethod adding other header keys");
+            log.debug("CHC request before invoking apacheclient execute");
             response = apacheClient.execute(httpMethod);
+            log.debug("CHC request after invoking apacheclient execute");
             statusCode = response.getStatusLine().getStatusCode();
+            log.debug("CHC request response statusCode="+statusCode);
 
             if (statusCode == HttpStatus.SC_UNAUTHORIZED) { // Token has probably expired
                 throw new CxTokenExpiredException(extractResponseBody(response));
             }
-
+            log.debug("CHC request before validateResponse"+response);
             validateResponse(response, expectStatus, "Failed to " + failedMsg);
+            log.debug("CHC request after validateResponse");
 
             //extract response as object and return the link
             return convertToObject(response, responseType, isCollection);
@@ -704,7 +722,14 @@ public class CxHttpClient implements Closeable {
                 }
             }
             throw ex;
-        } finally {
+        }
+        catch(Exception e)
+        {
+        	log.error("Exception occurred ",e);
+        	System.out.println(e.getMessage());
+        	e.printStackTrace();
+        	throw e;
+        }finally {
             httpMethod.releaseConnection();
             HttpClientUtils.closeQuietly(response);
         }
