@@ -1,6 +1,6 @@
 package com.cx.restclient.sast.dto;
 
-import jakarta.xml.bind.annotation.*;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
