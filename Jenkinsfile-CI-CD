@@ -18,6 +18,7 @@ def vmwareNetwork = "Lab"
 def automationBranch = "9.0.0"
 
 pipeline {
+    
     parameters {
         string(name: "vmTemplate94",defaultValue: "${vmTemplate94}", description: "Template for 9.4 VM")
         string(name: "vmTemplate95",defaultValue: "${vmTemplate95}", description: "Template for 9.5 VM")
