@@ -16,7 +16,54 @@ import java.util.*;
  */
 public class CxScanConfig implements Serializable {
 
-    private String cxOrigin;
+    @Override
+	public String toString() {
+		return "CxScanConfig [cxOrigin=" + cxOrigin + ", cxOriginUrl=" + cxOriginUrl + ", cxVersion=" + cxVersion
+				+ ", projectRetentionRate=" + projectRetentionRate + ", enableDataRetention=" + enableDataRetention
+				+ ", disableCertificateValidation=" + disableCertificateValidation + ", useSSOLogin=" + useSSOLogin
+				+ ", sourceDir=" + sourceDir + ", osaLocationPath=" + osaLocationPath + ", reportsDir=" + reportsDir
+				+ ", reports=" + reports 
+				+ ", username=" + (username==null?"is null":"not null") + ", password=" + (password==null?"is null":"not null")+ ", refreshToken="
+				+ refreshToken + ", url=" + url + ", projectName=" + projectName + ", teamPath=" + teamPath
+				+ ", mvnPath=" + mvnPath + ", teamId=" + teamId + ", denyProject=" + denyProject + ", hideResults="
+				+ hideResults + ", continueBuild=" + continueBuild + ", isPublic=" + isPublic + ", forceScan="
+				+ forceScan + ", presetName=" + presetName + ", presetId=" + presetId + ", postScanName=" + postScanName
+				+ ", sastFolderExclusions=" + sastFolderExclusions + ", sastFilterPattern=" + sastFilterPattern
+				+ ", sastScanTimeoutInMinutes=" + sastScanTimeoutInMinutes + ", scaScanTimeoutInMinutes="
+				+ scaScanTimeoutInMinutes + ", osaScanTimeoutInMinutes=" + osaScanTimeoutInMinutes + ", scanComment="
+				+ scanComment + ", isIncremental=" + isIncremental + ", isSynchronous=" + isSynchronous
+				+ ", sastThresholdsEnabled=" + sastThresholdsEnabled + ", sastHighThreshold=" + sastHighThreshold
+				+ ", sastMediumThreshold=" + sastMediumThreshold + ", sastLowThreshold=" + sastLowThreshold
+				+ ", sastNewResultsThresholdEnabled=" + sastNewResultsThresholdEnabled
+				+ ", sastNewResultsThresholdSeverity=" + sastNewResultsThresholdSeverity + ", token=" + token
+				+ ", generatePDFReport=" + generatePDFReport + ", zipFile=" + zipFile + ", engineConfigurationId="
+				+ engineConfigurationId + ", engineConfigurationName=" + engineConfigurationName
+				+ ", ignoreBenignErrors=" + ignoreBenignErrors + ", osaFolderExclusions=" + osaFolderExclusions
+				+ ", osaFilterPattern=" + osaFilterPattern + ", osaArchiveIncludePatterns=" + osaArchiveIncludePatterns
+				+ ", osaGenerateJsonReport=" + osaGenerateJsonReport + ", osaRunInstall=" + osaRunInstall
+				+ ", osaThresholdsEnabled=" + osaThresholdsEnabled + ", osaFailOnError=" + osaFailOnError
+				+ ", osaHighThreshold=" + osaHighThreshold + ", osaMediumThreshold=" + osaMediumThreshold
+				+ ", osaLowThreshold=" + osaLowThreshold + ", osaFsaConfig=" + osaFsaConfig + ", osaDependenciesJson="
+				+ osaDependenciesJson + ", avoidDuplicateProjectScans=" + avoidDuplicateProjectScans
+				+ ", enablePolicyViolations=" + enablePolicyViolations + ", generateXmlReport=" + generateXmlReport
+				+ ", cxARMUrl=" + cxARMUrl + ", paths=" + Arrays.toString(paths) + ", remoteType=" + remoteType
+				+ ", remoteSrcUser=" + (remoteSrcUser==null?"is null":"not null") + ", remoteSrcPass=" + (remoteSrcPass==null?"is null":"not null") + ", remoteSrcUrl="
+				+ remoteSrcUrl + ", remoteSrcPort=" + remoteSrcPort + ", remoteSrcKeyFile="
+				+ Arrays.toString(remoteSrcKeyFile) + ", remoteSrcBranch=" + remoteSrcBranch + ", perforceMode="
+				+ perforceMode + ", progressInterval=" + progressInterval + ", osaProgressInterval="
+				+ osaProgressInterval + ", connectionRetries=" + connectionRetries + ", osaScanDepth=" + osaScanDepth
+				+ ", maxZipSize=" + maxZipSize + ", defaultProjectName=" + defaultProjectName + ", scaJsonReport="
+				+ scaJsonReport + ", astScaConfig=" + astScaConfig + ", astSastConfig=" + astSastConfig
+				+ ", scannerTypes=" + scannerTypes + ", sessionCookies=" + sessionCookies + ", isProxy=" + isProxy
+				+ ", isScaProxy=" + isScaProxy + ", proxyConfig=" + proxyConfig + ", proxyScaConfig=" + proxyScaConfig
+				+ ", useNTLM=" + useNTLM + ", generateScaReport=" + generateScaReport + ", hasScaReportFormat="
+				+ hasScaReportFormat + ", scaReportFormat=" + scaReportFormat + ", postScanActionId=" + postScanActionId
+				+ ", customFields=" + customFields + ", isOverrideProjectSetting=" + isOverrideProjectSetting
+				+ ", isOverrideRetentionRate=" + isOverrideRetentionRate + ", enableSastBranching="
+				+ enableSastBranching + ", masterBranchProjName=" + masterBranchProjName + "]";
+	}
+
+	private String cxOrigin;
     private String cxOriginUrl;
     private CxVersion cxVersion;
 
