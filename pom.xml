@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.checkmarx</groupId>
 	<artifactId>cx-client-common</artifactId>
-	<version>2023.2.7-private</version>
+	<version>2023.2.6-P-2</version>
 	<packaging>jar</packaging>
 	<name>Checkmarx Client</name>
 	<description>Web client for interaction with Checkmarx SAST, SCA and OSA products</description>
