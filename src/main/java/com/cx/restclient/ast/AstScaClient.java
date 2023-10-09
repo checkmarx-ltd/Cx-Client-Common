@@ -887,7 +887,7 @@ public class AstScaClient extends AstClient implements Scanner {
                 .build();
         log.info("ASC login acUrl"+acUrl);
         System.out.println("ASC login acUrl"+acUrl);
-        ClientTypeResolver resolver = new ClientTypeResolver(config);
+        ClientTypeResolver resolver = new ClientTypeResolver(config,log);
         ClientType clientType = resolver.determineClientType(acUrl);
         settings.setClientTypeForPasswordAuth(clientType);
         log.info("ASC login before httpClient login");
