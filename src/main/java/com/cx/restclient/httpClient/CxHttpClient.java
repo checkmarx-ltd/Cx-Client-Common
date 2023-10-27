@@ -600,8 +600,13 @@ public class CxHttpClient implements Closeable {
     //POST REQUEST
     public <T> T postRequest(String relPath, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPost post = new HttpPost(rootUri + relPath);
-        return request(post, contentType, entity, responseType, expectStatus, failedMsg, false, true);
-    }
+		if ("sast/scanWithSettings".equals(relPath)) {
+			return requestForMultipartFile(post, contentType, entity, responseType, expectStatus, failedMsg, false,
+					true);
+		} else {
+			return request(post, contentType, entity, responseType, expectStatus, failedMsg, false, true);
+		}
+	}
 
     //PUT REQUEST
     public <T> T putRequest(String relPath, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
@@ -622,6 +627,53 @@ public class CxHttpClient implements Closeable {
     public void addCustomHeader(String name, String value) {
         log.debug(String.format("Adding a custom header: %s: %s", name, value));
         customHeaders.put(name, value);
+    }
+    
+    private <T> T requestForMultipartFile(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException, CxClientException {
+        if (contentType != null) {
+            httpMethod.addHeader("Accept", contentType);
+        }
+        if (entity != null && httpMethod instanceof HttpEntityEnclosingRequestBase) { //Entity for Post methods
+            ((HttpEntityEnclosingRequestBase) httpMethod).setEntity(entity);
+        }
+        HttpResponse response = null;
+        int statusCode = 0;
+
+        try {
+            httpMethod.addHeader(ORIGIN_HEADER, cxOrigin);
+            httpMethod.addHeader(TEAM_PATH, this.teamPath);
+            if (token != null) {
+                httpMethod.addHeader(HttpHeaders.AUTHORIZATION, token.getToken_type() + " " + token.getAccess_token());
+            }
+
+            for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
+                httpMethod.addHeader(entry.getKey(), entry.getValue());
+            }
+
+            response = apacheClient.execute(httpMethod);
+            statusCode = response.getStatusLine().getStatusCode();
+
+            if (statusCode == HttpStatus.SC_UNAUTHORIZED) { // Token has probably expired
+                throw new CxTokenExpiredException(extractResponseBody(response));
+            }
+
+            validateResponse(response, expectStatus, "Failed to " + failedMsg);
+
+            //extract response as object and return the link
+            return convertToObject(response, responseType, isCollection);
+        } catch (UnknownHostException e) {
+            throw new CxHTTPClientException(ErrorMessage.CHECKMARX_SERVER_CONNECTION_FAILED.getErrorMessage());
+        } catch (CxTokenExpiredException ex) {
+            if (retry) {
+                logTokenError(httpMethod, statusCode, ex);
+                login(lastLoginSettings);
+                return request(httpMethod, contentType, entity, responseType, expectStatus, failedMsg, isCollection, false);
+            }
+            throw ex;
+        } finally {
+            httpMethod.releaseConnection();
+            HttpClientUtils.closeQuietly(response);
+        }
     }
 
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {

@@ -5,6 +5,8 @@ package com.cx.restclient.httpClient.utils;
  */
 public class ContentType {
     public static final String CONTENT_TYPE_APPLICATION_JSON = "application/json";
+    public static final String CONTENT_TYPE_API_VERSION_1_2 = "application/json;v=1.2";
+    public static final String CONTENT_TYPE_API_VERSION_1_1 = "application/json;v=1.1";
     public static final String CONTENT_TYPE_APPLICATION_JSON_V21 = "application/json;v=2.1";
     public static final String CONTENT_TYPE_APPLICATION_JSON_V2 = "application/json;v=2.0";
     public static final String CONTENT_TYPE_APPLICATION_JSON_V1 = "application/json;v=1.0";
