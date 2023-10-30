@@ -2,8 +2,11 @@ package com.cx.restclient;
 
 import static com.cx.restclient.cxArm.dto.CxProviders.SAST;
 import static com.cx.restclient.cxArm.utils.CxARMUtils.getProjectViolatedPolicies;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_API_VERSION_1_2;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_API_VERSION_1_1;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_PDF_V1;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_XML_V1;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 import static com.cx.restclient.sast.utils.SASTParam.LINK_FORMAT;
@@ -48,6 +51,7 @@ import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.CxVersion;
 import com.cx.restclient.dto.PathFilter;
 import com.cx.restclient.dto.RemoteSourceRequest;
 import com.cx.restclient.dto.RemoteSourceTypes;
@@ -379,6 +383,40 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
         }
     }
+    
+    public String getContentTypeAndApiVersion(CxScanConfig config, String apiName) {
+    	   CxVersion cxVersion = config.getCxVersion();
+    	   String sastVersion = cxVersion.getVersion();
+    	   String apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+
+    	   if (sastVersion != null && !sastVersion.isEmpty()) {
+    	       String[] versionComponents = sastVersion.split("\\.");
+
+    	       if (versionComponents.length >= 2) {
+    	           String currentVersion = versionComponents[0] + "." + versionComponents[1];
+    	           float currentVersionFloat = Float.parseFloat(currentVersion);
+
+    	           if (currentVersionFloat >= 9.4) {
+    	               if ("SAST_RETENTION_RATE".equals(apiName) && config.isEnableDataRetention()) {
+    	                   apiVersion = CONTENT_TYPE_API_VERSION_1_1;
+    	               } else if ("scanWithSettings".equals(apiName)) {
+    	                   String customFields = config.getCustomFields();
+    	                   if (customFields != null && !customFields.isEmpty()) {
+    	                       apiVersion = CONTENT_TYPE_API_VERSION_1_2;
+    	                   } else if (config.getPostScanActionId() != null && config.getPostScanActionId() == 1) {
+    	                       apiVersion = CONTENT_TYPE_API_VERSION_1_2;
+    	                   } else {
+    	                       apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+    	                   }
+    	               }
+    	           } else if (currentVersionFloat >= 9.2 && currentVersionFloat <= 9.3) {
+    	               apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+    	           }
+    	       }
+    	   }
+
+    	   return apiVersion;
+    	}
 
 
     private void configureScanSettings(long projectId) throws IOException {
@@ -394,6 +432,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         defineScanSetting(scanSettingRequest);
     }
 
+    
     
     /*
      * Suppress only those conditions for which it is generally acceptable
@@ -779,9 +818,10 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         				ContentType.APPLICATION_JSON);
 
         builder.addTextBody("customFields", config.getCustomFields() != null?
-                config.getCustomFields() : "", ContentType.APPLICATION_JSON);   
+                config.getCustomFields() : "", ContentType.APPLICATION_JSON); 
+       String apiVersion = getContentTypeAndApiVersion(config, "scanWithSettings");
 
         HttpEntity entity = builder.build();
-        return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
+        return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, apiVersion, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
     }
 }
