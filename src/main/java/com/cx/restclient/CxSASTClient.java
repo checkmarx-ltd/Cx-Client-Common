@@ -323,6 +323,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         RemoteSourceRequest req = new RemoteSourceRequest(config);
         RemoteSourceTypes type = req.getType();
         boolean isSSH = false;
+        String apiVersion = getContentTypeAndApiVersion(config, "scanWithSettings");
 
         switch (type) {
             case SVN:
@@ -373,50 +374,64 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
         }
         if (isScanWithSettingsSupported()) {
-            createRemoteSourceRequest(projectId, entity, type.value(), isSSH);
+            createRemoteSourceRequest(projectId, apiVersion, entity, type.value(), isSSH);
             ScanWithSettingsResponse response = scanWithSettings(null, projectId, true);
             return response.getId();
         } else {
             configureScanSettings(projectId);
-            createRemoteSourceRequest(projectId, entity, type.value(), isSSH);
+            createRemoteSourceRequest(projectId, apiVersion, entity, type.value(), isSSH);
             return createScan(projectId);
 
         }
     }
     
-    public String getContentTypeAndApiVersion(CxScanConfig config, String apiName) {
-    	   CxVersion cxVersion = config.getCxVersion();
-    	   String sastVersion = cxVersion.getVersion();
-    	   String apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
-
-    	   if (sastVersion != null && !sastVersion.isEmpty()) {
-    	       String[] versionComponents = sastVersion.split("\\.");
-
-    	       if (versionComponents.length >= 2) {
-    	           String currentVersion = versionComponents[0] + "." + versionComponents[1];
-    	           float currentVersionFloat = Float.parseFloat(currentVersion);
-
-    	           if (currentVersionFloat >= 9.4) {
-    	               if ("SAST_RETENTION_RATE".equals(apiName) && config.isEnableDataRetention()) {
-    	                   apiVersion = CONTENT_TYPE_API_VERSION_1_1;
-    	               } else if ("scanWithSettings".equals(apiName)) {
-    	                   String customFields = config.getCustomFields();
-    	                   if (customFields != null && !customFields.isEmpty()) {
-    	                       apiVersion = CONTENT_TYPE_API_VERSION_1_2;
-    	                   } else if (config.getPostScanActionId() != null && config.getPostScanActionId() == 1) {
-    	                       apiVersion = CONTENT_TYPE_API_VERSION_1_2;
-    	                   } else {
-    	                       apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
-    	                   }
-    	               }
-    	           } else if (currentVersionFloat >= 9.2 && currentVersionFloat <= 9.3) {
-    	               apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
-    	           }
-    	       }
-    	   }
-
-    	   return apiVersion;
-    	}
+    /**
+    * Determine the appropriate content type and API version based on the provided configuration and API name.
+    * 
+    * scanWithSettings api and some other api have got different versions in different sast server because those implement different capabilities.
+    * The cx-client-common as and when gets enhanced to support those new capabilities and it should also take care of sending required version.
+    * This logic takes care of search api's that may have different versions of different capabilities accross different sast servers. 
+    * This logic is to identify what should be content type for actual version name and api version name that should be used while calling api
+    *
+    * If the apiName is equal to SAST_RETENTION_RATE and data retention is enabled in the configuration,
+    * it sets the apiVersion to "application/json;v=1.1".
+    *
+    * If the apiName is equal to SCAN_WITH_SETTINGS_URL, it checks if custom fields are defined in the configuration.
+    * If custom fields exist, it sets the apiVersion to "application/json;v=1.2".
+    * If not, it checks if a post-scan action ID is defined and sets the apiVersion to "application/json;v=1.2".
+    * If none of these conditions are met, it sets the apiVersion to the default "application/json;v=1.0".
+    *
+    * If the current version is between 9.2 and 9.3 (inclusive), it sets the apiVersion to "application/json;v=1.0".
+    */
+	public String getContentTypeAndApiVersion(CxScanConfig config, String apiName) {
+		CxVersion cxVersion = config.getCxVersion();
+		String sastVersion = cxVersion.getVersion();
+		String apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+		if (sastVersion != null && !sastVersion.isEmpty()) {
+			String[] versionComponents = sastVersion.split("\\.");
+			if (versionComponents.length >= 2) {
+				String currentVersion = versionComponents[0] + "." + versionComponents[1];
+				float currentVersionFloat = Float.parseFloat(currentVersion);
+				if (currentVersionFloat >= Float.parseFloat("9.4")) {
+					if (SAST_RETENTION_RATE.equalsIgnoreCase(apiName) && config.isEnableDataRetention()) {
+						apiVersion = CONTENT_TYPE_API_VERSION_1_1;
+					} else if (SCAN_WITH_SETTINGS_URL.equalsIgnoreCase(apiName)) {
+						String customFields = config.getCustomFields();
+						if (customFields != null && !customFields.isEmpty()) {
+							apiVersion = CONTENT_TYPE_API_VERSION_1_2;
+						} else if (config.getPostScanActionId() != null) {
+							apiVersion = CONTENT_TYPE_API_VERSION_1_2;
+						} else {
+							apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+						}
+					}
+				} else if (currentVersionFloat >= 9.2 && currentVersionFloat <= 9.3) {
+					apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+				}
+			}
+		}
+		return apiVersion;
+	}
 
 
     private void configureScanSettings(long projectId) throws IOException {
@@ -663,8 +678,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
             builder.addPart(ZIPPED_SOURCE, streamBody);
+            String apiVersion = getContentTypeAndApiVersion(config, "scanWithSettings");
             HttpEntity entity = builder.build();
-            httpClient.postRequest(SAST_ZIP_ATTACHMENTS.replace(PROJECT_ID_PATH_PARAM, Long.toString(projectId)), null, new BufferedHttpEntity(entity), null, 204, "upload ZIP file");
+            httpClient.postRequest(SAST_ZIP_ATTACHMENTS.replace(PROJECT_ID_PATH_PARAM, Long.toString(projectId)),null, apiVersion, new BufferedHttpEntity(entity), null, 204, "upload ZIP file");
         }
     }
 
@@ -680,8 +696,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     }
 
 
-    private CxID createRemoteSourceRequest(long projectId, HttpEntity entity, String sourceType, boolean isSSH) throws IOException {
-        return httpClient.postRequest(String.format(SAST_CREATE_REMOTE_SOURCE_SCAN, projectId, sourceType, isSSH ? "ssh" : ""), isSSH ? null : CONTENT_TYPE_APPLICATION_JSON_V1,
+    private CxID createRemoteSourceRequest(long projectId, String apiVersion,HttpEntity entity, String sourceType, boolean isSSH) throws IOException {
+    	
+        return httpClient.postRequest(String.format(SAST_CREATE_REMOTE_SOURCE_SCAN, projectId, sourceType, isSSH ? "ssh" : ""), isSSH ? null : CONTENT_TYPE_APPLICATION_JSON_V1, apiVersion,
                 entity, CxID.class, 204, "create " + sourceType + " remote source scan setting");
 
     }
@@ -822,6 +839,6 @@ public class CxSASTClient extends LegacyClient implements Scanner {
        String apiVersion = getContentTypeAndApiVersion(config, "scanWithSettings");
 
         HttpEntity entity = builder.build();
-        return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, apiVersion, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
+        return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, apiVersion, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
     }
 }
