@@ -495,12 +495,14 @@ public class AstScaClient extends AstClient implements Scanner {
 				FileUtils.deleteDirectory(destParentDir);
 				log.info("Deleted directory of result file " + destParentDir.getAbsolutePath());
 			} else {
-				log.info("Deleting temporary uploaded file for scan {}", destTempDir.getAbsolutePath());
+
+                log.info("Deleting temporary uploaded file for scan {}", destTempDir.getAbsolutePath());
 				FileUtils.deleteDirectory(destTempDir);
 				log.info("Deleted temp directory " + destTempDir.getAbsolutePath());
 			}
 			if (!StringUtils.isEmpty(pathToSASTResultJSONFileNew) && !pathToSASTResultJSONFileNew.equals(pathToSASTResultJSONFile)) {
-				log.info("Deleting directory of result file {}", destPartentSastDir.getAbsolutePath());
+
+                log.info("Deleting directory of result file {}", destPartentSastDir.getAbsolutePath());
 				FileUtils.deleteDirectory(destPartentSastDir);
 				log.info("Deleted directory of result file " + destPartentSastDir.getAbsolutePath());
 			}
