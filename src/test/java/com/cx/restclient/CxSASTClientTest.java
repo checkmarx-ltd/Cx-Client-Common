@@ -6,7 +6,7 @@ import com.cx.restclient.dto.CxVersion;
 import junit.framework.TestCase;
 
 public class CxSASTClientTest extends TestCase {
-	public void testGetContentTypeAndApiVersionWithValidSastVersionAndSastRetentionRate() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion_SastRetentionRate_Sast96() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion("9.6");
@@ -20,7 +20,7 @@ public class CxSASTClientTest extends TestCase {
 				apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithValidSastVersionAndScanWithSettings() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion_ScanWithSettings_Sast96() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion("9.6");
@@ -36,7 +36,7 @@ public class CxSASTClientTest extends TestCase {
 				"application/json;v=1.2", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithValidSastVersionAndScanWithSettingsCustomFieldsOnly()
+	public void testGetContentTypeAndApiVersion_ScanWithSettings_CustomFields_Sast96()
 			throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
@@ -52,7 +52,7 @@ public class CxSASTClientTest extends TestCase {
 				"application/json;v=1.2", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithValidSastVersionAndScanWithSettingsPostScanActionIdOnly()
+	public void testGetContentTypeAndApiVersion_ScanWithSettings_PostScanActionId_Sast96()
 			throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
@@ -67,7 +67,7 @@ public class CxSASTClientTest extends TestCase {
 				"application/json;v=1.2", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithSastVersionIn92To93RangeAndSastRetentionRate()
+	public void testGetContentTypeAndApiVersion_SastRetentionRate_Sast93()
 			throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
@@ -80,7 +80,7 @@ public class CxSASTClientTest extends TestCase {
 				"application/json;v=1.0", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithNullSastVersion() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion_NullSastVersion() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion(null);
@@ -91,7 +91,7 @@ public class CxSASTClientTest extends TestCase {
 		assertEquals("Expected API version when SAST version is null", "application/json;v=1.0", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithInvalidSastVersion() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion_InvalidSastVersion() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion("9.1.5");
@@ -102,7 +102,7 @@ public class CxSASTClientTest extends TestCase {
 		assertEquals("Expected default API version for an invalid SAST version", "application/json;v=1.0", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithUnknownApiName() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion_UnknownApiName() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion("9.4.1");
@@ -113,7 +113,7 @@ public class CxSASTClientTest extends TestCase {
 		assertEquals("Expected default API version for an unknown API name", "application/json;v=1.0", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithSastVersion9_4() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion__SastRetentionRate_Sast94() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion("9.4");
@@ -124,7 +124,7 @@ public class CxSASTClientTest extends TestCase {
 		assertEquals("Expected API version for SAST version 9.4", "application/json;v=1.0", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithSastVersion9_5() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion_SastRetentionRate_Sast95() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion("9.5");
@@ -135,7 +135,7 @@ public class CxSASTClientTest extends TestCase {
 		assertEquals("Expected API version for SAST version 9.5", "application/json;v=1.0", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithSastVersion94() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion_ScanWithSettings_Sast94() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion("9.4");
@@ -146,7 +146,7 @@ public class CxSASTClientTest extends TestCase {
 		assertEquals("Expected API version for SAST version 9.4", "application/json;v=1.0", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithSastVersion95() throws MalformedURLException {
+	public void testGetContentTypeAndApiVersion_ScanWithSettings_Sast95() throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
 		cxVersion.setVersion("9.5");
@@ -157,7 +157,7 @@ public class CxSASTClientTest extends TestCase {
 		assertEquals("Expected API version for SAST version 9.5", "application/json;v=1.0", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithSastVersion9_4AndDataRetentionEnabled()
+	public void testGetContentTypeAndApiVersion_DataRetentionEnabled_Sast94()
 			throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
@@ -171,7 +171,7 @@ public class CxSASTClientTest extends TestCase {
 				apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithSastVersion9_4AndScanWithSettingsAndCustomFields()
+	public void testGetContentTypeAndApiVersion_ScanWithSettings_CustomFields_Sast94()
 			throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
@@ -186,7 +186,7 @@ public class CxSASTClientTest extends TestCase {
 				"application/json;v=1.2", apiVersion);
 	}
 
-	public void testGetContentTypeAndApiVersionWithSastVersion9_4AndScanWithSettingsAndPostScanActionId()
+	public void testGetContentTypeAndApiVersion_ScanWithSettings_PostScanActionId_Sast94()
 			throws MalformedURLException {
 		CxScanConfig config = new CxScanConfig();
 		CxVersion cxVersion = new CxVersion();
