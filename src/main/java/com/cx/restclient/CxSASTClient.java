@@ -323,7 +323,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         RemoteSourceRequest req = new RemoteSourceRequest(config);
         RemoteSourceTypes type = req.getType();
         boolean isSSH = false;
-        String apiVersion = getContentTypeAndApiVersion(config, "scanWithSettings");
+        String apiVersion = getContentTypeAndApiVersion(config, SCAN_WITH_SETTINGS_URL);
 
         switch (type) {
             case SVN:
@@ -678,7 +678,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
             builder.addPart(ZIPPED_SOURCE, streamBody);
-            String apiVersion = getContentTypeAndApiVersion(config, "scanWithSettings");
+            String apiVersion = getContentTypeAndApiVersion(config, SCAN_WITH_SETTINGS_URL);
             HttpEntity entity = builder.build();
             httpClient.postRequest(SAST_ZIP_ATTACHMENTS.replace(PROJECT_ID_PATH_PARAM, Long.toString(projectId)),null, apiVersion, new BufferedHttpEntity(entity), null, 204, "upload ZIP file");
         }
@@ -836,7 +836,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
         builder.addTextBody("customFields", config.getCustomFields() != null?
                 config.getCustomFields() : "", ContentType.APPLICATION_JSON); 
-       String apiVersion = getContentTypeAndApiVersion(config, "scanWithSettings");
+       String apiVersion = getContentTypeAndApiVersion(config, SCAN_WITH_SETTINGS_URL);
 
         HttpEntity entity = builder.build();
         return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, apiVersion, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
