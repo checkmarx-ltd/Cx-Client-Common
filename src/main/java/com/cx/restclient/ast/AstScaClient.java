@@ -437,7 +437,7 @@ public class AstScaClient extends AstClient implements Scanner {
         String pathToSASTResultJSONFileNew= "";
 
         String scaResultPathArgName = getScaResultPathArgumentName(scaConfig);
-        if(scaResultPathArgName != "") {
+        if(!scaResultPathArgName.equals("")) {
         	try {
         		pathToResultJSONFile = getScaResolverResultFilePathFromAdditionalParams(scaConfig.getScaResolverAddParameters(), scaResultPathArgName);     
             } catch (ParseException e) {
@@ -465,7 +465,7 @@ public class AstScaClient extends AstClient implements Scanner {
         	log.info("Dependency resolution completed."); 
 			String parentDir = pathToResultJSONFileNew.substring(0, pathToResultJSONFileNew.lastIndexOf(File.separator));
 			String parentDirSast = "";
-			File destPartentSastDir = null;
+			File destPartentSastDir = new File("/");
 			if (!StringUtils.isEmpty(pathToSASTResultJSONFileNew)) {
 				parentDirSast = pathToSASTResultJSONFileNew.substring(0,
 						pathToSASTResultJSONFileNew.lastIndexOf(File.separator));
