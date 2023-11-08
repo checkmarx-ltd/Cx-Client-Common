@@ -3,10 +3,7 @@ package com.cx.restclient;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.PathFilter;
-import com.cx.restclient.dto.RemoteSourceRequest;
-import com.cx.restclient.dto.RemoteSourceTypes;
-import com.cx.restclient.dto.Status;
+import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.httpClient.CxHttpClient;
 import com.cx.restclient.sast.dto.*;
@@ -20,12 +17,15 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_API_VERSION_1_2;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_API_VERSION_1_1;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_PDF_V1;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -51,6 +51,13 @@ class CxSASTClient {
     private int reportTimeoutSec = 5000;
     private int cxARMTimeoutSec = 1000;
     private Waiter<ResponseQueueScanStatus> sastWaiter;
+    private static final String SWAGGER_LOCATION = "help/swagger/docs/v1.1";
+    private static final String ZIPPED_SOURCE = "zippedSource";
+    private static final String ENGINE_CONFIGURATION_ID_DEFAULT = "0";
+    private static final String SCAN_WITH_SETTINGS_URL = "sast/scanWithSettings";
+    public static final String SAST_RETENTION_RATE ="projects/{id}/dataRetentionSettings";
+
+    private static final String SAST_SCAN= "SAST scan status";
     private static final String SCAN_ID_PATH_PARAM = "{scanId}";
     private static final String PROJECT_ID_PATH_PARAM = "{projectId}";
 
@@ -144,6 +151,8 @@ class CxSASTClient {
         RemoteSourceRequest req = new RemoteSourceRequest(config);
         RemoteSourceTypes type = req.getType();
         boolean isSSH = false;
+        String apiVersion = getContentTypeAndApiVersion(config, SAST_CREATE_REMOTE_SOURCE_SCAN);
+
 
         switch (type) {
             case SVN:
@@ -193,11 +202,66 @@ class CxSASTClient {
                 entity = new StringEntity("", StandardCharsets.UTF_8);
 
         }
-        configureScanSettings(projectId);
-        createRemoteSourceRequest(projectId, entity, type.value(), isSSH);
+        if (isScanWithSettingsSupported()) {
+            createRemoteSourceRequest(projectId, apiVersion, entity, type.value(), isSSH);
+            ScanWithSettingsResponse response = scanWithSettings(null, projectId, true);
+            return response.getId();
+        } else {
+            configureScanSettings(projectId);
+            createRemoteSourceRequest(projectId, apiVersion, entity, type.value(), isSSH);
+            return createScan(projectId);
 
-        return createScan(projectId);
+        }
     }
+    
+    /**
+     * Determine the appropriate content type and API version based on the provided configuration and API name.
+     * 
+     * scanWithSettings api and some other api have got different versions in different sast server because those implement different capabilities.
+     * The cx-client-common as and when gets enhanced to support those new capabilities and it should also take care of sending required version.
+     * This logic takes care of search api's that may have different versions of different capabilities accross different sast servers. 
+     * This logic is to identify what should be content type for actual version name and api version name that should be used while calling api
+     *
+     * If the apiName is equal to SAST_RETENTION_RATE and data retention is enabled in the configuration,
+     * it sets the apiVersion to "application/json;v=1.1".
+     *
+     * If the apiName is equal to SCAN_WITH_SETTINGS_URL, it checks if custom fields are defined in the configuration.
+     * If custom fields exist, it sets the apiVersion to "application/json;v=1.2".
+     * If not, it checks if a post-scan action ID is defined and sets the apiVersion to "application/json;v=1.2".
+     * If none of these conditions are met, it sets the apiVersion to the default "application/json;v=1.0".
+     *
+     * If the current version is between 9.2 and 9.3 (inclusive), it sets the apiVersion to "application/json;v=1.0".
+     */
+ 	public String getContentTypeAndApiVersion(CxScanConfig config, String apiName) {
+ 		CxVersion cxVersion = config.getCxVersion();
+ 		String sastVersion = cxVersion.getVersion();
+ 		String apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+ 		if (sastVersion != null && !sastVersion.isEmpty()) {
+ 			String[] versionComponents = sastVersion.split("\\.");
+ 			if (versionComponents.length >= 2) {
+ 				String currentVersion = versionComponents[0] + "." + versionComponents[1];
+ 				float currentVersionFloat = Float.parseFloat(currentVersion);
+ 				if (currentVersionFloat >= Float.parseFloat("9.4")) {
+ 					if (SAST_RETENTION_RATE.equalsIgnoreCase(apiName) && config.isEnableDataRetention()) {
+ 						apiVersion = CONTENT_TYPE_API_VERSION_1_1;
+ 					} else if (SCAN_WITH_SETTINGS_URL.equalsIgnoreCase(apiName)) {
+ 						String customFields = config.getCustomFields();
+ 						if (customFields != null && !customFields.isEmpty()) {
+ 							apiVersion = CONTENT_TYPE_API_VERSION_1_2;
+ 						} else if (config.getPostScanActionId() != null) {
+ 							apiVersion = CONTENT_TYPE_API_VERSION_1_2;
+ 						} else {
+ 							apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+ 						}
+ 					}
+ 				} else if (currentVersionFloat >= 9.2 && currentVersionFloat <= 9.3) {
+ 					apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+ 				}
+ 			}
+ 		}
+ 		return apiVersion;
+ 	}
+
 
 
     private void configureScanSettings(long projectId) throws IOException {
@@ -358,8 +422,9 @@ class CxSASTClient {
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
         builder.addPart("zippedSource", streamBody);
+        String apiVersion = getContentTypeAndApiVersion(config, SAST_ZIP_ATTACHMENTS);
         HttpEntity entity = builder.build();
-        httpClient.postRequest(SAST_ZIP_ATTACHMENTS.replace(PROJECT_ID_PATH_PARAM, Long.toString(projectId)), null, new BufferedHttpEntity(entity), null, 204, "upload ZIP file");
+        httpClient.postRequest(SAST_ZIP_ATTACHMENTS.replace(PROJECT_ID_PATH_PARAM, Long.toString(projectId)),null, apiVersion, new BufferedHttpEntity(entity), null, 204, "upload ZIP file");
     }
 
     private long createScan(long projectId) throws CxClientException, IOException {
@@ -373,8 +438,8 @@ class CxSASTClient {
         return createScanResponse.getId();
     }
 
-    private CxID createRemoteSourceRequest(long projectId, HttpEntity entity, String sourceType, boolean isSSH) throws IOException, CxClientException {
-        final CxID cxID = httpClient.postRequest(String.format(SAST_CREATE_REMOTE_SOURCE_SCAN, projectId, sourceType, isSSH ? "ssh" : ""), isSSH? null : CONTENT_TYPE_APPLICATION_JSON_V1,
+    private CxID createRemoteSourceRequest(long projectId, String apiVersion, HttpEntity entity, String sourceType, boolean isSSH) throws IOException, CxClientException {
+        final CxID cxID = httpClient.postRequest(String.format(SAST_CREATE_REMOTE_SOURCE_SCAN, projectId, sourceType, isSSH ? "ssh" : ""), isSSH? null : CONTENT_TYPE_APPLICATION_JSON_V1, apiVersion,
                 entity, CxID.class, 204, "create " + sourceType + " remote source scan setting");
 
         return cxID;
@@ -515,6 +580,51 @@ class CxSASTClient {
         }else{
             throw new CxClientException("Getting policy violations of project failed.");
         }
+    }
+    
+    private boolean isScanWithSettingsSupported() {
+        try {
+            HashMap swaggerResponse = this.httpClient.getRequest(SWAGGER_LOCATION, CONTENT_TYPE_APPLICATION_JSON, HashMap.class, 200, SAST_SCAN, false);
+            return swaggerResponse.toString().contains("/sast/scanWithSettings");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    private ScanWithSettingsResponse scanWithSettings(byte[] zipFile, long projectId, boolean isRemote) throws IOException {
+        log.info("Uploading zip file");
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        if (!isRemote) {
+            try (InputStream is = new ByteArrayInputStream(zipFile)) {
+                InputStreamBody streamBody = new InputStreamBody(is, ContentType.APPLICATION_OCTET_STREAM, ZIPPED_SOURCE);
+                builder.addPart(ZIPPED_SOURCE, streamBody);
+            }
+        }
+        builder.addTextBody("projectId", Long.toString(projectId), ContentType.APPLICATION_JSON);
+        if(config.getIsOverrideProjectSetting()){
+        	builder.addTextBody("overrideProjectSetting",config.getIsOverrideProjectSetting()+"", ContentType.APPLICATION_JSON);
+        }else{
+        	builder.addTextBody("overrideProjectSetting", "false", ContentType.APPLICATION_JSON);
+        }
+        builder.addTextBody("isIncremental", config.getIncremental().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("isPublic", config.getPublic().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("forceScan", config.getForceScan().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("presetId", config.getPresetId().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("comment", config.getScanComment() == null ? "" : config.getScanComment(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("engineConfigurationId", config.getEngineConfigurationId() != null ? config.getEngineConfigurationId().toString() : ENGINE_CONFIGURATION_ID_DEFAULT, ContentType.APPLICATION_JSON);
+
+        builder.addTextBody("postScanActionId",
+        		config.getPostScanActionId() != null && config.getPostScanActionId() != 0 ?
+        				config.getPostScanActionId().toString() : "",
+        				ContentType.APPLICATION_JSON);
+
+        builder.addTextBody("customFields", config.getCustomFields() != null?
+                config.getCustomFields() : "", ContentType.APPLICATION_JSON); 
+       String apiVersion = getContentTypeAndApiVersion(config, SCAN_WITH_SETTINGS_URL);
+
+        HttpEntity entity = builder.build();
+        return httpClient.postRequest(SCAN_WITH_SETTINGS_URL, null, apiVersion, new BufferedHttpEntity(entity), ScanWithSettingsResponse.class, 201, "upload ZIP file");
     }
 
 }
