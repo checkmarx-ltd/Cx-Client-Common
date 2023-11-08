@@ -135,14 +135,15 @@ class CxSASTClient {
     }
 
     private long createLocalSASTScan(long projectId) throws IOException, CxClientException {
-        configureScanSettings(projectId);
+
         //prepare sources for scan
         PathFilter filter = new PathFilter(config.getSastFolderExclusions(), config.getSastFilterPattern(), log);
-        File zipFile = CxZipUtils.getZippedSources(config, filter, config.getSourceDir(), log);
-        uploadZipFile(zipFile, projectId);
-        CxZipUtils.deleteZippedSources(zipFile, config, log);
-
-        return createScan(projectId);
+        byte[] zipFile = CxZipUtils.getZippedSourcesbyte(config, filter, config.getSourceDir(), log);
+        if(!config.isExestingProject()||config.isOverrideProjectSettings()) {
+            configureScanSettings(projectId);
+        }
+        ScanWithSettingsResponse scanWithSettingsResponse= scanWithSettings(zipFile,projectId,false);
+        return scanWithSettingsResponse.getId();
     }
 
     private long createRemoteSourceScan(long projectId) throws IOException, CxClientException {
@@ -620,7 +621,7 @@ class CxSASTClient {
         				ContentType.APPLICATION_JSON);
 
         builder.addTextBody("customFields", config.getCustomFields() != null?
-                config.getCustomFields() : "", ContentType.APPLICATION_JSON); 
+                config.getCustomFields() : "", ContentType.APPLICATION_JSON);
        String apiVersion = getContentTypeAndApiVersion(config, SCAN_WITH_SETTINGS_URL);
 
         HttpEntity entity = builder.build();

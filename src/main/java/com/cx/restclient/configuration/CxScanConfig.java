@@ -18,7 +18,25 @@ public class CxScanConfig implements Serializable {
 
     private String cxOrigin;
     private CxVersion cxVersion;
+    private boolean overrideProjectSettings;
 
+    public boolean isOverrideProjectSettings() {
+        return overrideProjectSettings;
+    }
+
+    public void setOverrideProjectSettings(boolean overrideProjectSettings) {
+        this.overrideProjectSettings = overrideProjectSettings;
+    }
+
+    public boolean isExestingProject() {
+        return isExestingProject;
+    }
+
+    public void setExestingProject(boolean exestingProject) {
+        isExestingProject = exestingProject;
+    }
+
+    private boolean isExestingProject;
     private boolean disableCertificateValidation = false;
     private boolean useSSOLogin = false;
     private boolean enableDataRetention;
