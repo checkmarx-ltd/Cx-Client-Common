@@ -12,4 +12,6 @@ public class ContentType {
     public static final String CONTENT_TYPE_APPLICATION_PDF_V1 = "application/pdf;v=1.0";
     public static final String CONTENT_TYPE_APPLICATION_RTF_V1 = "application/rtf;v=1.0";
     public static final String CONTENT_TYPE_APPLICATION_CSV_V1 = "application/csv;v=1.0";
+    public static final String CONTENT_TYPE_API_VERSION_1_2 = "application/json;v=1.2";
+    public static final String CONTENT_TYPE_API_VERSION_1_1 = "application/json;v=1.1";
 }
