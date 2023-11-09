@@ -456,9 +456,11 @@ public class CxShragaClient {
             //Create newProject
             CreateProjectRequest request = new CreateProjectRequest(config.getProjectName(), config.getTeamId(), config.getPublic());
             projectId = createNewProject(request).getId();
+            config.setExistingProject(false);
 
         } else {
             projectId = projects.get(0).getId();
+            config.setExistingProject(true);
         }
 
         // SAST and OSA share the same project ID.

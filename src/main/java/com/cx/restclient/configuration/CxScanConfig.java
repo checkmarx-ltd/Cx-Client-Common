@@ -18,9 +18,28 @@ public class CxScanConfig implements Serializable {
 
     private String cxOrigin;
     private CxVersion cxVersion;
+    private boolean overrideProjectSettings;
 
+    public boolean isOverrideProjectSettings() {
+        return overrideProjectSettings;
+    }
+
+    public void setOverrideProjectSettings(boolean overrideProjectSettings) {
+        this.overrideProjectSettings = overrideProjectSettings;
+    }
+
+    public boolean isExistingProject() {
+        return isExistingProject;
+    }
+
+    public void setExistingProject(boolean ExistingProject) {
+        isExistingProject = ExistingProject;
+    }
+
+    private boolean isExistingProject;
     private boolean disableCertificateValidation = false;
     private boolean useSSOLogin = false;
+    private boolean enableDataRetention;
 
     private String sourceDir;
     private String osaLocationPath;
@@ -59,6 +78,10 @@ public class CxScanConfig implements Serializable {
     private File zipFile;
     private Integer engineConfigurationId;
     private String engineConfigurationName;
+    private String customFields;
+    private Integer postScanActionId;
+    private boolean isOverrideProjectSetting = false;
+
 
     private String osaFolderExclusions;
 
@@ -134,6 +157,14 @@ public class CxScanConfig implements Serializable {
 
     public void setSastEnabled(Boolean sastEnabled) {
         this.sastEnabled = sastEnabled;
+    }
+
+    public boolean isEnableDataRetention() {
+        return enableDataRetention;
+    }
+
+    public void setEnableDataRetention(boolean enableDataRetention) {
+        this.enableDataRetention = enableDataRetention;
     }
 
     public String getCxOrigin() {
@@ -772,4 +803,28 @@ public class CxScanConfig implements Serializable {
     public void setToken(TokenLoginResponse token) {
         this.token = token;
     }
+
+    public String getCustomFields() {
+		return customFields;
+	}
+
+	public void setCustomFields(String customFields) {
+		this.customFields = customFields;
+	}
+
+	public Integer getPostScanActionId() {
+		return postScanActionId;
+	}
+
+	public void setPostScanActionId(Integer postScanActionId) {
+		this.postScanActionId = postScanActionId;
+	}
+
+	public boolean getIsOverrideProjectSetting() {
+		return isOverrideProjectSetting;
+	}
+
+	public void setIsOverrideProjectSetting(boolean isOverrideProjectSetting) {
+		this.isOverrideProjectSetting = isOverrideProjectSetting;
+	}
 }
