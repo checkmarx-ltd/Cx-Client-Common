@@ -466,7 +466,7 @@ public class CxHttpClient {
         HttpPost post = new HttpPost(rootUri + relPath);
         return request(post, contentType, entity, responseType, expectStatus, failedMsg, false, true);
     }
-    
+
     //POST REQUEST
  	public <T> T postRequest(String relPath, String contentType, String acceptHeader, HttpEntity entity,
  			Class<T> responseType, int expectStatus, String failedMsg) throws IOException {

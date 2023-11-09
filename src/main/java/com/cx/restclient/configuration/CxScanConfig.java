@@ -28,15 +28,15 @@ public class CxScanConfig implements Serializable {
         this.overrideProjectSettings = overrideProjectSettings;
     }
 
-    public boolean isExestingProject() {
-        return isExestingProject;
+    public boolean isExistingProject() {
+        return isExistingProject;
     }
 
-    public void setExestingProject(boolean exestingProject) {
-        isExestingProject = exestingProject;
+    public void setExistingProject(boolean ExistingProject) {
+        isExistingProject = ExistingProject;
     }
 
-    private boolean isExestingProject;
+    private boolean isExistingProject;
     private boolean disableCertificateValidation = false;
     private boolean useSSOLogin = false;
     private boolean enableDataRetention;
@@ -81,7 +81,7 @@ public class CxScanConfig implements Serializable {
     private String customFields;
     private Integer postScanActionId;
     private boolean isOverrideProjectSetting = false;
-    
+
 
     private String osaFolderExclusions;
 
@@ -158,7 +158,7 @@ public class CxScanConfig implements Serializable {
     public void setSastEnabled(Boolean sastEnabled) {
         this.sastEnabled = sastEnabled;
     }
-    
+
     public boolean isEnableDataRetention() {
         return enableDataRetention;
     }
@@ -803,7 +803,7 @@ public class CxScanConfig implements Serializable {
     public void setToken(TokenLoginResponse token) {
         this.token = token;
     }
-    
+
     public String getCustomFields() {
 		return customFields;
 	}
@@ -811,7 +811,7 @@ public class CxScanConfig implements Serializable {
 	public void setCustomFields(String customFields) {
 		this.customFields = customFields;
 	}
-	
+
 	public Integer getPostScanActionId() {
 		return postScanActionId;
 	}
@@ -819,7 +819,7 @@ public class CxScanConfig implements Serializable {
 	public void setPostScanActionId(Integer postScanActionId) {
 		this.postScanActionId = postScanActionId;
 	}
-	
+
 	public boolean getIsOverrideProjectSetting() {
 		return isOverrideProjectSetting;
 	}

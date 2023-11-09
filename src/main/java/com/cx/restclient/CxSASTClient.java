@@ -139,7 +139,7 @@ class CxSASTClient {
         //prepare sources for scan
         PathFilter filter = new PathFilter(config.getSastFolderExclusions(), config.getSastFilterPattern(), log);
         byte[] zipFile = CxZipUtils.getZippedSourcesbyte(config, filter, config.getSourceDir(), log);
-        if(!config.isExestingProject()||config.isOverrideProjectSettings()) {
+        if(!config.isExistingProject()||config.isOverrideProjectSettings()) {
             configureScanSettings(projectId);
         }
         ScanWithSettingsResponse scanWithSettingsResponse= scanWithSettings(zipFile,projectId,false);
