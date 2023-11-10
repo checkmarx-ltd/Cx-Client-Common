@@ -429,7 +429,7 @@ class CxSASTClient {
     }
 
     private long createScan(long projectId) throws CxClientException, IOException {
-        CreateScanRequest scanRequest = new CreateScanRequest(projectId, config.getIncremental(), config.getPublic(), config.getForceScan(), config.getScanComment() == null ? "" : config.getScanComment());
+        CreateScanRequest scanRequest = new CreateScanRequest(projectId, config.getIncremental(), config.getPublicScan(), config.getForceScan(), config.getScanComment() == null ? "" : config.getScanComment());
 
         log.info("Sending SAST scan request");
         StringEntity entity = new StringEntity(convertToJson(scanRequest), StandardCharsets.UTF_8);
@@ -609,7 +609,7 @@ class CxSASTClient {
         	builder.addTextBody("overrideProjectSetting", "false", ContentType.APPLICATION_JSON);
         }
         builder.addTextBody("isIncremental", config.getIncremental().toString(), ContentType.APPLICATION_JSON);
-        builder.addTextBody("isPublic", config.getPublic().toString(), ContentType.APPLICATION_JSON);
+        builder.addTextBody("isPublic", config.getPublicScan().toString(), ContentType.APPLICATION_JSON);
         builder.addTextBody("forceScan", config.getForceScan().toString(), ContentType.APPLICATION_JSON);
         builder.addTextBody("presetId", config.getPresetId().toString(), ContentType.APPLICATION_JSON);
         builder.addTextBody("comment", config.getScanComment() == null ? "" : config.getScanComment(), ContentType.APPLICATION_JSON);
