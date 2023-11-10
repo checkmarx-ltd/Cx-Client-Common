@@ -56,17 +56,17 @@ public class CxScanConfig implements Serializable {
     private String teamId;
     private Boolean denyProject = false;
     private Boolean hideResults = false;
+    private Boolean isPublic = true;
+
+    public Boolean getPublicScan() {
+        return isPublicScan;
+    }
+
+    public void setPublicScan(Boolean apublic) {
+        isPublicScan = apublic;
+    }
+
     private Boolean isPublicScan = true;
-
-    public Boolean getPublicProject() {
-        return isPublicProject;
-    }
-
-    public void setPublicProject(Boolean publicProject) {
-        isPublicProject = publicProject;
-    }
-
-    private Boolean isPublicProject = true;
     private Boolean forceScan = false;
     private String presetName;
     private Integer presetId;
@@ -300,12 +300,12 @@ public class CxScanConfig implements Serializable {
         this.denyProject = denyProject;
     }
 
-    public Boolean getPublicScan() {
-        return isPublicScan;
+    public Boolean getPublic() {
+        return isPublic;
     }
 
-    public void setPublicScan(Boolean aPublic) {
-        isPublicScan = aPublic;
+    public void setPublic(Boolean aPublic) {
+        isPublic = aPublic;
     }
 
     public Boolean getForceScan() {

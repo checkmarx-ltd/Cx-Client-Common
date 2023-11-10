@@ -454,7 +454,7 @@ public class CxShragaClient {
                 throw new CxClientException(DENY_NEW_PROJECT_ERROR.replace("{projectName}", config.getProjectName()));
             }
             //Create newProject
-            CreateProjectRequest request = new CreateProjectRequest(config.getProjectName(), config.getTeamId(), config.getPublicProject());
+            CreateProjectRequest request = new CreateProjectRequest(config.getProjectName(), config.getTeamId(), config.getPublic());
             projectId = createNewProject(request).getId();
             config.setExistingProject(false);
 
