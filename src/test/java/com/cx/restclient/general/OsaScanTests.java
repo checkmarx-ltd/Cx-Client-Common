@@ -50,7 +50,7 @@ public class OsaScanTests extends CommonClientTest {
 
         config.setOsaRunInstall(true);
         config.setOsaThresholdsEnabled(true);
-        config.setPublic(true);
+        config.setPublicScan(true);
 
         return config;
     }

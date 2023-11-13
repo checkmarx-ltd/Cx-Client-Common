@@ -57,6 +57,16 @@ public class CxScanConfig implements Serializable {
     private Boolean denyProject = false;
     private Boolean hideResults = false;
     private Boolean isPublic = true;
+
+    public Boolean getPublicScan() {
+        return isPublicScan;
+    }
+
+    public void setPublicScan(Boolean apublic) {
+        isPublicScan = apublic;
+    }
+
+    private Boolean isPublicScan = true;
     private Boolean forceScan = false;
     private String presetName;
     private Integer presetId;
