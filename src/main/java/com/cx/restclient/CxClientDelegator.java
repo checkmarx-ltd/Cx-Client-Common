@@ -19,8 +19,7 @@ import java.net.MalformedURLException;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_COMPLIANT_STATUS;
-import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_VIOLATED_STATUS;
+import static com.cx.restclient.common.CxPARAM.*;
 import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
 
 /**
@@ -127,12 +126,12 @@ public class CxClientDelegator implements Scanner {
     public void printIsProjectViolated(ScanResults scanResults) {
         if (config.getEnablePolicyViolations()) {
             log.info(PRINT_LINE);
-            log.info("Policy Management: ");
+            log.info("Policy Management: SAST and OSA ");
             log.info("--------------------");
 
             OSAResults osaResults = (OSAResults) scanResults.get(ScannerType.OSA);
             SASTResults sastResults = (SASTResults) scanResults.get(ScannerType.SAST);
-            AstScaResults scaResults = (AstScaResults) scanResults.get(ScannerType.AST_SCA);
+//            AstScaResults scaResults = (AstScaResults) scanResults.get(ScannerType.AST_SCA);
 
             boolean hasOsaViolations =
                     osaResults != null &&
@@ -145,24 +144,67 @@ public class CxClientDelegator implements Scanner {
                 hasSastPolicies = true;
             }
             
-            boolean hasScaViolations = false;
-            if (scaResults != null && scaResults.getPolicyEvaluations() != null && !scaResults.getPolicyEvaluations().isEmpty()) {
-            	hasScaViolations = true;
-            }            
+//            boolean hasScaViolations = false;
+//            if (scaResults != null && scaResults.getPolicyEvaluations() != null && !scaResults.getPolicyEvaluations().isEmpty()) {
+//            	hasScaViolations = true;
+//            }
 
-            if (!hasSastPolicies && !hasOsaViolations && !hasScaViolations) {
-                log.info(PROJECT_POLICY_COMPLIANT_STATUS);
+            if (!hasSastPolicies && !hasOsaViolations) {
+                log.info(PROJECT_POLICY_COMPLIANT_STATUS_SAST);
                 log.info(PRINT_LINE);
             } else {
-                log.info(PROJECT_POLICY_VIOLATED_STATUS);
+                log.info(PROJECT_POLICY_VIOLATED_STATUS_SAST);
                 if (hasSastPolicies) {
                     log.info("SAST violated policies names: {}", getPoliciesNames(sastResults.getSastPolicies()));
                 }
                 if (hasOsaViolations) {
                     log.info("OSA violated policies names: {}", getPoliciesNames(osaResults.getOsaPolicies()));
                 }
+//                if (hasScaViolations) {
+//                	log.info("SCA policies are violated.");
+//                }
+                log.info(PRINT_LINE);
+            }
+
+        }
+        if (config.getEnablePolicyViolationsSCA()) {
+            log.info(PRINT_LINE);
+            log.info("Policy Management: SCA ");
+            log.info("--------------------");
+
+//            OSAResults osaResults = (OSAResults) scanResults.get(ScannerType.OSA);
+  //          SASTResults sastResults = (SASTResults) scanResults.get(ScannerType.SAST);
+            AstScaResults scaResults = (AstScaResults) scanResults.get(ScannerType.AST_SCA);
+
+//            boolean hasOsaViolations =
+//                    osaResults != null &&
+//                            osaResults.getOsaPolicies() != null &&
+//                            !osaResults.getOsaPolicies().isEmpty();
+//
+//            boolean hasSastPolicies = false;
+//
+//            if (sastResults != null && sastResults.getSastPolicies() != null && !sastResults.getSastPolicies().isEmpty()) {
+//                hasSastPolicies = true;
+//            }
+
+            boolean hasScaViolations = false;
+            if (scaResults != null && scaResults.getPolicyEvaluations() != null && !scaResults.getPolicyEvaluations().isEmpty()) {
+                hasScaViolations = true;
+            }
+
+            if (!hasScaViolations) {
+                log.info(PROJECT_POLICY_COMPLIANT_STATUS_SCA);
+                log.info(PRINT_LINE);
+            } else {
+                log.info(PROJECT_POLICY_VIOLATED_STATUS_SCA);
+//                if (hasSastPolicies) {
+//                    log.info("SAST violated policies names: {}", getPoliciesNames(sastResults.getSastPolicies()));
+//                }
+//                if (hasOsaViolations) {
+//                    log.info("OSA violated policies names: {}", getPoliciesNames(osaResults.getOsaPolicies()));
+//                }
                 if (hasScaViolations) {
-                	log.info("SCA policies are violated.");
+                    log.info("SCA policies are violated.");
                 }
                 log.info(PRINT_LINE);
             }

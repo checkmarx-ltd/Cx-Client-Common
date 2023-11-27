@@ -1000,7 +1000,7 @@
                     </svg>
                 </div>
             </div>
-            <div class='content-scan-status'>
+            <div class='content-scan-status1'>
                 <p class="title-scan-status success">
                     Checkmarx Scan Passed
                 </p>
