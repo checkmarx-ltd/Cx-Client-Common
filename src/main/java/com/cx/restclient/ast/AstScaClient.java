@@ -1069,6 +1069,7 @@ public class AstScaClient extends AstClient implements Scanner {
                 printPolicyEvaluations(policyEvaluations);
                 determinePolicyViolations(result);
             }
+
             String reportLink = getWebReportLink(config.getAstScaConfig().getWebAppUrl());
             result.setWebReportLink(reportLink);
             printWebReportLink(result);
