@@ -1056,11 +1056,18 @@ public class AstScaClient extends AstClient implements Scanner {
             List<Package> packages = getPackages(scanId);
             result.setPackages(packages);            
             
-            if(config.isEnablePolicyViolations()) {
-            	List<PolicyEvaluation> policyEvaluations = getPolicyEvaluation(reportId);
-            	result.setPolicyEvaluations(policyEvaluations);
-            	printPolicyEvaluations(policyEvaluations);
-            	determinePolicyViolations(result);
+//            if(config.isEnablePolicyViolations()) {
+//            	List<PolicyEvaluation> policyEvaluations = getPolicyEvaluation(reportId);
+//            	result.setPolicyEvaluations(policyEvaluations);
+//            	printPolicyEvaluations(policyEvaluations);
+//            	determinePolicyViolations(result);
+//            }
+
+            if(config.isEnablePolicyViolationsSCA()) {
+                List<PolicyEvaluation> policyEvaluations = getPolicyEvaluation(reportId);
+                result.setPolicyEvaluations(policyEvaluations);
+                printPolicyEvaluations(policyEvaluations);
+                determinePolicyViolations(result);
             }
 
             String reportLink = getWebReportLink(config.getAstScaConfig().getWebAppUrl());

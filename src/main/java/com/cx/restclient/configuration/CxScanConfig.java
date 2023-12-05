@@ -89,6 +89,7 @@ public class CxScanConfig implements Serializable {
     private String osaDependenciesJson;
     private Boolean avoidDuplicateProjectScans = false;
     private boolean enablePolicyViolations = false;
+    private boolean enablePolicyViolationsSCA = false;
     private Boolean generateXmlReport = true;
 
     private String cxARMUrl;
@@ -650,12 +651,32 @@ public class CxScanConfig implements Serializable {
         return enablePolicyViolations;
     }
 
+    public boolean getEnablePolicyViolationsSCA() {
+        return enablePolicyViolationsSCA;
+    }
+
     public void setEnablePolicyViolations(boolean enablePolicyViolations) {
         this.enablePolicyViolations = enablePolicyViolations;
     }
 
+    public void setEnablePolicyViolationsSCA(boolean enablePolicyViolationsSCA) {
+        this.enablePolicyViolationsSCA = enablePolicyViolationsSCA;
+    }
+
     public boolean isEnablePolicyViolations() {
         return enablePolicyViolations;
+    }
+
+    public boolean isEnablePolicyViolationsSCA() {
+        return enablePolicyViolationsSCA;
+    }
+
+    public Boolean isSASTversionCompitable(){
+
+        if(Float.parseFloat(cxVersion.getVersion())>=9.6){
+            return false;
+        }
+        return true;
     }
 
     public String getCxARMUrl() {
