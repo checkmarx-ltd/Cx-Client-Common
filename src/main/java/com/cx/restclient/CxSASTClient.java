@@ -59,7 +59,9 @@ import com.cx.restclient.dto.Results;
 import com.cx.restclient.dto.Status;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
+import com.cx.restclient.osa.dto.CVE;
 import com.cx.restclient.sast.dto.*;
+import com.cx.restclient.sast.dto.Project.CustomField;
 import com.cx.restclient.sast.utils.LegacyClient;
 import com.cx.restclient.sast.utils.SASTUtils;
 import com.cx.restclient.sast.utils.State;
@@ -286,6 +288,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 scanId = createLocalSASTScan(projectId);
             } else {
                 scanId = createRemoteSourceScan(projectId);
+            }
+            if(config.getProjectLevelCustomFields()!=null) {
+            	updateProjectCustomFields();
             }
             sastResults.setSastLanguage(language);
             sastResults.setScanId(scanId);
@@ -806,6 +811,116 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         }
     }
 
+    public void updateProjectCustomFields() {
+    	   try {
+    	       log.info("Updating Project Custom Fields.");
+    	       if (config != null) {
+    	           String projectId = String.valueOf(this.projectId);
+    	           String path = "projects/" + projectId;
+    	           String customFieldPath = "customFields";
+    	           String projectCustomFieldsString = config.getProjectLevelCustomFields();
+    	           if (projectCustomFieldsString != null && !projectCustomFieldsString.isEmpty()) {
+    	               String[] projectCustomFields = projectCustomFieldsString.split(",");
+    	               List<Project.CustomField> fetchSASTProjectCustomFields = (List<Project.CustomField>) httpClient.getRequest(
+    	                       customFieldPath, CONTENT_TYPE_APPLICATION_JSON, Project.CustomField.class, 200, SAST_SCAN, true
+    	               );
+    	               log.info("Fetch SAST Project Custom Fields: {}", fetchSASTProjectCustomFields);
+    	               List<Project.CustomField> temp_customFields = new ArrayList<>();
+    	               List<ProjectLevelCustomFields> existingCustomFields = new ArrayList<>(getCustomFieldsProjectName());
+    	               for (ProjectLevelCustomFields existingCustomField : existingCustomFields) {
+    	                   if (!Arrays.asList(projectCustomFields).contains(existingCustomField.getName())) {
+    	                       Project.CustomField customField = new Project.CustomField();
+    	                       customField.setId(existingCustomField.getId());
+    	                       customField.setValue(existingCustomField.getValue());
+    	                       customField.setName(existingCustomField.getName());
+    	                       temp_customFields.add(customField);
+    	                   }
+    	               }
+    	               for (String projectCustomField : projectCustomFields) {
+    	                   String[] customFieldParts = projectCustomField.split(":");
+    	                   String key = customFieldParts[0].trim();
+    	                   String value = customFieldParts[1].trim();
+    	                   Project.CustomField customField = new Project.CustomField();
+    	                   long customFieldId = fetchSASTProjectCustomFields.stream()
+    	                           .filter(cf -> key.equals(cf.getName()))
+    	                           .findFirst()
+    	                           .map(Project.CustomField::getId)
+    	                           .orElse(0L);
+    	                   if (customFieldId != 0 && !value.isEmpty()) {
+    	                       customField.setId(customFieldId);
+    	                       customField.setValue(value);
+    	                       temp_customFields.add(customField);
+    	                   }
+    	               }
+    	               Map<String, Object> projectPutRequest = new HashMap<>();
+    	               projectPutRequest.put("name", "string");
+    	               try {
+    	                   int owningTeamId = 0;
+    	                   projectPutRequest.put("owningTeam", owningTeamId);
+    	               } catch (NumberFormatException e) {
+    	                   log.warn("Failed to convert 'owningTeam' to an integer. Please provide a valid numeric value for owningTeam.");
+    	               }
+    	               List<Map<String, Object>> customFieldsList = temp_customFields.stream()
+    	            		   .filter(cf -> cf.getId() != 0 && !cf.getValue().isEmpty())
+    	            		   .map(cf -> {
+    	            		       Map<String, Object> map = new HashMap<>();
+    	            		       map.put("id", cf.getId());
+    	            		       map.put("value", cf.getValue());
+    	            		       return map;
+    	            		   })
+    	            		   .collect(Collectors.toList());
+    	               projectPutRequest.put("customFields", customFieldsList);
+    	               // Create an HttpEntity from the converted JSON string
+    	               StringEntity entity = new StringEntity(convertToJson(projectPutRequest), ContentType.APPLICATION_JSON);
+    	               try {
+    	                   // Make sure the putRequest method expects an HttpEntity parameter
+    	                   Project result = httpClient.putRequest(path, CONTENT_TYPE_APPLICATION_JSON_V1, entity, Project.class, 200, "define project level custom field");
+    	                   log.info("Result received for updateProjectCustomFields: {}", result);
+    	               } catch (CxHTTPClientException e) {
+    	                   log.error("Error updating project custom fields: {}", e.getMessage());
+    	               }
+    	           } else {
+    	               log.warn("projectCustomFieldsString is null or empty");
+    	           }
+    	       } else {
+    	           log.warn("config is null");
+    	       }
+    	   } catch (IOException e) {
+    	       log.error("IOException during updateProjectCustomFields: {}", e.getMessage());
+    	       e.printStackTrace();
+    	   }
+    	}
+    
+    
+    private List<ProjectLevelCustomFields> getCustomFieldsProjectName() throws IOException {
+    	   List<ProjectLevelCustomFields> result = new ArrayList<>();
+    	   String encodedName = config.getProjectName();
+    	   String path = "projects?projectname=" + encodedName + "&teamid=" + this.getTeamIdByName(config.getTeamPath());
+    	   try {
+    	       Project[] projects = httpClient.getRequest(path, CONTENT_TYPE_APPLICATION_JSON, Project[].class, 200, SAST_SCAN, false);
+    	       log.info("Projects Response: {}", projects);
+    	       if (projects != null && projects.length > 0) {
+    	           List<CustomField> customFields = projects[0].getCustomFields();
+    	           result = convertCustomFields(customFields);
+    	       }
+    	   } catch (Exception err) {
+    	       throw new CxClientException("CxARM is not available. Policy violations for SAST cannot be calculated: " + err.getMessage());
+    	   }
+    	   return result;
+    	}
+    	// Helper method to convert CustomField to ProjectLevelCustomFields
+    	private List<ProjectLevelCustomFields> convertCustomFields(List<CustomField> customFields) {
+    	   List<ProjectLevelCustomFields> result = new ArrayList<>();
+    	   for (CustomField customField : customFields) {
+    	       ProjectLevelCustomFields projectLevelCustomField = new ProjectLevelCustomFields(
+    	               customField.getId(),
+    	               customField.getValue(),
+    	               customField.getName()
+    	       );
+    	       result.add(projectLevelCustomField);
+    	   }
+    	   return result;
+    	}
     private ScanWithSettingsResponse scanWithSettings(byte[] zipFile, long projectId, boolean isRemote) throws IOException {
         log.info("Uploading zip file");
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
