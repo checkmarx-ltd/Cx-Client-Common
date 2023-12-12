@@ -612,11 +612,11 @@ public class CxHttpClient implements Closeable {
 	}
 
     //PUT REQUEST
-    public <T> T putRequest(String relPath, String contentType,String acceptHeader, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
-        HttpPut put = new HttpPut(rootUri + relPath);
-        put.addHeader("Accept", acceptHeader);
-        return request(put, contentType, entity, responseType, expectStatus, failedMsg, false, true);
-    }
+//    public <T> T putRequest(String relPath, String contentType,String acceptHeader, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
+//        HttpPut put = new HttpPut(rootUri + relPath);
+//        put.addHeader("Accept", acceptHeader);
+//        return request(put, contentType, entity, responseType, expectStatus, failedMsg, false, true);
+//    }
     public <T> T putRequest(String relPath, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPut put = new HttpPut(rootUri + relPath);
         return request(put, contentType, entity, responseType, expectStatus, failedMsg, false, true);

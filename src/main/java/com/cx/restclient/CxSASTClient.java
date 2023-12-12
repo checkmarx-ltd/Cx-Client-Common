@@ -889,13 +889,14 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 //    	            		       return map;
 //    	            		   })
 //    	            		   .collect(Collectors.toList());
-    	               //projectPutRequest.put("customFields", customFieldsList);
+    	               //projectPutRequest.put("customFelds", customFieldsList);
                        // Create an HttpEntity from the converted JSON string
                        Project getProjectRequest = httpClient.getRequest(path
                                , CONTENT_TYPE_APPLICATION_JSON, Project.class, 200, SAST_SCAN, false);
                        ProjectPutRequest projectPutRequest = new ProjectPutRequest();
                        projectPutRequest.setName(getProjectRequest.getName());
-                       projectPutRequest.getOwningTeam(Integer.parseInt( String.valueOf(1)));
+                       Integer team = Integer.parseInt(getProjectRequest.getTeamId());
+                       projectPutRequest.setOwningTeam(team);
 
                        if(custObj.size()>0){
                            projectPutRequest.setCustomFields(custObj);
@@ -903,7 +904,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     	               StringEntity entity = new StringEntity(convertToJson(projectPutRequest));
     	               try {
     	                   // Make sure the putRequest method expects an HttpEntity parameter
-    	                   httpClient.putRequest(path, CONTENT_TYPE_APPLICATION_JSON_V1,CONTENT_TYPE_APPLICATION_JSON_V1, entity, Project.class, 204, "define project level custom field");
+    	                   httpClient.putRequest(path, CONTENT_TYPE_APPLICATION_JSON_V1, entity, null, 204, "define project level custom field");
     	                   log.info("Result received for updateProjectCustomFields");
     	               } catch (CxHTTPClientException e) {
     	                   log.error("Error updating project custom fields: {}", e.getMessage());

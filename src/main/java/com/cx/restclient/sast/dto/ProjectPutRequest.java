@@ -21,7 +21,7 @@ public class ProjectPutRequest {
         this.name = name;
     }
 
-    public Integer getOwningTeam(int i) {
+    public Integer getOwningTeam() {
         return owningTeam;
     }
 
