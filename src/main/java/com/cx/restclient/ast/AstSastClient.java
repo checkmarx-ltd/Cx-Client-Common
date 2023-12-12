@@ -139,9 +139,8 @@ public class AstSastClient extends AstClient implements Scanner {
             SourceLocationType locationType = astConfig.getSourceLocationType();
             HttpResponse response;
             if (locationType == SourceLocationType.REMOTE_REPOSITORY) {
-                response = submitSourcesFromRemoteRepo(astConfig, config.getProjectName());
+                response = submitSourcesFromRemoteRepo(astConfig, config.getProjectName(),config.getAstScaConfig().getScaScanCustomTags());
             } else {
-
                 response = submitAllSourcesFromLocalDir(config.getProjectName(), astConfig.getZipFilePath());
             }
             scanId = extractScanIdFrom(response);
@@ -161,7 +160,7 @@ public class AstSastClient extends AstClient implements Scanner {
         String sourceDir = config.getSourceDir();
         byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
 
-        return initiateScanForUpload(projectId, zipFile, config.getAstSastConfig());
+        return initiateScanForUpload(projectId, zipFile, config.getAstSastConfig(),config.getAstScaConfig().getScaScanCustomTags());
     }
 
     @Override
