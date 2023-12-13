@@ -824,7 +824,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     	                       customFieldPath, CONTENT_TYPE_APPLICATION_JSON, CustomField.class, 200, SAST_SCAN, true
     	               );
                        ArrayList<Object> custObj = new ArrayList<>();
-                       Map<String,String> projectCustomFieldMap = customFiledMap(projectCustomFieldsString);
+                       Map<String,String> projectCustomFieldMap = customFieldMap(projectCustomFieldsString);
 
                        for(int i=0;i<fetchSASTProjectCustomFields.size();i++){
                            if(projectCustomFieldMap.containsKey(fetchSASTProjectCustomFields.get(i).getName())){
@@ -864,7 +864,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 	        }
     	}
 
-    private Map<String,String> customFiledMap(String projectCustomField){
+    private Map<String,String> customFieldMap(String projectCustomField){
         Map<String,String> customFieldMap = new HashMap<String,String>();
         StringTokenizer tokenizer = new StringTokenizer(projectCustomField, ",");
         log.info("Project custom field: {}",projectCustomField);
