@@ -61,7 +61,6 @@ import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.osa.dto.CVE;
 import com.cx.restclient.sast.dto.*;
-import com.cx.restclient.sast.dto.CustomField;
 import com.cx.restclient.sast.utils.LegacyClient;
 import com.cx.restclient.sast.utils.SASTUtils;
 import com.cx.restclient.sast.utils.State;
@@ -816,26 +815,28 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     	       log.info("Updating Project Custom Fields.");
     	       if (config != null) {
     	           String projectId = String.valueOf(this.projectId);
-    	           String path = "projects/" + projectId;
-    	           String customFieldPath = "customFields";
+    	           String apiVersion = getContentTypeAndApiVersion(config, PROJECT_PATH);
+    	           String apiVersionCustomField = getContentTypeAndApiVersion(config, CUSTOM_FIELD_PATH);
     	           String projectCustomFieldsString = config.getProjectLevelCustomFields();
     	           if (projectCustomFieldsString != null && !projectCustomFieldsString.isEmpty()) {
-    	               List<CustomField> fetchSASTProjectCustomFields = (List<CustomField>) httpClient.getRequest(
-    	                       customFieldPath, CONTENT_TYPE_APPLICATION_JSON, CustomField.class, 200, SAST_SCAN, true
+    	               List<ProjectLevelCustomFields> fetchSASTProjectCustomFields = (List<ProjectLevelCustomFields>) httpClient.getRequest(
+    	            		   CUSTOM_FIELD_PATH, apiVersionCustomField, ProjectLevelCustomFields.class, 200, SAST_SCAN, true
     	               );
                        ArrayList<Object> custObj = new ArrayList<>();
                        Map<String,String> projectCustomFieldMap = customFieldMap(projectCustomFieldsString);
 
                        for(int i=0;i<fetchSASTProjectCustomFields.size();i++){
-                           if(projectCustomFieldMap.containsKey(fetchSASTProjectCustomFields.get(i).getName())){
-                               CustomProjectField customProjectField = new CustomProjectField();
-                               customProjectField.setId(Integer.parseInt(String.valueOf(fetchSASTProjectCustomFields.get(i).getId())));
-                               customProjectField.setValue(projectCustomFieldMap.get(fetchSASTProjectCustomFields.get(i).getName()));
-                               custObj.add(customProjectField);
+                    	   if (projectCustomFieldMap.containsKey(fetchSASTProjectCustomFields.get(i).getName())) {
+                    		   ProjectLevelCustomFields customProjectField = new ProjectLevelCustomFields(
+                    		           fetchSASTProjectCustomFields.get(i).getId(),
+                    		           projectCustomFieldMap.get(fetchSASTProjectCustomFields.get(i).getName()),
+                    		           fetchSASTProjectCustomFields.get(i).getName()
+                    		   );
+                    		   custObj.add(customProjectField);
+                    		}
                        }
-                       }
-                       Project getProjectRequest = httpClient.getRequest(path
-                               , CONTENT_TYPE_APPLICATION_JSON, Project.class, 200, SAST_SCAN, false);
+                       Project getProjectRequest = httpClient.getRequest(PROJECT_PATH + projectId
+                               , apiVersion, Project.class, 200, SAST_SCAN, false);
                        ProjectPutRequest projectPutRequest = new ProjectPutRequest();
                        projectPutRequest.setName(getProjectRequest.getName());
                        Integer team = Integer.parseInt(getProjectRequest.getTeamId());
@@ -846,7 +847,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     	               StringEntity entity = new StringEntity(convertToJson(projectPutRequest));
     	               try {
-    	                   httpClient.putRequest(path, CONTENT_TYPE_APPLICATION_JSON_V1, entity, null, 204, "define project level custom field");
+    	                   httpClient.putRequest(PROJECT_PATH + projectId, apiVersion, entity, null, 204, "define project level custom field");
     	                   log.info("Project Level-Custom Fields updated successfully.");
     	               } catch (CxHTTPClientException e) {
     	                   log.error("Error updating Project Level-Custom Fields: {}", e.getMessage());

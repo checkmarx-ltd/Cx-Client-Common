@@ -11,6 +11,9 @@ public class ProjectLevelCustomFields {
 	   private String value;
 	   private String name;
 	   
+	   public ProjectLevelCustomFields() {
+	   }
+	   
 	   public ProjectLevelCustomFields(long id, String value, String name) {
 			this.id = id;
 			       this.value = value;
