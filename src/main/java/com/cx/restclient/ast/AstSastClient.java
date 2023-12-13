@@ -141,6 +141,7 @@ public class AstSastClient extends AstClient implements Scanner {
             if (locationType == SourceLocationType.REMOTE_REPOSITORY) {
                 response = submitSourcesFromRemoteRepo(astConfig, config.getProjectName(),config.getAstScaConfig().getScaScanCustomTags());
             } else {
+
                 response = submitAllSourcesFromLocalDir(config.getProjectName(), astConfig.getZipFilePath());
             }
             scanId = extractScanIdFrom(response);

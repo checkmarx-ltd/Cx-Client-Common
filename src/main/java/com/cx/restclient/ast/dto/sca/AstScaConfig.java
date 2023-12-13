@@ -47,6 +47,7 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private String scaProjectCustomTags;
     private String scaScanCustomTags;
     private String scaResolverAddParameters;
+
     public String getPathToScaResolver() {
 		return pathToScaResolver;
 	}

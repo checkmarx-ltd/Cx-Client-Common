@@ -91,9 +91,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 public class AstScaClient extends AstClient implements Scanner {
     private static final String RISK_MANAGEMENT_API = properties.get("astSca.riskManagementApi");
     private static final String PROJECTS = RISK_MANAGEMENT_API + properties.get("astSca.projects");
-
     private static final String PROJECTID = PROJECTS + properties.get("astSca.projectId");
-
     private static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + properties.get("astSca.summaryReport");
     private static final String FINDINGS = RISK_MANAGEMENT_API + properties.get("astSca.findings");
     private static final String PACKAGES = RISK_MANAGEMENT_API + properties.get("astSca.packages");
@@ -905,6 +903,7 @@ public class AstScaClient extends AstClient implements Scanner {
 			assignedTeam = getTeamById(assignedTeamId);
 			
 		} else if(StringUtils.isEmpty(assignedTeam)){
+
         	assignedTeam = config.getTeamPath();
         }
 		

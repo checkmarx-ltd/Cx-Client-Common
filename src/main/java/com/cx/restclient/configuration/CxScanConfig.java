@@ -670,15 +670,6 @@ public class CxScanConfig implements Serializable {
     public boolean isEnablePolicyViolationsSCA() {
         return enablePolicyViolationsSCA;
     }
-
-    public Boolean isSASTversionCompitable(){
-
-        if(Float.parseFloat(cxVersion.getVersion())>=9.6){
-            return false;
-        }
-        return true;
-    }
-
     public String getCxARMUrl() {
         return cxARMUrl;
     }

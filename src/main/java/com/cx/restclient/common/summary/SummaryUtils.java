@@ -257,23 +257,23 @@ public abstract class SummaryUtils {
 
             if(Boolean.TRUE.equals(config.isAstScaEnabled())
                     && scaResults != null && scaResults.getPolicyEvaluations() != null
-                    && !scaResults.getPolicyEvaluations().isEmpty())
+                            && !scaResults.getPolicyEvaluations().isEmpty())
             {
-                policyViolated = true;
+            	policyViolated = true;
 
-                policies.putAll(scaResults.getPolicyEvaluations().stream().filter(policy -> policy.getIsViolated()).collect(
+            	policies.putAll(scaResults.getPolicyEvaluations().stream().filter(policy -> policy.getIsViolated()).collect(
                         Collectors.toMap(PolicyEvaluation::getName, PolicyEvaluation::getId,
                                 (left, right) -> left)));
-                if(policies.size()==0)
-                {
-                    policyViolated = false;
-                }
+            	if(policies.size()==0)
+            	{
+            		policyViolated = false;
+            	}
             }
 
 
             if(scanSummary.isPolicyViolated()) {
-                buildFailed = true;
-                policyViolated = true;
+            	buildFailed = true;
+            	policyViolated = true;
             }
             policyViolatedCount = policies.size();
             String policyLabel = policyViolatedCount == 1 ? "Policy" : "Policies";
@@ -281,6 +281,7 @@ public abstract class SummaryUtils {
 
             templateData.put("policyViolatedCount", policyViolatedCount);
         }
+
 
         templateData.put("policyViolated", policyViolated);
         buildFailed = policyViolated;

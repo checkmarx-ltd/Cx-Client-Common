@@ -12,4 +12,3 @@ public class ProjectToScan {
     private String type;
     private ScanStartHandler handler;
 }
-

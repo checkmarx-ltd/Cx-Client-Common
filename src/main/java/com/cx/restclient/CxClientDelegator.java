@@ -131,7 +131,7 @@ public class CxClientDelegator implements Scanner {
 
             OSAResults osaResults = (OSAResults) scanResults.get(ScannerType.OSA);
             SASTResults sastResults = (SASTResults) scanResults.get(ScannerType.SAST);
-//            AstScaResults scaResults = (AstScaResults) scanResults.get(ScannerType.AST_SCA);
+            AstScaResults scaResults = (AstScaResults) scanResults.get(ScannerType.AST_SCA);
 
             boolean hasOsaViolations =
                     osaResults != null &&
