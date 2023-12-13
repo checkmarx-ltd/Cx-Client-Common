@@ -847,9 +847,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     	               StringEntity entity = new StringEntity(convertToJson(projectPutRequest));
     	               try {
     	                   httpClient.putRequest(path, CONTENT_TYPE_APPLICATION_JSON_V1, entity, null, 204, "define project level custom field");
-    	                   log.info("Result received for updateProjectCustomFields");
+    	                   log.info("Project Level-Custom Fields updated successfully.");
     	               } catch (CxHTTPClientException e) {
-    	                   log.error("Error updating project custom fields: {}", e.getMessage());
+    	                   log.error("Error updating Project Level-Custom Fields: {}", e.getMessage());
     	               }
     	           } else {
     	               log.warn("projectCustomFieldsString is null or empty");
@@ -858,10 +858,10 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     	       } else {
     	           log.warn("config is null");
     	       }
-    	   } catch (IOException e) {
-    	       log.error("IOException during updateProjectCustomFields: {}", e.getMessage());
-    	       e.printStackTrace();
     	   }
+	       catch (Exception ex) {
+	            throw new CxClientException("Failed to Update Project Level-Custom Fields: " + ex.getMessage());
+	        }
     	}
 
     private Map<String,String> customFiledMap(String projectCustomField){
