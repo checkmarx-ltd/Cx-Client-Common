@@ -47,6 +47,12 @@ import com.cx.restclient.ast.dto.common.HandlerRef;
 import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
 import com.cx.restclient.ast.dto.common.ScanConfig;
 import com.cx.restclient.ast.dto.common.ScanConfigValue;
+import com.cx.restclient.ast.dto.sca.AstScaConfig;
+import com.cx.restclient.ast.dto.sca.AstScaResults;
+import com.cx.restclient.ast.dto.sca.CreateProjectRequest;
+import com.cx.restclient.ast.dto.sca.Project;
+import com.cx.restclient.ast.dto.sca.ScaScanConfigValue;
+import com.cx.restclient.ast.dto.sca.Team;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
 import com.cx.restclient.ast.dto.sca.report.Finding;
 import com.cx.restclient.ast.dto.sca.report.Package;
@@ -1044,13 +1050,15 @@ public class AstScaClient extends AstClient implements Scanner {
 
        if(existingProject.getTags()!=null){
            Map<String,String> tagMaps = (Map<String, String>) existingProject.getTags();
-           StringTokenizer tokenizer = new StringTokenizer(customTags, ",");
-           log.info("Project level custom tag name: {}",tokenizer.toString());
-           while (tokenizer.hasMoreTokens()) {
-               String token = tokenizer.nextToken();
-               String[] keyValue = token.split(":");
-               tagMaps.put(keyValue[0], keyValue[1]);
-           }
+          if(!StringUtils.isEmpty(customTags)) {
+              StringTokenizer tokenizer = new StringTokenizer(customTags, ",");
+              log.info("Project level custom tag name: {}", tokenizer.toString());
+              while (tokenizer.hasMoreTokens()) {
+                  String token = tokenizer.nextToken();
+                  String[] keyValue = token.split(":");
+                  tagMaps.put(keyValue[0], keyValue[1]);
+              }
+          }
            request.setTags(tagMaps);
        }else{
                if(!StringUtils.isEmpty(customTags)) {
@@ -1068,12 +1076,14 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private Map<String,String> customFiledMap(String projectCustomField){
         Map<String,String> customFieldMap = new LinkedHashMap<String,String>();
+        if(!StringUtils.isEmpty(projectCustomField)){
         StringTokenizer tokenizer = new StringTokenizer(projectCustomField, ",");
         log.info("Project level custom tag name: {}",tokenizer);
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
             String[] keyValue = token.split(":");
             customFieldMap.put(keyValue[0], keyValue[1]);
+        }
         }
     return customFieldMap;
 

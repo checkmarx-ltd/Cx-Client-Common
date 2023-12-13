@@ -65,6 +65,7 @@ public class CxScanConfig implements Serializable {
     private File zipFile;
     private Integer engineConfigurationId;
     private String engineConfigurationName;
+    private String projectCustomFields;
     private boolean ignoreBenignErrors = false;
 
     private String osaFolderExclusions;    
@@ -74,6 +75,14 @@ public class CxScanConfig implements Serializable {
 
     public void setEngineConfigurationName(String engineConfigurationName) {
         this.engineConfigurationName = engineConfigurationName;
+    }
+
+    public String getprojectCustomFields() {
+        return projectCustomFields;
+    }
+
+    public void setprojectCustomFields(String projectCustomFields) {
+        this.projectCustomFields = projectCustomFields;
     }
 
     private String osaFilterPattern;
@@ -132,6 +141,8 @@ public class CxScanConfig implements Serializable {
 
     private String customFields;
     
+    private String projectLevelCustomFields;
+
     private boolean isOverrideProjectSetting = false;
 
     public boolean isOverrideRetentionRate() {
@@ -258,6 +269,14 @@ public class CxScanConfig implements Serializable {
 	public void setCustomFields(String customFields) {
 		this.customFields = customFields;
 	}
+
+	public String getProjectLevelCustomFields() {
+        return projectLevelCustomFields;
+    }
+
+    public void setProjectLevelCustomFields(String projectLevelCustomFields) {
+        this.projectLevelCustomFields = projectLevelCustomFields;
+    }
 
 	public String getOsaLocationPath() {
         return osaLocationPath;

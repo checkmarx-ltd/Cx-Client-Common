@@ -126,12 +126,14 @@ public abstract class AstClient {
     }
     private Map<String,String> customFiledMap(String scanCustomField){
         Map<String,String> customFieldMap = new HashMap<String,String>();
-        StringTokenizer tokenizer = new StringTokenizer(scanCustomField, ",");
-        log.info("scan custom Tags: {}",scanCustomField);
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-            String[] keyValue = token.split(":");
-            customFieldMap.put(keyValue[0], keyValue[1]);
+        if(!StringUtils.isEmpty(scanCustomField)) {
+            StringTokenizer tokenizer = new StringTokenizer(scanCustomField, ",");
+            log.info("scan custom Tags: {}", scanCustomField);
+            while (tokenizer.hasMoreTokens()) {
+                String token = tokenizer.nextToken();
+                String[] keyValue = token.split(":");
+                customFieldMap.put(keyValue[0], keyValue[1]);
+            }
         }
         return customFieldMap;
     }
