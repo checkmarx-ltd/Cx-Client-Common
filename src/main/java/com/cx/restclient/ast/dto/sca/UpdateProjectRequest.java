@@ -1,12 +1,15 @@
 package com.cx.restclient.ast.dto.sca;
 
-import com.cx.restclient.sca.dto.Tags;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreateProjectRequest {
+public class UpdateProjectRequest {
     private String name;
+
+    public void setAssignedTeams(List<String> assignedTeams) {
+        this.assignedTeams = assignedTeams;
+    }
+
     private List<String> assignedTeams = new ArrayList<>();
     private Object Tags;
 
@@ -18,21 +21,19 @@ public class CreateProjectRequest {
         this.Tags = tags;
     }
 
-	public List<String> getAssignedTeams() {
-		return assignedTeams;
-	}
+    public List<String> getAssignedTeams() {
+        return assignedTeams;
+    }
 
-	public void addAssignedTeams(String assignedTeam) {
-		this.assignedTeams.add(assignedTeam);
-	}
+    public void addAssignedTeams(String assignedTeam) {
+        this.assignedTeams.add(assignedTeam);
+    }
 
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     public String getName() {
         return name;
     }
-
-
 }

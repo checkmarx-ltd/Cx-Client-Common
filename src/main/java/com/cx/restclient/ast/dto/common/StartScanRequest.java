@@ -17,4 +17,5 @@ public class StartScanRequest {
      * How to scan.
      */
     private List<ScanConfig> config;
+    private Object tags;
 }
