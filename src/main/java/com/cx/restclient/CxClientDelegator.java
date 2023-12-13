@@ -22,6 +22,9 @@ import java.util.Map;
 import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_COMPLIANT_STATUS_SAST;
 import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_COMPLIANT_STATUS_SCA;
 import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_VIOLATED_STATUS;
+import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_VIOLATED_STATUS_SAST;
+import static com.cx.restclient.common.CxPARAM.PROJECT_POLICY_VIOLATED_STATUS_SCA;
+
 import static com.cx.restclient.cxArm.utils.CxARMUtils.getPoliciesNames;
 
 /**
