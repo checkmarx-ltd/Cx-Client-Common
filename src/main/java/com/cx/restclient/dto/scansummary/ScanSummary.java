@@ -32,7 +32,7 @@ public class ScanSummary {
 
         policyVioletedSAST = determinePolicyViolation(config, sastResults, osaResults);
         policyVioletedSCA = determinePolicyViolationSCA(config,scaResults);
-        if(policyVioletedSAST&&policyVioletedSCA){
+        if(policyVioletedSAST||policyVioletedSCA){
             policyViolated=true;
         }else{
             policyViolated=false;
