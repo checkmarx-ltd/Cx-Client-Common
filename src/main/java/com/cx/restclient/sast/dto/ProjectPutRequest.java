@@ -39,5 +39,4 @@ public class ProjectPutRequest {
         this.customFields = custObj;
     }
 
-
 }

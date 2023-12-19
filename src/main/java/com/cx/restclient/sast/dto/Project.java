@@ -38,6 +38,24 @@ public class Project {
         this.customFields = customFields;
     }
 
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(boolean aPublic) {
+        isPublic = aPublic;
+    }
+
+    public List<Object> getCustomFields() {
+        return customFields;
+    }
+
+    public void setCustomFields(List<Object> customFields) {
+        this.customFields = customFields;
+    }
+
+    private List<Object> customFields;
+
     public long getId() {
         return id;
     }
