@@ -1,5 +1,7 @@
 package com.cx.restclient.sast.dto;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -12,6 +14,24 @@ public class Project {
     private String name;
     private String teamId;
     private boolean isPublic;
+
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(boolean aPublic) {
+        isPublic = aPublic;
+    }
+
+    public List<Object> getCustomFields() {
+        return customFields;
+    }
+
+    public void setCustomFields(List<Object> customFields) {
+        this.customFields = customFields;
+    }
+
+    private List<Object> customFields;
 
     public long getId() {
         return id;

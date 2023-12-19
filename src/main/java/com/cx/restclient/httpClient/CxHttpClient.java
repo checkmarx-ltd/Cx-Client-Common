@@ -63,6 +63,9 @@ import javax.net.ssl.SSLContext;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.IDN;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
@@ -633,7 +636,21 @@ public class CxHttpClient implements Closeable {
     }
 
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
-        if (contentType != null) {
+    	//Support unicode characters
+        if (httpMethod.getURI() != null && (StringUtils.isNotEmpty(httpMethod.getURI().getHost()) ||
+                StringUtils.isNotEmpty(httpMethod.getURI().getAuthority()))) {
+            URI tmpUri = httpMethod.getURI();
+            String host = StringUtils.isNotEmpty(tmpUri.getAuthority()) ? tmpUri.getAuthority() : tmpUri.getHost();
+            host = IDN.toASCII(host, IDN.ALLOW_UNASSIGNED);
+            try {
+                URI uri = new URI(tmpUri.getScheme(), tmpUri.getUserInfo(), host, tmpUri.getPort(), tmpUri.getPath(),
+                        tmpUri.getQuery(), tmpUri.getFragment());
+                httpMethod.setURI(uri);
+            } catch (URISyntaxException e) {
+                log.error("Fail to convert URI: " + httpMethod.getURI().toString());
+            }
+        }
+    	if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
         }
         if (entity != null && httpMethod instanceof HttpEntityEnclosingRequestBase) { //Entity for Post methods

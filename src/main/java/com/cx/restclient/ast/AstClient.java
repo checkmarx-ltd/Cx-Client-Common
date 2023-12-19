@@ -5,9 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -101,11 +99,11 @@ public abstract class AstClient {
 
     protected HttpResponse sendStartScanRequest(RemoteRepositoryInfo repoInfo,
                                                 SourceLocationType sourceLocation,
-                                                String projectId) throws IOException {
+                                                String projectId, String scanCustomTags) throws IOException {
         log.debug("Constructing the 'start scan' request");
 
         ScanStartHandler handler = getScanStartHandler(repoInfo);
-
+        Map<String,String> scanCustomMap = customFiledMap(scanCustomTags);
         ProjectToScan project = ProjectToScan.builder()
                 .id(projectId)
                 .type(sourceLocation.getApiValue())
@@ -117,6 +115,7 @@ public abstract class AstClient {
         StartScanRequest request = StartScanRequest.builder()
                 .project(project)
                 .config(apiScanConfig)
+                .tags(scanCustomMap)
                 .build();
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
@@ -125,15 +124,27 @@ public abstract class AstClient {
         return httpClient.postRequest(CREATE_SCAN, ContentType.CONTENT_TYPE_APPLICATION_JSON, entity,
                 HttpResponse.class, HttpStatus.SC_CREATED, "start the scan");
     }
-
-    protected HttpResponse submitSourcesFromRemoteRepo(ASTConfig config, String projectId) throws IOException {
+    private Map<String,String> customFiledMap(String scanCustomField){
+        Map<String,String> customFieldMap = new HashMap<String,String>();
+        if(!StringUtils.isEmpty(scanCustomField)) {
+            StringTokenizer tokenizer = new StringTokenizer(scanCustomField, ",");
+            log.info("scan custom Tags: {}", scanCustomField);
+            while (tokenizer.hasMoreTokens()) {
+                String token = tokenizer.nextToken();
+                String[] keyValue = token.split(":");
+                customFieldMap.put(keyValue[0], keyValue[1]);
+            }
+        }
+        return customFieldMap;
+    }
+    protected HttpResponse submitSourcesFromRemoteRepo(ASTConfig config, String projectId,String customTags) throws IOException {
         log.info("Using remote repository flow.");
         RemoteRepositoryInfo repoInfo = config.getRemoteRepositoryInfo();
         validateRepoInfo(repoInfo);
 
         URL sanitizedUrl = sanitize(repoInfo.getUrl());
         log.info("Repository URL: {}", sanitizedUrl);
-        return sendStartScanRequest(repoInfo, SourceLocationType.REMOTE_REPOSITORY, projectId);
+        return sendStartScanRequest(repoInfo, SourceLocationType.REMOTE_REPOSITORY, projectId,customTags);
     }
 
     protected void waitForScanToFinish(String scanId) {
@@ -249,7 +260,7 @@ public abstract class AstClient {
         results.setException(new CxClientException(message, e));
     }
 
-    protected HttpResponse initiateScanForUpload(String projectId, byte[] zipFile, ASTConfig scanConfig) throws IOException {
+    protected HttpResponse initiateScanForUpload(String projectId, byte[] zipFile, ASTConfig scanConfig,String scanCustomTag) throws IOException {
         String uploadedArchiveUrl = getSourcesUploadUrl(scanConfig);
         String cleanPath = uploadedArchiveUrl.split("\\?")[0];
         log.info("Uploading to: {}", cleanPath);
@@ -262,7 +273,7 @@ public abstract class AstClient {
         RemoteRepositoryInfo uploadedFileInfo = new RemoteRepositoryInfo();
         uploadedFileInfo.setUrl(new URL(uploadedArchiveUrl));
 
-        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId);
+        return sendStartScanRequest(uploadedFileInfo, SourceLocationType.LOCAL_DIRECTORY, projectId,scanCustomTag);
     }
 
     private String getSourcesUploadUrl(ASTConfig scanConfig) throws IOException {

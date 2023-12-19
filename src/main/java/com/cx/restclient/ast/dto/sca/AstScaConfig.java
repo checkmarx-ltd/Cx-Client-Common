@@ -44,6 +44,8 @@ public class AstScaConfig extends ASTConfig implements Serializable {
     private Boolean isScaProxy;
 
 	private String pathToScaResolver;
+    private String scaProjectCustomTags;
+    private String scaScanCustomTags;
     private String scaResolverAddParameters;
 	
     public String getPathToScaResolver() {
@@ -59,6 +61,21 @@ public class AstScaConfig extends ASTConfig implements Serializable {
 		this.scaResolverAddParameters = scaResolverAddParameters;
 	}
 
+    public String getScaProjectCustomTags() {
+        return scaProjectCustomTags;
+    }
+
+    public void setScaProjectCustomTags(String scaProjectCustomTags) {
+        this.scaProjectCustomTags = scaProjectCustomTags;
+    }
+
+    public String getScaScanCustomTags() {
+        return scaScanCustomTags;
+    }
+
+    public void setScaScanCustomTags(String scaScanCustomTags) {
+        this.scaScanCustomTags = scaScanCustomTags;
+    }
 	private Map<String,String> envVariables;
     private List<String> configFilePaths;
     
