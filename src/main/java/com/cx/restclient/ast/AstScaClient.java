@@ -1023,10 +1023,9 @@ public class AstScaClient extends AstClient implements Scanner {
 
         log.info("Project level custom tag name: {}",projectCustomTag);
         if(!StringUtils.isEmpty(projectCustomTag)) {
-            Map<String,String> tagMaps = customFiledMap(projectCustomTag);
-            log.info("Project level custom tag name: {}",tagMaps);
+            Map<String,String> tagMaps = customFieldMap(projectCustomTag);
+            log.debug("Project level custom tags: {}",tagMaps);
             request.setTags(tagMaps);
-            log.info("Project level custom tag name: {}",projectCustomTag);
         }
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
@@ -1048,11 +1047,11 @@ public class AstScaClient extends AstClient implements Scanner {
      UpdateProjectRequest request = new UpdateProjectRequest();
      request.setName(existingProject.getName());
 
+     log.info("Project level custom tag name: {}",customTags);
        if(existingProject.getTags()!=null){
            Map<String,String> tagMaps = (Map<String, String>) existingProject.getTags();
           if(!StringUtils.isEmpty(customTags)) {
               StringTokenizer tokenizer = new StringTokenizer(customTags, ",");
-              log.info("Project level custom tag name: {}", tokenizer.toString());
               while (tokenizer.hasMoreTokens()) {
                   String token = tokenizer.nextToken();
                   String[] keyValue = token.split(":");
@@ -1062,10 +1061,9 @@ public class AstScaClient extends AstClient implements Scanner {
            request.setTags(tagMaps);
        }else{
                if(!StringUtils.isEmpty(customTags)) {
-                   Map<String,String> tagMaps = customFiledMap(customTags);
+                   Map<String,String> tagMaps = customFieldMap(customTags);
 
                    request.setTags(tagMaps);
-                   log.info("Project level custom tag name: {}",customTags);
                }
            }
        StringEntity entity = HttpClientHelper.convertToStringEntity(request);
@@ -1074,11 +1072,10 @@ public class AstScaClient extends AstClient implements Scanner {
     }
 
 
-    private Map<String,String> customFiledMap(String projectCustomField){
+    private Map<String,String> customFieldMap(String projectCustomField){
         Map<String,String> customFieldMap = new LinkedHashMap<String,String>();
         if(!StringUtils.isEmpty(projectCustomField)){
         StringTokenizer tokenizer = new StringTokenizer(projectCustomField, ",");
-        log.info("Project level custom tag name: {}",tokenizer);
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
             String[] keyValue = token.split(":");
