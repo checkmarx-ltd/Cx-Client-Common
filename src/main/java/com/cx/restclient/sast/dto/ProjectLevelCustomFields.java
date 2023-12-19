@@ -7,6 +7,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ProjectLevelCustomFields {
+	@Override
+	public String toString() {
+		return "ProjectLevelCustomFields [id=" + id + ", value=" + value + ", name=" + name + "]";
+	}
+
 	private long id;
 	   private String value;
 	   private String name;

@@ -1,5 +1,6 @@
 package com.cx.restclient.sast.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -14,6 +15,7 @@ public class Project {
     private String name;
     private String teamId;
     private boolean isPublic;
+    private List<ProjectLevelCustomFields> customFields;
 
     public boolean isPublic() {
         return isPublic;
@@ -23,15 +25,18 @@ public class Project {
         isPublic = aPublic;
     }
 
-    public List<Object> getCustomFields() {
-        return customFields;
+    public ArrayList<ProjectLevelCustomFields> getCustomFields() {
+        if (customFields instanceof ArrayList) {
+            return (ArrayList<ProjectLevelCustomFields>) customFields;
+        } else if (customFields != null) {
+            return new ArrayList<>(customFields);
+        } else {
+            return new ArrayList<>();
+        }
     }
-
-    public void setCustomFields(List<Object> customFields) {
+    public void setCustomFields(ArrayList<ProjectLevelCustomFields> customFields) {
         this.customFields = customFields;
     }
-
-    private List<Object> customFields;
 
     public long getId() {
         return id;
@@ -72,4 +77,5 @@ public class Project {
     public void setOwner(String owner) {
         this.owner = owner;
     }
+    
 }
