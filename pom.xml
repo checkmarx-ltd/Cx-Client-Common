@@ -28,7 +28,7 @@
         <javax.activation.version>1.2.0</javax.activation.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <lombok.version>1.18.6</lombok.version>
-        <cx.ws.fs.agent.version>24.0.0</cx.ws.fs.agent.version>
+        <cx.ws.fs.agent.version>23.0.5</cx.ws.fs.agent.version>
 
         <!--SonarCloud scan -->
         <sonar.projectKey>checkmarx-ltd_Cx-Client-Common</sonar.projectKey>
@@ -147,9 +147,29 @@
             <version>4.5.10</version>
         </dependency>
         <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.69</version>
+        </dependency>
+        <dependency>
             <artifactId>plexus-utils</artifactId>
             <groupId>org.codehaus.plexus</groupId>
             <version>3.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-archiver</artifactId>
+            <version>4.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>commons-compress</artifactId>
+                    <groupId>org.apache.commons</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>plexus-utils</artifactId>
+                    <groupId>org.codehaus.plexus</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -166,6 +186,14 @@
                     <artifactId>jaxb-api</artifactId>
                 </exclusion>
                 <exclusion>
+                    <artifactId>bcpg-jdk15on</artifactId>
+                    <groupId>org.bouncycastle</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>plexus-archiver</artifactId>
+                    <groupId>org.codehaus.plexus</groupId>
+                </exclusion>
+                <exclusion>
                     <artifactId>commons-collections</artifactId>
                     <groupId>commons-collections</groupId>
                 </exclusion>
@@ -173,8 +201,39 @@
                     <artifactId>plexus-utils</artifactId>
                     <groupId>org.codehaus.plexus</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>org.jsoup</artifactId>
+                    <groupId>jsoup</groupId>
+                </exclusion>
+                
+                <!--causing vulnerabilities in the osa scan of the project, excluded and newer dependencies imported instead -->
+                <exclusion>
+                    <groupId>com.beust</groupId>
+                    <artifactId>jcommander</artifactId>
+                </exclusion>
+                <exclusion>
+					<groupId>net.lingala.zip4j</groupId>
+					<artifactId>zip4j</artifactId>
+				</exclusion>
             </exclusions>
-        </dependency>        
+        </dependency>
+        <!-- excluded dependencies from fsa -->
+		<dependency>
+		    <artifactId>jsoup</artifactId>
+            <groupId>org.jsoup</groupId>
+		    <version>1.14.3</version>
+		</dependency>
+		<dependency>
+			<groupId>net.lingala.zip4j</groupId>
+			<artifactId>zip4j</artifactId>
+			<version>2.11.5</version>
+		</dependency>
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <version>1.78</version>
+        </dependency>
+        <!-- end of excluded dependencies -->        
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
