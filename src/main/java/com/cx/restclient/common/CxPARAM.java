@@ -26,9 +26,12 @@ public abstract class CxPARAM {
     public static final String ORIGIN_HEADER = "cxOrigin";
     public static final String ORIGIN_URL_HEADER = "cxOriginUrl";
     public static final String CSRF_TOKEN_HEADER = "CXCSRFToken";
-    public static final String PROJECT_POLICY_VIOLATED_STATUS = "Project policy status : violated";
-    public static final String PROJECT_POLICY_COMPLIANT_STATUS = "Project policy status : compliant";
+    public static final String PROJECT_POLICY_VIOLATED_STATUS_SAST = "Project policy status for SAST and OSA : violated";
 
+    public static final String PROJECT_POLICY_VIOLATED_STATUS ="Project policy status : violated";
+    public static final String PROJECT_POLICY_VIOLATED_STATUS_SCA = "Project policy status for SCA : violated";
+    public static final String PROJECT_POLICY_COMPLIANT_STATUS_SAST = "Project policy status for SAST and OSA : compliant";
+    public static final String PROJECT_POLICY_COMPLIANT_STATUS_SCA = "Project policy status for SCA : compliant";
     public static final String DENY_NEW_PROJECT_ERROR = "Creation of the new project [{projectName}] is not authorized. " +
             "Please use an existing project. \nYou can enable the creation of new projects by disabling" + "" +
             " the Deny new Checkmarx projects creation checkbox in the Checkmarx plugin global settings.\n";

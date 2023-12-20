@@ -19,6 +19,10 @@ public class ScanSummary {
     private final List<Severity> newResultThresholdErrors = new ArrayList<>();
     private final boolean policyViolated;
 
+    private boolean policyVioletedSAST;
+
+    private boolean policyVioletedSCA;
+
     public ScanSummary(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {
 
         addSastThresholdErrors(config, sastResults);
@@ -26,7 +30,13 @@ public class ScanSummary {
 
         addNewResultThresholdErrors(config, sastResults);
 
-        policyViolated = determinePolicyViolation(config, sastResults, osaResults, scaResults);
+        policyVioletedSAST = determinePolicyViolation(config, sastResults, osaResults);
+        policyVioletedSCA = determinePolicyViolationSCA(config,scaResults);
+        if(policyVioletedSAST&&policyVioletedSCA){
+            policyViolated=true;
+        }else{
+            policyViolated=false;
+        }
     }
 
     @Override
@@ -145,11 +155,15 @@ public class ScanSummary {
         }
     }
 
-    private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults, OSAResults osaResults, AstScaResults scaResults) {
+    private static boolean determinePolicyViolation(CxScanConfig config, SASTResults sastResults, OSAResults osaResults) {
         return config.getEnablePolicyViolations() &&
                 ((osaResults != null &&
                         !osaResults.getOsaPolicies().isEmpty()) ||
-                        (sastResults != null && !sastResults.getSastPolicies().isEmpty())) || (scaResults != null && scaResults.isBreakTheBuild() && scaResults.isPolicyViolated());
+                        (sastResults != null && !sastResults.getSastPolicies().isEmpty()));
+    }
+
+    private static boolean determinePolicyViolationSCA(CxScanConfig config,AstScaResults scaResults) {
+        return config.getEnablePolicyViolationsSCA() && (scaResults != null && scaResults.isBreakTheBuild() && scaResults.isPolicyViolated());
     }
 
     private void checkForThresholdError(int value, Integer threshold, ErrorSource source, Severity severity) {

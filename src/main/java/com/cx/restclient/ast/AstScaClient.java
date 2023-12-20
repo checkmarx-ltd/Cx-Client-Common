@@ -19,21 +19,16 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileAttribute;
 import java.sql.Timestamp;
-import java.util.Date;
+import java.util.*;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.cx.restclient.ast.dto.sca.*;
+import com.cx.restclient.sca.dto.Tags;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -102,6 +97,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 public class AstScaClient extends AstClient implements Scanner {
     private static final String RISK_MANAGEMENT_API = properties.get("astSca.riskManagementApi");
     private static final String PROJECTS = RISK_MANAGEMENT_API + properties.get("astSca.projects");
+    private static final String PROJECTID = PROJECTS + properties.get("astSca.projectId");
     private static final String SUMMARY_REPORT = RISK_MANAGEMENT_API + properties.get("astSca.summaryReport");
     private static final String FINDINGS = RISK_MANAGEMENT_API + properties.get("astSca.findings");
     private static final String PACKAGES = RISK_MANAGEMENT_API + properties.get("astSca.packages");
@@ -375,7 +371,7 @@ public class AstScaClient extends AstClient implements Scanner {
             }
 
             if (locationType == SourceLocationType.REMOTE_REPOSITORY) {
-                response = submitSourcesFromRemoteRepo(scaConfig, projectId);
+                response = submitSourcesFromRemoteRepo(scaConfig, projectId,scaConfig.getScaScanCustomTags());
             } else {
                 if (scaConfig.isIncludeSources()) {
                     response = submitAllSourcesFromLocalDir(projectId, astScaConfig.getZipFilePath());
@@ -415,7 +411,7 @@ public class AstScaClient extends AstClient implements Scanner {
         
         FileUtils.deleteDirectory(configFileDestination.toFile());
 
-        return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig());
+        return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig(),config.getAstScaConfig().getScaScanCustomTags());
     }
 
     /**
@@ -510,7 +506,7 @@ public class AstScaClient extends AstClient implements Scanner {
 		}else{
             throw new CxClientException("Error while running sca resolver executable. Exit code: "+exitCode);
         }
-    	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig());
+    	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig(),config.getAstScaConfig().getScaScanCustomTags());
     }
 
     public boolean checkSastResultPath(AstScaConfig scaConfig) {
@@ -625,7 +621,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         FileUtils.deleteDirectory(configFileDestination.toFile());
 
-        return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig);
+        return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig,config.getAstScaConfig().getScaScanCustomTags());
     }
 
     /**
@@ -907,8 +903,8 @@ public class AstScaClient extends AstClient implements Scanner {
     private String resolveRiskManagementProject() throws IOException {
         String projectName = config.getProjectName();
         String assignedTeam = config.getAstScaConfig().getTeamPath();
-        String assignedTeamId = config.getAstScaConfig().getTeamId();
-                        
+        String assignedTeamId  = config.getAstScaConfig().getTeamId();
+        String projectCustomTag = config.getAstScaConfig().getScaProjectCustomTags();
 		if (!StringUtils.isEmpty(assignedTeamId)) {
 			assignedTeam = getTeamById(assignedTeamId);
 			
@@ -921,10 +917,11 @@ public class AstScaClient extends AstClient implements Scanner {
         String resolvedProjectId = getRiskManagementProjectId(projectName);
         if (resolvedProjectId == null) {
             log.info("Project not found, creating a new one.");
-            resolvedProjectId = createRiskManagementProject(projectName, assignedTeam);
+            resolvedProjectId = createRiskManagementProject(projectName, assignedTeam,projectCustomTag);
             log.info("Created a project with ID {}", resolvedProjectId);
         } else {
             log.info("Project already exists with ID {}", resolvedProjectId);
+            UpdateRiskManagementProject(resolvedProjectId,projectCustomTag);
         }
         return resolvedProjectId;
     }
@@ -1016,12 +1013,19 @@ public class AstScaClient extends AstClient implements Scanner {
                 true);
     }
 
-    private String createRiskManagementProject(String name, String assignedTeam) throws IOException {
+    private String createRiskManagementProject(String name, String assignedTeam, String projectCustomTag) throws IOException {
         CreateProjectRequest request = new CreateProjectRequest();
         request.setName(name);
         if(!StringUtils.isEmpty(assignedTeam)) {
         	request.addAssignedTeams(assignedTeam);        
         	log.info("Team name: {}", assignedTeam);
+        }
+
+        log.info("Project level custom tag name: {}",projectCustomTag);
+        if(!StringUtils.isEmpty(projectCustomTag)) {
+            Map<String,String> tagMaps = customFieldMap(projectCustomTag);
+            log.debug("Project level custom tags: {}",tagMaps);
+            request.setTags(tagMaps);
         }
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
@@ -1036,6 +1040,51 @@ public class AstScaClient extends AstClient implements Scanner {
         return newProject.getId();
     }
 
+   private void UpdateRiskManagementProject(String projectId, String customTags) throws IOException {
+       Project existingProject = httpClient.getRequest(PROJECTID.replace("id",projectId),ContentType.CONTENT_TYPE_APPLICATION_JSON,Project.class,
+               HttpStatus.SC_OK,"got project details",false);
+
+     UpdateProjectRequest request = new UpdateProjectRequest();
+     request.setName(existingProject.getName());
+
+     log.info("Project level custom tag name: {}",customTags);
+       if(existingProject.getTags()!=null){
+           Map<String,String> tagMaps = (Map<String, String>) existingProject.getTags();
+          if(!StringUtils.isEmpty(customTags)) {
+              StringTokenizer tokenizer = new StringTokenizer(customTags, ",");
+              while (tokenizer.hasMoreTokens()) {
+                  String token = tokenizer.nextToken();
+                  String[] keyValue = token.split(":");
+                  tagMaps.put(keyValue[0], keyValue[1]);
+              }
+          }
+           request.setTags(tagMaps);
+       }else{
+               if(!StringUtils.isEmpty(customTags)) {
+                   Map<String,String> tagMaps = customFieldMap(customTags);
+
+                   request.setTags(tagMaps);
+               }
+           }
+       StringEntity entity = HttpClientHelper.convertToStringEntity(request);
+    httpClient.putRequest(PROJECTID.replace("id",projectId),ContentType.CONTENT_TYPE_APPLICATION_JSON,entity,Project.class,
+            HttpStatus.SC_NO_CONTENT,"Updated project successfully");
+    }
+
+
+    private Map<String,String> customFieldMap(String projectCustomField){
+        Map<String,String> customFieldMap = new LinkedHashMap<String,String>();
+        if(!StringUtils.isEmpty(projectCustomField)){
+        StringTokenizer tokenizer = new StringTokenizer(projectCustomField, ",");
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+            String[] keyValue = token.split(":");
+            customFieldMap.put(keyValue[0], keyValue[1]);
+        }
+        }
+    return customFieldMap;
+
+    }
     private AstScaResults getScanResults() {
         AstScaResults result;
         log.debug("Getting results for scan ID {}", scanId);
@@ -1056,11 +1105,12 @@ public class AstScaClient extends AstClient implements Scanner {
             List<Package> packages = getPackages(scanId);
             result.setPackages(packages);            
             
-            if(config.isEnablePolicyViolations()) {
-            	List<PolicyEvaluation> policyEvaluations = getPolicyEvaluation(reportId);
-            	result.setPolicyEvaluations(policyEvaluations);
-            	printPolicyEvaluations(policyEvaluations);
-            	determinePolicyViolations(result);
+
+            if(config.isEnablePolicyViolationsSCA()) {
+                List<PolicyEvaluation> policyEvaluations = getPolicyEvaluation(reportId);
+                result.setPolicyEvaluations(policyEvaluations);
+                printPolicyEvaluations(policyEvaluations);
+                determinePolicyViolations(result);
             }
 
             String reportLink = getWebReportLink(config.getAstScaConfig().getWebAppUrl());
