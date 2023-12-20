@@ -221,13 +221,9 @@ public abstract class LegacyClient {
                 if (config.isSastEnabled()) {
                     resolvePreset();
                 }
-                if (config.getEnablePolicyViolations()) {
+                if (config.getEnablePolicyViolations() || config.getEnablePolicyViolationsSCA()) {
                     resolveCxARMUrl();
-                }
-
-                if (config.getEnablePolicyViolationsSCA()) {
-                    resolveCxARMUrl();
-                }
+                }                
                 resolveEngineConfiguration();
                 resolveProjectId();
                 resolvePostScanAction();
