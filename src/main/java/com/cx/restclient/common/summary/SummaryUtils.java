@@ -247,7 +247,7 @@ public abstract class SummaryUtils {
         }
 
         templateData.put("policyViolated", policyViolated);
-        buildFailed = policyViolated;
+        buildFailed = buildFailed || policyViolated;
         templateData.put("buildFailed", buildFailed);
 
         //generate the report:
