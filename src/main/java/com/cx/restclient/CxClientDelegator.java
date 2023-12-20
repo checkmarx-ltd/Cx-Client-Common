@@ -131,7 +131,6 @@ public class CxClientDelegator implements Scanner {
 
             OSAResults osaResults = (OSAResults) scanResults.get(ScannerType.OSA);
             SASTResults sastResults = (SASTResults) scanResults.get(ScannerType.SAST);
-//            AstScaResults scaResults = (AstScaResults) scanResults.get(ScannerType.AST_SCA);
 
             boolean hasOsaViolations =
                     osaResults != null &&
@@ -142,12 +141,7 @@ public class CxClientDelegator implements Scanner {
 
             if (sastResults != null && sastResults.getSastPolicies() != null && !sastResults.getSastPolicies().isEmpty()) {
                 hasSastPolicies = true;
-            }
-            
-//            boolean hasScaViolations = false;
-//            if (scaResults != null && scaResults.getPolicyEvaluations() != null && !scaResults.getPolicyEvaluations().isEmpty()) {
-//            	hasScaViolations = true;
-//            }
+            }            
 
             if (!hasSastPolicies && !hasOsaViolations) {
                 log.info(PROJECT_POLICY_COMPLIANT_STATUS_SAST);
@@ -160,32 +154,15 @@ public class CxClientDelegator implements Scanner {
                 if (hasOsaViolations) {
                     log.info("OSA violated policies names: {}", getPoliciesNames(osaResults.getOsaPolicies()));
                 }
-//                if (hasScaViolations) {
-//                	log.info("SCA policies are violated.");
-//                }
                 log.info(PRINT_LINE);
             }
-
         }
         if (config.getEnablePolicyViolationsSCA()) {
             log.info(PRINT_LINE);
             log.info("Policy Management: SCA ");
             log.info("--------------------");
 
-//            OSAResults osaResults = (OSAResults) scanResults.get(ScannerType.OSA);
-  //          SASTResults sastResults = (SASTResults) scanResults.get(ScannerType.SAST);
             AstScaResults scaResults = (AstScaResults) scanResults.get(ScannerType.AST_SCA);
-
-//            boolean hasOsaViolations =
-//                    osaResults != null &&
-//                            osaResults.getOsaPolicies() != null &&
-//                            !osaResults.getOsaPolicies().isEmpty();
-//
-//            boolean hasSastPolicies = false;
-//
-//            if (sastResults != null && sastResults.getSastPolicies() != null && !sastResults.getSastPolicies().isEmpty()) {
-//                hasSastPolicies = true;
-//            }
 
             boolean hasScaViolations = false;
             if (scaResults != null && scaResults.getPolicyEvaluations() != null && !scaResults.getPolicyEvaluations().isEmpty()) {
@@ -197,18 +174,11 @@ public class CxClientDelegator implements Scanner {
                 log.info(PRINT_LINE);
             } else {
                 log.info(PROJECT_POLICY_VIOLATED_STATUS_SCA);
-//                if (hasSastPolicies) {
-//                    log.info("SAST violated policies names: {}", getPoliciesNames(sastResults.getSastPolicies()));
-//                }
-//                if (hasOsaViolations) {
-//                    log.info("OSA violated policies names: {}", getPoliciesNames(osaResults.getOsaPolicies()));
-//                }
                 if (hasScaViolations) {
                     log.info("SCA policies are violated.");
                 }
                 log.info(PRINT_LINE);
             }
-
         }
     }
 

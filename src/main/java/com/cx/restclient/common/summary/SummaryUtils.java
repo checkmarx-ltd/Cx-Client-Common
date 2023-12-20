@@ -57,7 +57,7 @@ public abstract class SummaryUtils {
 
         boolean buildFailed = false;
         boolean policyViolated = false;
-        int policyViolatedCount;
+        int policyViolatedCount=0;
         //sast:
         if (config.isSastEnabled()) {
             if (sastResults != null && sastResults.isSastResultsReady()) {
@@ -180,7 +180,7 @@ public abstract class SummaryUtils {
         }
 
 
-        if (config.getEnablePolicyViolations()) {
+        if ((config.isSastEnabled()|| config.isOsaEnabled() )&& config.getEnablePolicyViolations()) {
             Map<String, String> policies = new HashMap<>();
 
 
@@ -204,22 +204,6 @@ public abstract class SummaryUtils {
                                 (left, right) -> left)));
             }
            
-//            if(Boolean.TRUE.equals(config.isAstScaEnabled())
-//                    && scaResults != null && scaResults.getPolicyEvaluations() != null
-//                            && !scaResults.getPolicyEvaluations().isEmpty())
-//            {
-//            	policyViolated = true;
-//
-//            	policies.putAll(scaResults.getPolicyEvaluations().stream().filter(policy -> policy.getIsViolated()).collect(
-//                        Collectors.toMap(PolicyEvaluation::getName, PolicyEvaluation::getId,
-//                                (left, right) -> left)));
-//            	if(policies.size()==0)
-//            	{
-//            		policyViolated = false;
-//            	}
-//            }
-
-
             if(scanSummary.isPolicyViolated()) {
             	buildFailed = true;
             	policyViolated = true;
@@ -231,43 +215,23 @@ public abstract class SummaryUtils {
             templateData.put("policyViolatedCount", policyViolatedCount);
         }
 
-        if (config.getEnablePolicyViolationsSCA()) {
+        if (config.isAstScaEnabled() && config.getEnablePolicyViolationsSCA()) {
             Map<String, String> policies = new HashMap<>();
-
-
-//            if (Boolean.TRUE.equals(config.isSastEnabled())
-//                    && sastResults != null
-//                    && sastResults.getSastPolicies() != null
-//                    && !sastResults.getSastPolicies().isEmpty()) {
-//                policyViolated = true;
-//                policies.putAll(sastResults.getSastPolicies().stream().collect(
-//                        Collectors.toMap(Policy::getPolicyName, Policy::getRuleName,
-//                                (left, right) -> left)));
-//            }
-//
-//            if (Boolean.TRUE.equals(config.isOsaEnabled())
-//                    && osaResults != null
-//                    && osaResults.getOsaPolicies() != null
-//                    && !osaResults.getOsaPolicies().isEmpty()) {
-//                policyViolated = true;
-//                policies.putAll(osaResults.getOsaPolicies().stream().collect(
-//                        Collectors.toMap(Policy::getPolicyName, Policy::getRuleName,
-//                                (left, right) -> left)));
-//            }
-
             if(Boolean.TRUE.equals(config.isAstScaEnabled())
                     && scaResults != null && scaResults.getPolicyEvaluations() != null
                     && !scaResults.getPolicyEvaluations().isEmpty())
             {
-                policyViolated = true;
-
                 policies.putAll(scaResults.getPolicyEvaluations().stream().filter(policy -> policy.getIsViolated()).collect(
                         Collectors.toMap(PolicyEvaluation::getName, PolicyEvaluation::getId,
                                 (left, right) -> left)));
-                if(policies.size()==0)
+                if(!policyViolated && policies.size()==0)
                 {
                     policyViolated = false;
                 }
+                else
+            	{
+            		policyViolated = true;
+            	}
             }
 
 
@@ -275,7 +239,7 @@ public abstract class SummaryUtils {
                 buildFailed = true;
                 policyViolated = true;
             }
-            policyViolatedCount = policies.size();
+            policyViolatedCount = policyViolatedCount+policies.size();
             String policyLabel = policyViolatedCount == 1 ? "Policy" : "Policies";
             templateData.put("policyLabel", policyLabel);
 
