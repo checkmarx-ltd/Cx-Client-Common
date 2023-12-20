@@ -67,7 +67,7 @@ pipeline {
         stage('Build CxCommon') {
             steps {
                 script {
-                    sh "docker run --rm --name build-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-11 mvn clean install -DskipTests -Dcxcommon.version=${env.cxCommonVersion}"
+                    sh "docker run --rm --name build-${BUILD_TAG} -v /root/.m2:/root/.m2 -v ${workspace}:/usr/src/cx-common -w /usr/src/cx-common maven:3.6.1-jdk-8-alpine mvn clean install -DskipTests -Dcxcommon.version=${env.cxCommonVersion}"
                 }
             }
             post {
