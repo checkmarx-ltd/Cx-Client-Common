@@ -825,8 +825,10 @@ public class CxSASTClient extends LegacyClient implements Scanner {
  	               projectPutRequest.setName(getProjectRequest.getName());
  	               Integer team = Integer.parseInt(getProjectRequest.getTeamId());
  	               List<ProjectLevelCustomFields> tempCustomFields = getProjectRequest.getCustomFields();
+ 	               Boolean validCustomFields = false;
  	               for (int i = 0; i < fetchSASTProjectCustomFields.size(); i++) {
  	                   if (projectCustomFieldMap.containsKey(fetchSASTProjectCustomFields.get(i).getName())) {
+ 	                	  validCustomFields=true;
  	                       ProjectLevelCustomFields customProjectField = new ProjectLevelCustomFields(
  	                               fetchSASTProjectCustomFields.get(i).getId(),
  	                               projectCustomFieldMap.get(fetchSASTProjectCustomFields.get(i).getName()),
@@ -834,6 +836,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
  	                       );
  	                       custObj.add(customProjectField);
  	                   }
+ 	               }
+ 	               if(!validCustomFields) {
+ 	            	   log.error("Project level custom fields not configured in SAST");
  	               }
 					   List<ProjectLevelCustomFields> additionalCustomFields = new ArrayList<>();
  	                  for (ProjectLevelCustomFields existingCustomField : tempCustomFields) {
