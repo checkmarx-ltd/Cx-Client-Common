@@ -61,9 +61,8 @@ import javax.net.ssl.SSLContext;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.IDN;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
@@ -629,14 +628,14 @@ public class CxHttpClient implements Closeable {
         if (httpMethod.getURI() != null && (StringUtils.isNotEmpty(httpMethod.getURI().getHost()) ||
                 StringUtils.isNotEmpty(httpMethod.getURI().getAuthority()))) {
             URI tmpUri = httpMethod.getURI();
-            String host = StringUtils.isNotEmpty(tmpUri.getAuthority()) ? tmpUri.getAuthority() : tmpUri.getHost();
-            host = IDN.toASCII(host, IDN.ALLOW_UNASSIGNED);
             try {
-                URI uri = new URI(tmpUri.getScheme(), tmpUri.getUserInfo(), host, tmpUri.getPort(), tmpUri.getPath(),
-                        tmpUri.getQuery(), tmpUri.getFragment());
-                httpMethod.setURI(uri);
-            } catch (URISyntaxException e) {
-                log.error("Fail to convert URI: " + httpMethod.getURI().toString());
+                if (tmpUri != null) {
+                    URI uri = new URL(tmpUri.toASCIIString()).toURI();
+                    httpMethod.setURI(uri);
+                    log.info("Unicode characters converted URI: " + uri.toString());
+                }
+            } catch (Exception e) {
+                log.error("Fail to unicode convert URI: " + tmpUri);
             }
         }
 
@@ -650,8 +649,10 @@ public class CxHttpClient implements Closeable {
         int statusCode = 0;
 
         try {
+            /*httpMethod.addHeader(ORIGIN_HEADER, cxOrigin);
+            httpMethod.addHeader(ORIGIN_URL_HEADER, cxOriginUrl);*/
             httpMethod.addHeader(ORIGIN_HEADER, cxOrigin);
-            httpMethod.addHeader(ORIGIN_URL_HEADER, cxOriginUrl);
+            httpMethod.addHeader(ORIGIN_URL_HEADER, "http://test");
             httpMethod.addHeader(TEAM_PATH, this.teamPath);
             if (token != null) {
                 httpMethod.addHeader(HttpHeaders.AUTHORIZATION, token.getToken_type() + " " + token.getAccess_token());
