@@ -47,6 +47,9 @@ public abstract class Waiter<T extends BaseStatus> {
                         throw new CxClientException(FAILED_MSG + scanType + ". Error message: " + e.getMessage(), e);
                     }
                     if (statusResponse == null || (statusResponse.getBaseStatus() == null)) {
+                        statusResponse = (T) new BaseStatus(Status.SOURCE_PULLING_AND_DEPLOYMENT);
+                    }
+                    if (statusResponse == null || (statusResponse.getBaseStatus() == null)) {
                         statusResponse = (T) new BaseStatus(Status.IN_PROGRESS);
                     }
                     continue;
