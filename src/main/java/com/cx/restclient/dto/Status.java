@@ -8,8 +8,8 @@ public enum Status {
 
     IN_PROGRESS("In progress"),
     SUCCEEDED("Succeeded"),
-    FAILED("Failed");
-
+    FAILED("Failed"),
+    SOURCE_PULLING_AND_DEPLOYMENT ("SourcePullingAndDeployment");
 
     private String value;
 
