@@ -28,6 +28,7 @@ public class OSAResults extends Results implements Serializable {
     private List<CVEReportTableRow> osaHighCVEReportTable = new ArrayList<CVEReportTableRow>();
     private List<CVEReportTableRow> osaMediumCVEReportTable = new ArrayList<CVEReportTableRow>();
     private List<CVEReportTableRow> osaLowCVEReportTable = new ArrayList<CVEReportTableRow>();
+    private List<CVEReportTableRow> osaCriticalCVEReportTable = new ArrayList<CVEReportTableRow>();
 
     private String scanStartTime;
     private String scanEndTime;
@@ -123,6 +124,10 @@ public class OSAResults extends Results implements Serializable {
     public List<CVEReportTableRow> getOsaLowCVEReportTable() {
         return osaLowCVEReportTable;
     }
+    
+    public List<CVEReportTableRow> getOsaCriticalCVEReportTable() {
+        return osaCriticalCVEReportTable;
+    }
 
     public String getScanStartTime() {
         return scanStartTime;
@@ -155,6 +160,9 @@ public class OSAResults extends Results implements Serializable {
             } else if ("Low".equals(row.getSeverity())) {
                 osaLowCVEReportTable.add(row);
             }
+            else if ("Critical".equals(row.getSeverity())) {
+                osaCriticalCVEReportTable.add(row);
+            }
 
         }
     }
@@ -174,6 +182,10 @@ public class OSAResults extends Results implements Serializable {
 
     public void setOsaLowCVEReportTable(List<CVEReportTableRow> osaLowCVEReportTable) {
         this.osaLowCVEReportTable = osaLowCVEReportTable;
+    }
+    
+    public void setOsaCriticalCVEReportTable(List<CVEReportTableRow> osaCriticalCVEReportTable) {
+        this.osaCriticalCVEReportTable = osaCriticalCVEReportTable;
     }
 
     public void setScanStartTime(String scanStartTime) {

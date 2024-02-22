@@ -58,6 +58,7 @@ public class CxScanConfig implements Serializable {
     private Integer sastHighThreshold;
     private Integer sastMediumThreshold;
     private Integer sastLowThreshold;
+    private Integer sastCriticalThreshold;
     private Boolean sastNewResultsThresholdEnabled = false;
     private String sastNewResultsThresholdSeverity;
     private TokenLoginResponse token;
@@ -94,6 +95,7 @@ public class CxScanConfig implements Serializable {
     private Integer osaHighThreshold;
     private Integer osaMediumThreshold;
     private Integer osaLowThreshold;
+    private Integer osaCriticalThreshold;
     private Properties osaFsaConfig; //for MAVEN
     private String osaDependenciesJson;
     private Boolean avoidDuplicateProjectScans = false;
@@ -519,6 +521,14 @@ public class CxScanConfig implements Serializable {
     public void setSastLowThreshold(Integer sastLowThreshold) {
         this.sastLowThreshold = sastLowThreshold;
     }
+    
+    public Integer getSastCriticalThreshold() {
+        return sastCriticalThreshold;
+    }
+
+    public void setSastCriticalThreshold(Integer sastCriticalThreshold) {
+        this.sastCriticalThreshold = sastCriticalThreshold;
+    }
 
     public String getSastNewResultsThresholdSeverity() {
         return sastNewResultsThresholdSeverity;
@@ -631,6 +641,14 @@ public class CxScanConfig implements Serializable {
     public void setOsaLowThreshold(Integer osaLowThreshold) {
         this.osaLowThreshold = osaLowThreshold;
     }
+    
+    public Integer getOsaCriticalThreshold() {
+        return osaLowThreshold;
+    }
+
+    public void setOsaCriticalThreshold(Integer osaCriticalThreshold) {
+        this.osaCriticalThreshold = osaCriticalThreshold;
+    }
 
     public Properties getOsaFsaConfig() {
         return osaFsaConfig;
@@ -645,13 +663,13 @@ public class CxScanConfig implements Serializable {
     }
 
     public boolean isSASTThresholdEffectivelyEnabled() {
-        return isSastEnabled() && getSastThresholdsEnabled() && (getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null);
+        return isSastEnabled() && getSastThresholdsEnabled() && (getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null || getSastCriticalThreshold() != null);
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
         return (isOsaEnabled() || isAstScaEnabled()) &&
                 getOsaThresholdsEnabled() &&
-                (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
+                (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null || getOsaCriticalThreshold() != null);
     }
 
     public void setOsaDependenciesJson(String osaDependenciesJson) {

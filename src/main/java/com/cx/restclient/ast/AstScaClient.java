@@ -1222,6 +1222,7 @@ public class AstScaClient extends AstClient implements Scanner {
             log.info("High vulnerabilities: {}", summary.getHighVulnerabilityCount());
             log.info("Medium vulnerabilities: {}", summary.getMediumVulnerabilityCount());
             log.info("Low vulnerabilities: {}", summary.getLowVulnerabilityCount());
+            log.info("Critical vulnerabilities: {}", summary.getCriticalVulnerabilityCount());
             log.info("Scan ID: {}", scanId);
             log.info(String.format("Risk score: %.2f", summary.getRiskScore()));
             log.info("Total packages: {}", summary.getTotalPackages());

@@ -15,6 +15,7 @@ public class OSASummaryResults implements Serializable {
     private int highVulnerabilityLibraries;
     private int mediumVulnerabilityLibraries;
     private int lowVulnerabilityLibraries;
+    private int criticalVulnerabilityLibraries;
     private int nonVulnerableLibraries;
     private int vulnerableAndUpdated;
     private int vulnerableAndOutdated;
@@ -22,6 +23,7 @@ public class OSASummaryResults implements Serializable {
     private int totalHighVulnerabilities;
     private int totalMediumVulnerabilities;
     private int totalLowVulnerabilities;
+    private int totalCriticalVulnerabilities;
 
     public int getTotalLibraries() {
         return totalLibraries;
@@ -53,6 +55,14 @@ public class OSASummaryResults implements Serializable {
 
     public void setLowVulnerabilityLibraries(int lowVulnerabilityLibraries) {
         this.lowVulnerabilityLibraries = lowVulnerabilityLibraries;
+    }
+    
+    public int getCriticalVulnerabilityLibraries() {
+        return criticalVulnerabilityLibraries;
+    }
+
+    public void setCriticalVulnerabilityLibraries(int criticalVulnerabilityLibraries) {
+        this.criticalVulnerabilityLibraries = criticalVulnerabilityLibraries;
     }
 
     public int getNonVulnerableLibraries() {
@@ -109,5 +119,13 @@ public class OSASummaryResults implements Serializable {
 
     public void setTotalLowVulnerabilities(int totalLowVulnerabilities) {
         this.totalLowVulnerabilities = totalLowVulnerabilities;
+    }
+    
+    public int getTotalCriticalVulnerabilities() {
+        return totalCriticalVulnerabilities;
+    }
+
+    public void setTotalCriticalVulnerabilities(int totalCriticalVulnerabilities) {
+        this.totalCriticalVulnerabilities = totalCriticalVulnerabilities;
     }
 }

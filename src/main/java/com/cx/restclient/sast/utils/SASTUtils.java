@@ -43,12 +43,14 @@ public abstract class SASTUtils {
         String highNew = sastResults.getNewHigh() > 0 ? " (" + sastResults.getNewHigh() + " new)" : "";
         String mediumNew = sastResults.getNewMedium() > 0 ? " (" + sastResults.getNewMedium() + " new)" : "";
         String lowNew = sastResults.getNewLow() > 0 ? " (" + sastResults.getNewLow() + " new)" : "";
+        String criticalNew = sastResults.getNewCritical() > 0 ? " (" + sastResults.getNewCritical() + " new)" : "";
         String infoNew = sastResults.getNewInfo() > 0 ? " (" + sastResults.getNewInfo() + " new)" : "";
 
         log.info("----------------------------Checkmarx Scan Results(CxSAST):-------------------------------");
         log.info("High severity results: " + sastResults.getHigh() + highNew);
         log.info("Medium severity results: " + sastResults.getMedium() + mediumNew);
         log.info("Low severity results: " + sastResults.getLow() + lowNew);
+        log.info("Critical severity results: " + sastResults.getCritical() + criticalNew);
         log.info("Information severity results: " + sastResults.getInformation() + infoNew);
         log.info("");
 		if (sastResults.getSastScanLink() != null)

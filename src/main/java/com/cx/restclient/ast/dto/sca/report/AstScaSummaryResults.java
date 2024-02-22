@@ -12,11 +12,12 @@ public class AstScaSummaryResults implements Serializable {
     private int highVulnerabilityCount = 0;
     private int mediumVulnerabilityCount = 0;
     private int lowVulnerabilityCount = 0;
+    private int criticalVulnerabilityCount = 0;
 
     public AstScaSummaryResults() {
     }
 
-    public AstScaSummaryResults(int totalPackages, int directPackages, String createdOn, double riskScore, int totalOutdatedPackages, int highVulnerabilityCount, int mediumVulnerabilityCount, int lowVulnerabilityCount) {
+    public AstScaSummaryResults(int totalPackages, int directPackages, String createdOn, double riskScore, int totalOutdatedPackages, int highVulnerabilityCount, int mediumVulnerabilityCount, int lowVulnerabilityCount, int criticalVulnerabilityCount) {
         this.totalPackages = totalPackages;
         this.directPackages = directPackages;
         this.createdOn = createdOn;
@@ -25,10 +26,11 @@ public class AstScaSummaryResults implements Serializable {
         this.highVulnerabilityCount = highVulnerabilityCount;
         this.mediumVulnerabilityCount = mediumVulnerabilityCount;
         this.lowVulnerabilityCount = lowVulnerabilityCount;
+        this.criticalVulnerabilityCount = criticalVulnerabilityCount;
     }
 
     public int getTotalOkLibraries() {
-        int totalOk = (totalPackages - (highVulnerabilityCount + mediumVulnerabilityCount + lowVulnerabilityCount));
+        int totalOk = (totalPackages - (highVulnerabilityCount + mediumVulnerabilityCount + lowVulnerabilityCount + criticalVulnerabilityCount));
         totalOk = Math.max(totalOk, 0);
         return totalOk;
     }
@@ -95,5 +97,13 @@ public class AstScaSummaryResults implements Serializable {
 
     public void setLowVulnerabilityCount(int lowVulnerabilityCount) {
         this.lowVulnerabilityCount = lowVulnerabilityCount;
+    }
+    
+    public int getCriticalVulnerabilityCount() {
+        return criticalVulnerabilityCount;
+    }
+
+    public void setCriticalVulnerabilityCount(int criticalVulnerabilityCount) {
+        this.criticalVulnerabilityCount = criticalVulnerabilityCount;
     }
 }

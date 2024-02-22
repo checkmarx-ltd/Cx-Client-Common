@@ -20,6 +20,7 @@ public class DependencyScanResult extends Results implements Serializable {
     private int highVulnerability;
     private int mediumVulnerability;
     private int lowVulnerability;
+    private int criticalVulnerability;
     private String summaryLink;
     private int vulnerableAndOutdated;
     private int nonVulnerableLibraries;
@@ -28,6 +29,7 @@ public class DependencyScanResult extends Results implements Serializable {
     private List<CVEReportTableRow> dependencyHighCVEReportTable = new ArrayList<>();
     private List<CVEReportTableRow> dependencyMediumCVEReportTable = new ArrayList<>();
     private List<CVEReportTableRow> dependencyLowCVEReportTable = new ArrayList<>();
+    private List<CVEReportTableRow> dependencyCriticalCVEReportTable = new ArrayList<>();
     private int totalLibraries;
 
     DependencyScanResult(){}
@@ -38,6 +40,7 @@ public class DependencyScanResult extends Results implements Serializable {
         this.highVulnerability = scaResults.getSummary().getHighVulnerabilityCount();
         this.mediumVulnerability = scaResults.getSummary().getMediumVulnerabilityCount();
         this.lowVulnerability = scaResults.getSummary().getLowVulnerabilityCount();
+        this.criticalVulnerability = scaResults.getSummary().getCriticalVulnerabilityCount();
         this.resultReady = scaResults.isScaResultReady();
         this.summaryLink = scaResults.getWebReportLink();
         this.vulnerableAndOutdated = scaResults.getVulnerableAndOutdated();
@@ -54,18 +57,23 @@ public class DependencyScanResult extends Results implements Serializable {
         this.highVulnerability = osaResults.getResults().getTotalHighVulnerabilities();
         this.mediumVulnerability = osaResults.getResults().getTotalMediumVulnerabilities();
         this.lowVulnerability = osaResults.getResults().getTotalLowVulnerabilities();
+        this.criticalVulnerability = osaResults.getResults().getTotalCriticalVulnerabilities();
         this.resultReady = osaResults.isOsaResultsReady();
         this.summaryLink = osaResults.getOsaProjectSummaryLink();
         this.vulnerableAndOutdated = osaResults.getResults().getVulnerableAndOutdated();
         this.nonVulnerableLibraries = osaResults.getResults().getNonVulnerableLibraries();
         this.scanStartTime =osaResults.getScanStartTime();
         this.scanEndTime = osaResults.getScanEndTime();
-        this.setDependencyCVEReportTableOsa(osaResults.getOsaLowCVEReportTable(),osaResults.getOsaMediumCVEReportTable(),osaResults.getOsaHighCVEReportTable());
+        this.setDependencyCVEReportTableOsa(osaResults.getOsaCriticalCVEReportTable(),osaResults.getOsaLowCVEReportTable(),osaResults.getOsaMediumCVEReportTable(),osaResults.getOsaHighCVEReportTable());
         this.setTotalLibraries(osaResults.getResults().getTotalLibraries());
     }
 
-    public void setDependencyCVEReportTableOsa(List<CVEReportTableRow> osaCVEResultsLow,List<CVEReportTableRow> osaCVEResultsMedium,List<CVEReportTableRow> osaCVEResultsHigh){
+    public void setDependencyCVEReportTableOsa(List<CVEReportTableRow> osaCVEResultsCritical,List<CVEReportTableRow> osaCVEResultsLow,List<CVEReportTableRow> osaCVEResultsMedium,List<CVEReportTableRow> osaCVEResultsHigh){
         CVEReportTableRow row;
+        for(CVEReportTableRow criticalCVE :osaCVEResultsCritical ){
+            row = criticalCVE;
+            this.dependencyCriticalCVEReportTable.add(row);
+        }
         for(CVEReportTableRow lowCVE :osaCVEResultsLow ){
             row = lowCVE;
             this.dependencyLowCVEReportTable.add(row);
@@ -90,6 +98,8 @@ public class DependencyScanResult extends Results implements Serializable {
                 this.dependencyMediumCVEReportTable.add(row);
             }else if(scaFinding.getSeverity() == Severity.HIGH){
                 this.dependencyHighCVEReportTable.add(row);
+            }else if(scaFinding.getSeverity() == Severity.CRITICAL){
+                this.dependencyCriticalCVEReportTable.add(row);
             }
         }
     }
@@ -132,6 +142,14 @@ public class DependencyScanResult extends Results implements Serializable {
 
     public void setLowVulnerability(int lowVulnerability) {
         this.lowVulnerability = lowVulnerability;
+    }
+    
+    public int getCriticalVulnerability() {
+        return criticalVulnerability;
+    }
+
+    public void setCriticalVulnerability(int criticalVulnerability) {
+        this.criticalVulnerability = criticalVulnerability;
     }
 
     public String getSummaryLink() {
@@ -196,6 +214,14 @@ public class DependencyScanResult extends Results implements Serializable {
 
     public void setDependencyLowCVEReportTable(List<CVEReportTableRow> dependencyLowCVEReportTable) {
         this.dependencyLowCVEReportTable = dependencyLowCVEReportTable;
+    }
+    
+    public List<CVEReportTableRow> getDependencyCriticalCVEReportTable() {
+        return dependencyCriticalCVEReportTable;
+    }
+
+    public void setDependencyCriticalCVEReportTable(List<CVEReportTableRow> dependencyCriticalCVEReportTable) {
+        this.dependencyCriticalCVEReportTable = dependencyCriticalCVEReportTable;
     }
 
     public int getTotalLibraries() {

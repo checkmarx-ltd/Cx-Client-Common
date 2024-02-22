@@ -26,6 +26,7 @@ public class Package implements Serializable {
     private int highVulnerabilityCount;
     private int mediumVulnerabilityCount;
     private int lowVulnerabilityCount;
+    private int criticalVulnerabilityCount;
     private int ignoredVulnerabilityCount;
     private int numberOfVersionsSinceLastUpdate;
     private String newestVersionReleaseDate;

@@ -80,7 +80,7 @@ public class AstSastTest extends CommonClientTest {
 
         int countFromSummaryExceptInfo = summary.getHighVulnerabilityCount()
                 + summary.getMediumVulnerabilityCount()
-                + summary.getLowVulnerabilityCount();
+                + summary.getLowVulnerabilityCount()+ summary.getCriticalVulnerabilityCount();
 
         Assert.assertEquals("Finding count from summary (excluding 'info') doesn't correspond to the actual count.",
                 actualFindingCountExceptInfo,

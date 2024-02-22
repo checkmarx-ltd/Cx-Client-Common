@@ -35,6 +35,7 @@ public class ScanConfiguration {
     private Integer highThreshold;
     private Integer mediumThreshold;
     private Integer lowThreshold;
+    private Integer criticalThreshold;
     private boolean generatePDFReport = false;
     private boolean osaEnabled = false;
     private String osaFilterPattern;
@@ -44,6 +45,7 @@ public class ScanConfiguration {
     private Integer osaHighThreshold;
     private Integer osaMediumThreshold;
     private Integer osaLowThreshold;
+    private Integer osaCriticalThreshold;
     private boolean denyProject = false;
     private boolean isPublic = false;
     private boolean forceScan = false;
@@ -227,6 +229,18 @@ public class ScanConfiguration {
     private void setLowThreshold(String lowSeveritiesThreshold) {
         this.lowThreshold = getAsInteger(lowSeveritiesThreshold);
     }
+    
+    public Integer getCriticalThreshold() {
+        return criticalThreshold;
+    }
+
+    public void setCriticalThreshold(Integer criticalThreshold) {
+        this.criticalThreshold = criticalThreshold;
+    }
+
+    private void setCriticalThreshold(String criticalSeveritiesThreshold) {
+        this.criticalThreshold = getAsInteger(criticalSeveritiesThreshold);
+    }
 
     public String getFolderExclusions() {
         return folderExclusions;
@@ -327,6 +341,18 @@ public class ScanConfiguration {
     private void setOsaLowSeveritiesThreshold(String osaLowSeveritiesThreshold) {
         this.osaLowThreshold = getAsInteger(osaLowSeveritiesThreshold);
     }
+    
+    public Integer getOsaCriticalThreshold() {
+        return osaCriticalThreshold;
+    }
+
+    public void setOsaCriticalThreshold(Integer osaCriticalThreshold) {
+        this.osaCriticalThreshold = osaCriticalThreshold;
+    }
+
+    private void setOsaCriticalSeveritiesThreshold(String osaCriticalSeveritiesThreshold) {
+        this.osaCriticalThreshold = getAsInteger(osaCriticalSeveritiesThreshold);
+    }
 
     private Integer getAsInteger(String number) {
         Integer inti = null;
@@ -341,11 +367,11 @@ public class ScanConfiguration {
     }
 
     public boolean isSASTThresholdEffectivelyEnabled() {
-        return isThresholdsEnabled() && (getLowThreshold() != null || getMediumThreshold() != null || getHighThreshold() != null);
+        return isThresholdsEnabled() && (getLowThreshold() != null || getMediumThreshold() != null || getHighThreshold() != null || getCriticalThreshold() != null);
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
-        return isOsaEnabled() && isOsaThresholdsEnabled() && (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
+        return isOsaEnabled() && isOsaThresholdsEnabled() && (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null || getOsaCriticalThreshold() != null);
     }
 
     public String getReportsDir() {

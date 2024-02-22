@@ -75,7 +75,8 @@ public  abstract class ScaTestsBase extends CommonClientTest {
 
         boolean anyVulnerabilitiesDetected = summary.getHighVulnerabilityCount() > 0 ||
                 summary.getMediumVulnerabilityCount() > 0 ||
-                summary.getLowVulnerabilityCount() > 0;
+                summary.getLowVulnerabilityCount() > 0||
+                summary.getCriticalVulnerabilityCount() > 0;
         assertTrue("Expected that at least one vulnerability would be detected.", anyVulnerabilitiesDetected);
     }
 

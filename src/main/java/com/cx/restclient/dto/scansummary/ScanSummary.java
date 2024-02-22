@@ -93,6 +93,7 @@ public class ScanSummary {
             checkForThresholdError(sastResults.getHigh(), config.getSastHighThreshold(), ErrorSource.SAST, Severity.HIGH);
             checkForThresholdError(sastResults.getMedium(), config.getSastMediumThreshold(), ErrorSource.SAST, Severity.MEDIUM);
             checkForThresholdError(sastResults.getLow(), config.getSastLowThreshold(), ErrorSource.SAST, Severity.LOW);
+            checkForThresholdError(sastResults.getCritical(), config.getSastCriticalThreshold(), ErrorSource.SAST, Severity.CRITICAL);
         }
     }
 
@@ -103,6 +104,7 @@ public class ScanSummary {
             int totalHigh = 0;
             int totalMedium = 0;
             int totalLow = 0;
+            int totalCritical = 0;
             boolean hasSummary = false;
 
             if (scaResults != null) {
@@ -112,6 +114,7 @@ public class ScanSummary {
                     totalHigh = summary.getHighVulnerabilityCount();
                     totalMedium = summary.getMediumVulnerabilityCount();
                     totalLow = summary.getLowVulnerabilityCount();
+                    totalCritical = summary.getCriticalVulnerabilityCount();
                 }
             } else if (osaResults.isOsaResultsReady()) {
                 OSASummaryResults summary = osaResults.getResults();
@@ -120,6 +123,7 @@ public class ScanSummary {
                     totalHigh = summary.getTotalHighVulnerabilities();
                     totalMedium = summary.getTotalMediumVulnerabilities();
                     totalLow = summary.getTotalLowVulnerabilities();
+                    totalCritical = summary.getTotalCriticalVulnerabilities();
                 }
             }
 
@@ -127,6 +131,7 @@ public class ScanSummary {
                 checkForThresholdError(totalHigh, config.getOsaHighThreshold(), errorSource, Severity.HIGH);
                 checkForThresholdError(totalMedium, config.getOsaMediumThreshold(), errorSource, Severity.MEDIUM);
                 checkForThresholdError(totalLow, config.getOsaLowThreshold(), errorSource, Severity.LOW);
+                checkForThresholdError(totalCritical, config.getOsaCriticalThreshold(), errorSource, Severity.CRITICAL);
             }
         }
     }
@@ -140,6 +145,13 @@ public class ScanSummary {
                     newResultThresholdErrors.add(Severity.LOW);
                 }
                 severity = "MEDIUM";
+            }
+            
+            if ("CRITICAL".equals(severity)) {
+                if (sastResults.getNewCritical() > 0) {
+                    newResultThresholdErrors.add(Severity.CRITICAL);
+                }
+                severity = "LOW";
             }
 
             if ("MEDIUM".equals(severity)) {
