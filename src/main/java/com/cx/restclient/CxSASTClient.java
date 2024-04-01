@@ -802,7 +802,8 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             HashMap swaggerResponse = this.httpClient.getRequest(SWAGGER_LOCATION, CONTENT_TYPE_APPLICATION_JSON, HashMap.class, 200, SAST_SCAN, false);
             return swaggerResponse.toString().contains("/sast/scanWithSettings");
         } catch (Exception e) {
-            return false;
+            // Assuming something went wrong but SAST version is greater than 9.x
+            return true;
         }
     }
 
