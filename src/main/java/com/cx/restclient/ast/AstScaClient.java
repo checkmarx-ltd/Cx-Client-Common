@@ -921,7 +921,7 @@ public class AstScaClient extends AstClient implements Scanner {
             log.info("Created a project with ID {}", resolvedProjectId);
         } else {
             log.info("Project already exists with ID {}", resolvedProjectId);
-            UpdateRiskManagementProject(resolvedProjectId,projectCustomTag);
+            UpdateRiskManagementProject(resolvedProjectId,projectCustomTag,assignedTeam);
         }
         return resolvedProjectId;
     }
@@ -1040,12 +1040,16 @@ public class AstScaClient extends AstClient implements Scanner {
         return newProject.getId();
     }
 
-   private void UpdateRiskManagementProject(String projectId, String customTags) throws IOException {
+   private void UpdateRiskManagementProject(String projectId, String customTags, String assignedTeam) throws IOException {
        Project existingProject = httpClient.getRequest(PROJECTID.replace("id",projectId),ContentType.CONTENT_TYPE_APPLICATION_JSON,Project.class,
                HttpStatus.SC_OK,"got project details",false);
 
      UpdateProjectRequest request = new UpdateProjectRequest();
      request.setName(existingProject.getName());
+		if (!StringUtils.isEmpty(assignedTeam)) {
+			request.addAssignedTeams(assignedTeam);
+			log.info("Team name: {}", assignedTeam);
+		}
 
      log.info("Project level custom tag name: {}",customTags);
        if(existingProject.getTags()!=null){
