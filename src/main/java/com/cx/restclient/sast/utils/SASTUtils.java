@@ -57,6 +57,7 @@ public abstract class SASTUtils {
     }
 
     //PDF Report
+    //This method is used for generate report for other file formats(CSV , XML, JSON etc) as well not only PDF file format.
     public static String writePDFReport(byte[] scanReport, File workspace, String pdfFileName, Logger log, String reportFormat) {
         try {
             FileUtils.writeByteArrayToFile(new File(workspace + CX_REPORT_LOCATION, pdfFileName), scanReport);
