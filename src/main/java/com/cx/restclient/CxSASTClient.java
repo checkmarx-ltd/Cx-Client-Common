@@ -541,7 +541,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 if (config.getReportsDir() != null) {
                     String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
                     String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
-                    String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
+                    String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log, "PDF");
                     sastResults.setSastPDFLink(pdfLink);
                     sastResults.setPdfFileName(pdfFileName);
                 }
