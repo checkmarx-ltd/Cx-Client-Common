@@ -53,13 +53,13 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -69,6 +69,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
@@ -85,7 +86,7 @@ import static com.cx.restclient.httpClient.utils.HttpClientHelper.*;
 /**
  * Created by Galn on 05/02/2018.
  */
-public class CxHttpClient implements Closeable {
+public class CxHttpClientOriginal implements Closeable {
 
     private static String HTTP_NO_HOST = System.getProperty("http.nonProxyHosts");
     private static String HTTPS_NO_HOST = System.getProperty("https.nonProxyHosts");
@@ -122,8 +123,8 @@ public class CxHttpClient implements Closeable {
     private final Map<String, String> customHeaders = new HashMap<>();
 
 
-    public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
+    public CxHttpClientOriginal(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
+                                boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
     	   	   	
         this.log = log;
         this.rootUri = rootUri;
@@ -180,8 +181,8 @@ public class CxHttpClient implements Closeable {
         } else apacheClient = cb.build();
     }
 
-    public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
+    public CxHttpClientOriginal(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
+                                boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
         this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM);
         this.cxOriginUrl = originUrl;
     }
@@ -715,11 +716,25 @@ public class CxHttpClient implements Closeable {
 
     private void setSSLTls(String protocol, Logger log) {
         try {
+            /* Load the keyStore that includes self-signed cert as a "trusted" entry. */
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+           /* keyStore.load(trustStore, trustStorePassword);
+            trustStore.close();*/
+            TrustManagerFactory tmf =
+                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(keyStore);
             final SSLContext sslContext = SSLContext.getInstance(protocol);
-            sslContext.init(null, null, null);
+            sslContext.init(null, tmf.getTrustManagers(), null);
+            //SSLSocketFactory sslFactory = sslContext.getSocketFactory();
+
+
+         /*   final SSLContext sslContext = SSLContext.getInstance(protocol);
+            sslContext.init(null, null, null);*/
             HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             log.warn(String.format("Failed to set SSL TLS : %s", e.getMessage()));
+        } catch (KeyStoreException e) {
+            throw new RuntimeException(e);
         }
     }
 

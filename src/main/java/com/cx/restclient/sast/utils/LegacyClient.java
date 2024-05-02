@@ -249,6 +249,9 @@ public abstract class LegacyClient {
             }
 
             version = config.getCxVersion().getVersion();
+            if(version.startsWith("9.7")){
+                config.setShowCriticalLabel(true);
+            }
             log.info("Checkmarx server version [" + config.getCxVersion().getVersion() + "]." + hotfix);
 
         } catch (Exception ex) {

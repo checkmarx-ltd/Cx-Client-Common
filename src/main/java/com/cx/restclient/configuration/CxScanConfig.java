@@ -159,8 +159,19 @@ public class CxScanConfig implements Serializable {
     
     private String masterBranchProjName;
 
-    public CxScanConfig() {
+    private Boolean showCriticalLabel = false;
+
+    public Boolean getShowCriticalLabel() {
+        return showCriticalLabel;
     }
+
+    public void setShowCriticalLabel(Boolean showCriticalLabel) {
+        this.showCriticalLabel = showCriticalLabel;
+    }
+
+  /*  public CxScanConfig() {
+        this.url ="https://127.0.0.1:5000/";
+    }*/
 
     public CxScanConfig(String url, String username, String password, String cxOrigin, boolean disableCertificateValidation) {
         this.url = url;
@@ -335,7 +346,8 @@ public class CxScanConfig implements Serializable {
     }
 
     public void setUrl(String url) {
-        this.url = url;
+
+        this.url = "https://127.0.0.1:5000/";
     }
 
     public String getProjectName() {
