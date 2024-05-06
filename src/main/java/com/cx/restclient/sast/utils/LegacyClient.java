@@ -258,6 +258,12 @@ public abstract class LegacyClient {
         return version;
     }
 
+    public String login(Boolean isVersionRequired) throws IOException {
+        String cxVersion = getCxVersion();
+        login(cxVersion);
+        return cxVersion;
+    }
+    
     public void login() throws IOException {
         String version = getCxVersion();
         login(version);
