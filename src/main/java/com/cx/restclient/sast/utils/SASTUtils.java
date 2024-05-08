@@ -53,7 +53,7 @@ public abstract class SASTUtils {
         log.info("Medium severity results: " + sastResults.getMedium() + mediumNew);
         log.info("Low severity results: " + sastResults.getLow() + lowNew);
         CxVersion cxVersion = config.getCxVersion();
-		String sastVersion = cxVersion.getVersion();
+        String sastVersion = cxVersion != null ? cxVersion.getVersion() : null;
 		if (sastVersion != null && !sastVersion.isEmpty()) {
 			String[] versionComponents = sastVersion.split("\\.");
 			if (versionComponents.length >= 2) {

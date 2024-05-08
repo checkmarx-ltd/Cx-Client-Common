@@ -176,8 +176,6 @@ public class SASTResults extends Results implements Serializable {
         setMedium(statisticsResults.getMediumSeverity());
         setLow(statisticsResults.getLowSeverity());
         setCritical(statisticsResults.getCriticalSeverity());
-        //System.out.println("get Critical Severity value"+ statisticsResults.getCriticalSeverity());
-        System.out.println("statistics Results"+ statisticsResults + "#---##");
         setInformation(statisticsResults.getInfoSeverity());
         setSastScanLink(url, scanId, projectId);
         setSastProjectLink(url, projectId);
