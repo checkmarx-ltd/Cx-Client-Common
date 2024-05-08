@@ -437,7 +437,6 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 				}
 			}
 		}
-		System.out.println("Using API version: " + apiVersion);
 		return apiVersion;
 	}
 
