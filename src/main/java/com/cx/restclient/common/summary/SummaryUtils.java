@@ -93,6 +93,14 @@ public abstract class SummaryUtils {
                 templateData.put("sastLowTotalHeight", sastLowTotalHeight);
                 templateData.put("sastLowNewHeight", sastLowNewHeight);
                 templateData.put("sastLowRecurrentHeight", sastLowRecurrentHeight);
+                
+              //sast critical bars
+                float sastCriticalTotalHeight = (float) sastResults.getCritical() / sastBarNorm * 238f;
+                float sastCriticalNewHeight = calculateNewBarHeight(sastResults.getNewCritical(), sastResults.getCritical(), sastCriticalTotalHeight);
+                float sastCriticalRecurrentHeight = sastCriticalTotalHeight - sastCriticalNewHeight;
+                templateData.put("sastCriticalTotalHeight", sastCriticalTotalHeight);
+                templateData.put("sastCriticalNewHeight", sastCriticalNewHeight);
+                templateData.put("sastCriticalRecurrentHeight", sastCriticalRecurrentHeight);
             } else {
                 buildFailed = true;
             }

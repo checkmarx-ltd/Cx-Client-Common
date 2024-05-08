@@ -741,7 +741,8 @@
 
     .cx-report table.cve-table td.sast-cve-table-high,
     .cx-report table.cve-table td.sast-cve-table-medium,
-    .cx-report table.cve-table td.sast-cve-table-low {
+    .cx-report table.cve-table td.sast-cve-table-low
+    .cx-report table.cve-table td.sast-cve-table-critical {
         max-width: 19px;
     }
 
@@ -1307,11 +1308,92 @@
                                         </#if>
                                     </div>
                                 </li>
+                                
+                                
+                                <#if config.cxVersion.version?has_content>
+								<#assign versionComponents = config.cxVersion.version?split(".")>
+								<#assign currentVersion = versionComponents[0] + "." + versionComponents[1]>
+								<#assign currentVersionFloat = currentVersion?number>
+								<#-- Debug log for currentVersionFloat -->
+								<#-- Current Version Float: ${currentVersionFloat} -->
+								<#if (currentVersionFloat?exists) && (currentVersionFloat >= 9.7)>
+                                <!--sast-critical-->
+	                                <li>
+	                                        <span class="bar-1" id="bar-critical" style="height: ${sastCriticalTotalHeight}px">
+	                                            <div id="tooltip-critical">
+	                                                <#if config.sastThresholdsEnabled && config.sastCriticalThreshold??>
+	                                                    <@thresholdTooltip threshold=config.sastCriticalThreshold count=sast.critical/>
+	                                                </#if>
+	                                            </div>
+	                                            <div id="critical-new-scans" class="new-scans"
+	                                                 style="height: ${sastCriticalNewHeight}px"></div>
+	                                            <div id="critical-recurrent-scans" class="recurrent-scans"
+	                                                 style="height: ${sastCriticalRecurrentHeight}px"></div>
+	                                        </span>
+	
+	                                    <div class="bar-title-wrapper">
+	                                        <div class="bar-title-container">
+	                                            <div class="bar-title-icon">
+	                                                <svg xmlns="http://www.w3.org/2000/svg"
+	                                                     xmlns:xlink="http://www.w3.org/1999/xlink"
+	                                                     width="16px" height="19px" viewBox="0 0 16 19" version="1.1">
+	                                                    <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
+	                                                    <title>Med</title>
+	                                                    <desc>Created with Sketch.</desc>
+	                                                    <defs>
+	                                                        <path d="M1,1 L8,0 L15,1 C15,1 16,4.01515152 16,7 C16,13.0151515 10.6766131,18.2701936 10.6766131,18.2701936 C10.30293,18.6732545 9.55664682,19 8.9906311,19 L7.0093689,19 C6.45190985,19 5.70245907,18.6673641 5.33497024,18.2411641 C5.33497024,18.2411641 3.70193273e-12,12.5151515 3.63797881e-12,8 C7.03437308e-13,4.82765152 1,1 1,1 Z"
+	                                                              id="path-1"/>
+	                                                        <path d="M1,1 L8,0 L15,1 C15,1 16,4.01515152 16,7 C16,13.0151515 10.6766131,18.2701936 10.6766131,18.2701936 C10.30293,18.6732545 9.55664682,19 8.9906311,19 L7.0093689,19 C6.45190985,19 5.70245907,18.6673641 5.33497024,18.2411641 C5.33497024,18.2411641 3.70193273e-12,12.5151515 3.63797881e-12,8 C7.03437308e-13,4.82765152 1,1 1,1 Z"
+	                                                              id="path-3"/>
+	                                                    </defs>
+	                                                    <g id="Page-1" stroke="none" stroke-width="1" fill="none"
+	                                                       fill-rule="evenodd">
+	                                                        <g id="Icons" transform="translate(-47.000000, -88.000000)">
+	                                                            <g id="Critical" transform="translate(47.000000, 88.000000)">
+	                                                                <g id="Vonerability-Critical">
+	                                                                    <mask id="mask-2" fill="white">
+	                                                                        <use xlink:href="#path-1"/>
+	                                                                    </mask>
+	                                                                    <g id="Rectangle-10">
+	                                                                        <use fill="#D82D49" fill-rule="evenodd"
+	                                                                             xlink:href="#path-1"/>
+	                                                                        <path stroke="#BB1A34" stroke-width="1"
+	                                                                              d="M1.4041953,1.44733409 L8,0.505076272 L14.6160396,1.45022478 C14.6341112,1.51124347 14.6539641,1.5795116 14.6753578,1.65465958 C14.7899552,2.05719756 14.9047222,2.50600605 15.0118679,2.98897331 C15.3098751,4.33226343 15.4915175,5.67204692 15.4997158,6.91419406 C15.4999523,6.95710967 15.4999523,6.95710967 15.5,7 C15.5,9.52090451 14.5340777,12.111589 12.9179883,14.6199787 C12.3484584,15.5039663 11.7377754,16.313821 11.1275564,17.0311249 C10.9144997,17.2815702 10.7170402,17.5022391 10.5403911,17.6908777 C10.4358029,17.8025645 10.3623853,17.8778048 10.3253512,17.9143634 C10.0291161,18.2331673 9.41484636,18.5 8.9906311,18.5 L7.0093689,18.5 C6.59080843,18.5 5.98194778,18.2258269 5.71364227,17.9146561 C5.66213668,17.8588317 5.58703389,17.7761053 5.4807125,17.6555634 C5.30200204,17.4529504 5.10247221,17.2193106 4.88735491,16.9580823 C4.27213719,16.2109907 3.656779,15.394289 3.08320773,14.5359605 C2.09721248,13.0604546 1.34127053,11.6205479 0.906388115,10.2835472 C0.639104683,9.46181216 0.5,8.69692293 0.5,8 C0.5,7.56658708 0.519280284,7.10494686 0.556403808,6.61890492 C0.63408435,5.60186781 0.786470164,4.51217341 0.991682584,3.40118912 C1.09968656,2.81647439 1.21542088,2.26333889 1.3310756,1.7595034 C1.35796875,1.64234673 1.3824953,1.53794489 1.4041953,1.44733409 Z"/>
+	                                                                    </g>
+	                                                                    <rect id="Rectangle-22" fill="#BB1A34"
+	                                                                          mask="url(#mask-2)" x="8"
+	                                                                          y="0" width="8" height="20"/>
+	                                                                    <mask id="mask-4" fill="white">
+	                                                                        <use xlink:href="#path-3"/>
+	                                                                    </mask>
+	                                                                    <path stroke="#BB1A34"
+	                                                                          d="M1.4041953,1.44733409 L8,0.505076272 L14.6160396,1.45022478 C14.6341112,1.51124347 14.6539641,1.5795116 14.6753578,1.65465958 C14.7899552,2.05719756 14.9047222,2.50600605 15.0118679,2.98897331 C15.3098751,4.33226343 15.4915175,5.67204692 15.4997158,6.91419406 C15.4999523,6.95710967 15.4999523,6.95710967 15.5,7 C15.5,9.52090451 14.5340777,12.111589 12.9179883,14.6199787 C12.3484584,15.5039663 11.7377754,16.313821 11.1275564,17.0311249 C10.9144997,17.2815702 10.7170402,17.5022391 10.5403911,17.6908777 C10.4358029,17.8025645 10.3623853,17.8778048 10.3253512,17.9143634 C10.0291161,18.2331673 9.41484636,18.5 8.9906311,18.5 L7.0093689,18.5 C6.59080843,18.5 5.98194778,18.2258269 5.71364227,17.9146561 C5.66213668,17.8588317 5.58703389,17.7761053 5.4807125,17.6555634 C5.30200204,17.4529504 5.10247221,17.2193106 4.88735491,16.9580823 C4.27213719,16.2109907 3.656779,15.394289 3.08320773,14.5359605 C2.09721248,13.0604546 1.34127053,11.6205479 0.906388115,10.2835472 C0.639104683,9.46181216 0.5,8.69692293 0.5,8 C0.5,7.56658708 0.519280284,7.10494686 0.556403808,6.61890492 C0.63408435,5.60186781 0.786470164,4.51217341 0.991682584,3.40118912 C1.09968656,2.81647439 1.21542088,2.26333889 1.3310756,1.7595034 C1.35796875,1.64234673 1.3824953,1.53794489 1.4041953,1.44733409 Z"/>
+	                                                                    <polygon id="H" fill="#FFFFFF" mask="url(#mask-4)"
+	                                                                             points="5 12 7 12 7 9.5 9 9.5 9 12 11 12 11 5 9 5 9 7.5 7 7.5 7 5 5 5"/>
+	                                                                </g>
+	                                                            </g>
+	                                                        </g>
+	                                                    </g>
+	                                                </svg>
+	                                            </div>
+	                                            <div class="bar-title">Critical -</div>
+	                                            <div class="bar-count" id="bar-count-critical">${sast.critical}</div>
+	                                        </div>
+	                                        <#if sast.hasNewResults()>
+	                                            <div id="new-bar-count-critical" class="new-bar-title-container">${sast.newCritical}
+	                                                New
+	                                            </div>
+	                                        </#if>
+	                                    </div>
+	                                </li>
+	                                </#if>
+	                                </#if>
                             </ul>
                         </div>
                     </#if>
                 </div>
             </#if>
+            
 
                 <#if config.isOsaEnabled()|| config.isAstScaEnabled() >
         <div class="osa-summary <#if !config.isSastEnabled()>sast-summary chart-large</#if>" id="osa-summary">
@@ -1884,7 +1966,7 @@
 </div>-->
 
     <#if config.isSastEnabled() && config.generateXmlReport &&sast.sastResultsReady>
-        <#if sast.high gt 0 || sast.medium gt 0 || sast.low gt 0>
+        <#if sast.high gt 0 || sast.medium gt 0 || sast.low gt 0 || sast.critical gt 0>
             <div id="sast-full" class="sast-full full-results-section">
                 <div class="summary-table-row cxsast-full">
                     <div class="title-column">
@@ -2261,6 +2343,58 @@
                                 </table>
                             </div>
                         </#if>
+                        
+                        <#if sast.critical gt 0>
+                            <div id="sast-cve-table-critical-container">
+                                <div class="full-severity-title">
+                                    <div class="severity-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                             xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="19"
+                                             viewBox="0 0 16 19"><title>Critical</title>
+                                            <defs>
+                                                <path d="M1 1l7-1 7 1s1 3.015 1 6c0 6.015-5.323 11.27-5.323 11.27-.374.403-1.12.73-1.686.73H7.01c-.558 0-1.308-.333-1.675-.76C5.335 18.24 0 12.516 0 8c0-3.172 1-7 1-7z"
+                                                      id="sast-full-critical-path-1"/>
+                                                <path d="M1 1l7-1 7 1s1 3.015 1 6c0 6.015-5.323 11.27-5.323 11.27-.374.403-1.12.73-1.686.73H7.01c-.558 0-1.308-.333-1.675-.76C5.335 18.24 0 12.516 0 8c0-3.172 1-7 1-7z"
+                                                      id="sast-full-critical-path-2"/>
+                                            </defs>
+                                            <g fill="none" fill-rule="evenodd">
+                                                <mask id="sast-full-critical-mask-1" fill="#fff">
+                                                    <use xlink:href="#sast-full-critical-path-1"/>
+                                                </mask>
+                                                <use fill="#D82D49" xlink:href="#sast-full-critical-path-1"/>
+                                                <path stroke="#BB1A34"
+                                                      d="M1.404 1.447L8 .505l6.616.945.06.205c.114.402.23.85.336 1.334.298 1.342.48 2.682.488 3.924V7c0 2.52-.966 5.112-2.582 7.62-.57.884-1.18 1.694-1.79 2.41-.214.252-.41.472-.588.66-.104.113-.178.188-.215.224-.296.32-.91.586-1.334.586H7.01c-.42 0-1.028-.274-1.296-.585-.052-.056-.127-.14-.233-.26-.178-.202-.378-.436-.593-.697-.615-.747-1.23-1.564-1.804-2.422C2.097 13.06 1.34 11.62.906 10.284.64 9.462.5 8.697.5 8c0-.433.02-.895.056-1.38C.634 5.6.786 4.51.992 3.4c.108-.584.223-1.137.34-1.64.026-.118.05-.222.072-.313z"/>
+                                                <path fill="#BB1A34" mask="url(#sast-full-critical-mask-1)"
+                                                      d="M8 0h8v20H8z"/>
+                                                <mask id="sast-full-critical-mask-2" fill="#fff">
+                                                    <use xlink:href="#sast-full-critical-path-2"/>
+                                                </mask>
+                                                <path stroke="#BB1A34"
+                                                      d="M1.404 1.447L8 .505l6.616.945.06.205c.114.402.23.85.336 1.334.298 1.342.48 2.682.488 3.924V7c0 2.52-.966 5.112-2.582 7.62-.57.884-1.18 1.694-1.79 2.41-.214.252-.41.472-.588.66-.104.113-.178.188-.215.224-.296.32-.91.586-1.334.586H7.01c-.42 0-1.028-.274-1.296-.585-.052-.056-.127-.14-.233-.26-.178-.202-.378-.436-.593-.697-.615-.747-1.23-1.564-1.804-2.422C2.097 13.06 1.34 11.62.906 10.284.64 9.462.5 8.697.5 8c0-.433.02-.895.056-1.38C.634 5.6.786 4.51.992 3.4c.108-.584.223-1.137.34-1.64.026-.118.05-.222.072-.313z"/>
+                                                <path fill="#FFF" mask="url(#sast-full-critical-mask-2)"
+                                                      d="M5 12h2V9.5h2V12h2V5H9v2.5H7V5H5"/>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <div class="severity-title-name">Critical</div>
+                                    <div class="severity-count">${sast.critical}</div>
+                                </div>
+                                <table id="sast-cve-table-critical" class="cve-table sast-cve-table sast-cve-table-critical">
+                                    <tr>
+                                        <th>Vulnerability</th>
+                                        <th>Issues Found</th>
+                                    </tr>
+                                    <#list sast.queryList as query>
+                                        <#if query.severity == sast.languageMap["CRITICAL"]>
+                                            <tr>
+                                                <td>${sast.encodeXSS(query.name)}</td>
+                                                <td>${query.result?size}</td>
+                                            </tr>
+                                        </#if>
+                                    </#list>
+                                </table>
+                            </div>
+                        </#if>
                     </div>
                 </div>
             </div>
@@ -2605,8 +2739,6 @@
                                 </table>
                             </div>
                         </#if>
-
-
                     </div>
                 </div>
             </div>

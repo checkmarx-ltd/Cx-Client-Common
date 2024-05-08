@@ -412,7 +412,11 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 			if (versionComponents.length >= 2) {
 				String currentVersion = versionComponents[0] + "." + versionComponents[1];
 				float currentVersionFloat = Float.parseFloat(currentVersion);
-				if (currentVersionFloat >= Float.parseFloat("9.4")) {
+				if (currentVersionFloat >= Float.parseFloat("9.7")) {
+		               if (apiName.equalsIgnoreCase(SAST_SCAN_RESULTS_STATISTICS)) {
+		                   apiVersion = CONTENT_TYPE_APPLICATION_XML_V6;
+		               }
+		           } else if (currentVersionFloat >= Float.parseFloat("9.4")) {
 					if (SAST_RETENTION_RATE.equalsIgnoreCase(apiName) && config.isEnableDataRetention()) {
 						apiVersion = CONTENT_TYPE_API_VERSION_1_1;
 					} else if (SCAN_WITH_SETTINGS_URL.equalsIgnoreCase(apiName)) {
@@ -425,6 +429,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 							apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
 						}
 					}
+					else {
+		                   apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
+		               }
 				} else if (currentVersionFloat >= 9.2 && currentVersionFloat <= 9.3) {
 					apiVersion = CONTENT_TYPE_APPLICATION_JSON_V1;
 				}
@@ -531,7 +538,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 resolveSASTViolation(sastResults, projectId);
             }
 			if (sastResults.getSastScanLink() != null)
-				SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
+				SASTUtils.printSASTResultsToConsole(config, sastResults, config.getEnablePolicyViolations(), log);
 
             //PDF report
             if (config.getGeneratePDFReport()) {
@@ -704,7 +711,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     }
 
     private SASTStatisticsResponse getScanStatistics(long scanId) throws IOException {
-        return httpClient.getRequest(SAST_SCAN_RESULTS_STATISTICS.replace(SCAN_ID_PATH_PARAM, Long.toString(scanId)), CONTENT_TYPE_APPLICATION_JSON_V1, SASTStatisticsResponse.class, 200, "SAST scan statistics", false);
+    	String apiVersion = getContentTypeAndApiVersion(config, SAST_SCAN_RESULTS_STATISTICS);
+    	System.out.println("Using API version for SAST scan statistics: " + apiVersion);
+        return httpClient.getRequest(SAST_SCAN_RESULTS_STATISTICS.replace(SCAN_ID_PATH_PARAM, Long.toString(scanId)), apiVersion, SASTStatisticsResponse.class, 200, "SAST scan statistics", false);
     }
 
     public List<LastScanResponse> getLatestSASTStatus(long projectId) throws IOException {

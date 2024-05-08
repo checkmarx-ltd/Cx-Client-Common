@@ -50,11 +50,13 @@ public class SASTResults extends Results implements Serializable {
     private int high = 0;
     private int medium = 0;
     private int low = 0;
+    private int critical = 0;
     private int information = 0;
     
     private int newHigh = 0;
     private int newMedium = 0;
     private int newLow = 0;
+    private int newCritical = 0;
     private int newInfo = 0;
 
     private String sastScanLink;
@@ -96,7 +98,7 @@ public class SASTResults extends Results implements Serializable {
     private List<Policy> sastPolicies = new ArrayList<>();
 
     public enum Severity {
-        High, Medium, Low, Information;
+        High, Medium, Low, CRITICAL, Information;
     }
     
 
@@ -129,6 +131,9 @@ public class SASTResults extends Results implements Serializable {
                         case Low:
                             newLow++;
                             break;
+                        case CRITICAL:
+                            newCritical++;
+                            break;
                         case Information:
                             newInfo++;
                             break;
@@ -153,6 +158,7 @@ public class SASTResults extends Results implements Serializable {
         languageMap.put("High", lang.getHigh());
         languageMap.put("Medium", lang.getMedium());
         languageMap.put("Low", lang.getLow());
+        languageMap.put("CRITICAL", lang.getCritical());
 		}
 	}
 	
@@ -169,6 +175,7 @@ public class SASTResults extends Results implements Serializable {
         setHigh(statisticsResults.getHighSeverity());
         setMedium(statisticsResults.getMediumSeverity());
         setLow(statisticsResults.getLowSeverity());
+        setCritical(statisticsResults.getCriticalSeverity());
         setInformation(statisticsResults.getInfoSeverity());
         setSastScanLink(url, scanId, projectId);
         setSastProjectLink(url, projectId);
@@ -209,6 +216,14 @@ public class SASTResults extends Results implements Serializable {
     public void setLow(int low) {
         this.low = low;
     }
+    
+    public int getCritical() {
+        return critical;
+    }
+
+    public void setCritical(int critical) {
+        this.critical = critical;
+    }
 
     public int getInformation() {
         return information;
@@ -240,6 +255,14 @@ public class SASTResults extends Results implements Serializable {
 
     public void setNewLow(int newLow) {
         this.newLow = newLow;
+    }
+    
+    public int getNewCritical() {
+        return newCritical;
+    }
+
+    public void setNewCritical(int newCritical) {
+        this.newCritical = newCritical;
     }
 
     public int getNewInfo() {
@@ -371,7 +394,7 @@ public class SASTResults extends Results implements Serializable {
     }
 
     public boolean hasNewResults() {
-        return newHigh + newMedium + newLow > 0;
+        return newHigh + newMedium + newLow + newCritical > 0;
     }
 
     private void setScanStartEndDates(String scanStart, String scanTime, String lang) {
