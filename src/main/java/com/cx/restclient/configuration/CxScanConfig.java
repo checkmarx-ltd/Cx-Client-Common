@@ -664,7 +664,9 @@ public class CxScanConfig implements Serializable {
     }
 
     public boolean isSASTThresholdEffectivelyEnabled() {
+
         return isSastEnabled() && getSastThresholdsEnabled() && (getSastCriticalThreshold() != null || getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null );
+
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {

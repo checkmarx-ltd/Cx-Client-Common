@@ -742,7 +742,8 @@
     .cx-report table.cve-table td.sast-cve-table-critical
     .cx-report table.cve-table td.sast-cve-table-high,
     .cx-report table.cve-table td.sast-cve-table-medium,
-    .cx-report table.cve-table td.sast-cve-table-low {
+    .cx-report table.cve-table td.sast-cve-table-low
+    .cx-report table.cve-table td.sast-cve-table-critical {
         max-width: 19px;
     }
 
@@ -1966,7 +1967,9 @@
 </div>-->
 
     <#if config.isSastEnabled() && config.generateXmlReport &&sast.sastResultsReady>
+
         <#if sast.critical gt 0 || sast.high gt 0 || sast.medium gt 0 || sast.low gt 0>
+
             <div id="sast-full" class="sast-full full-results-section">
                 <div class="summary-table-row cxsast-full">
                     <div class="title-column">

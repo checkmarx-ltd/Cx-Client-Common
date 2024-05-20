@@ -99,6 +99,7 @@ public class SASTResults extends Results implements Serializable {
 
     public enum Severity {
     	Critical, CRITICAL, High, Medium, Low, Information;
+
     }
     
 
@@ -159,6 +160,7 @@ public class SASTResults extends Results implements Serializable {
         languageMap.put("High", lang.getHigh());
         languageMap.put("Medium", lang.getMedium());
         languageMap.put("Low", lang.getLow());
+        languageMap.put("CRITICAL", lang.getCritical());
 		}
 	}
 	
@@ -176,6 +178,7 @@ public class SASTResults extends Results implements Serializable {
         setHigh(statisticsResults.getHighSeverity());
         setMedium(statisticsResults.getMediumSeverity());
         setLow(statisticsResults.getLowSeverity());
+        setCritical(statisticsResults.getCriticalSeverity());
         setInformation(statisticsResults.getInfoSeverity());
         setSastScanLink(url, scanId, projectId);
         setSastProjectLink(url, projectId);

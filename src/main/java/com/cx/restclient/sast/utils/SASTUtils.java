@@ -64,6 +64,18 @@ public abstract class SASTUtils {
         log.info("High severity results: " + sastResults.getHigh() + highNew);
         log.info("Medium severity results: " + sastResults.getMedium() + mediumNew);
         log.info("Low severity results: " + sastResults.getLow() + lowNew);
+        CxVersion cxVersion = config.getCxVersion();
+        String sastVersion = cxVersion != null ? cxVersion.getVersion() : null;
+		if (sastVersion != null && !sastVersion.isEmpty()) {
+			String[] versionComponents = sastVersion.split("\\.");
+			if (versionComponents.length >= 2) {
+				String currentVersion = versionComponents[0] + "." + versionComponents[1];
+				float currentVersionFloat = Float.parseFloat(currentVersion);
+				if (currentVersionFloat == Float.parseFloat("9.7")) {
+        log.info("Critical severity results: " + sastResults.getCritical() + criticalNew);
+				}
+			}
+		}
         log.info("Information severity results: " + sastResults.getInformation() + infoNew);
         log.info("");
 		if (sastResults.getSastScanLink() != null)
