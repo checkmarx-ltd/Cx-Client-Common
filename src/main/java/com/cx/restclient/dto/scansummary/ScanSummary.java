@@ -90,10 +90,10 @@ public class ScanSummary {
         if (config.isSASTThresholdEffectivelyEnabled() &&
                 sastResults != null &&
                 sastResults.isSastResultsReady()) {
+            checkForThresholdError(sastResults.getCritical(), config.getSastCriticalThreshold(), ErrorSource.SAST, Severity.CRITICAL);
             checkForThresholdError(sastResults.getHigh(), config.getSastHighThreshold(), ErrorSource.SAST, Severity.HIGH);
             checkForThresholdError(sastResults.getMedium(), config.getSastMediumThreshold(), ErrorSource.SAST, Severity.MEDIUM);
             checkForThresholdError(sastResults.getLow(), config.getSastLowThreshold(), ErrorSource.SAST, Severity.LOW);
-            checkForThresholdError(sastResults.getCritical(), config.getSastCriticalThreshold(), ErrorSource.SAST, Severity.CRITICAL);
         }
     }
 
@@ -104,7 +104,6 @@ public class ScanSummary {
             int totalHigh = 0;
             int totalMedium = 0;
             int totalLow = 0;
-            int totalCritical = 0;
             boolean hasSummary = false;
 
             if (scaResults != null) {
@@ -143,13 +142,6 @@ public class ScanSummary {
                 }
                 severity = "MEDIUM";
             }
-            
-            if ("CRITICAL".equals(severity)) {
-                if (sastResults.getNewCritical() > 0) {
-                    newResultThresholdErrors.add(Severity.CRITICAL);
-                }
-                severity = "LOW";
-            }
 
             if ("MEDIUM".equals(severity)) {
                 if (sastResults.getNewMedium() > 0) {
@@ -157,9 +149,16 @@ public class ScanSummary {
                 }
                 severity = "HIGH";
             }
+            
+            if ("HIGH".equals(severity)) {
+                if (sastResults.getNewHigh() > 0) {
+                    newResultThresholdErrors.add(Severity.HIGH);
+                }
+                severity = "CRITICAL";
+            }
 
-            if ("HIGH".equals(severity) && sastResults.getNewHigh() > 0) {
-                newResultThresholdErrors.add(Severity.HIGH);
+            if ("CRITICAL".equals(severity) && sastResults.getNewCritical() > 0) {
+                newResultThresholdErrors.add(Severity.CRITICAL);
             }
         }
     }

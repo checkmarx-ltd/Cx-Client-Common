@@ -65,10 +65,10 @@ public class CxScanConfig implements Serializable {
     private Boolean isIncremental = false;
     private Boolean isSynchronous = false;
     private Boolean sastThresholdsEnabled = false;
+    private Integer sastCriticalThreshold;
     private Integer sastHighThreshold;
     private Integer sastMediumThreshold;
     private Integer sastLowThreshold;
-    private Integer sastCriticalThreshold;
     private Boolean sastNewResultsThresholdEnabled = false;
     private String sastNewResultsThresholdSeverity;
     private TokenLoginResponse token;
@@ -506,6 +506,14 @@ public class CxScanConfig implements Serializable {
     public void setSastThresholdsEnabled(Boolean sastThresholdsEnabled) {
         this.sastThresholdsEnabled = sastThresholdsEnabled;
     }
+    
+    public Integer getSastCriticalThreshold() {
+        return sastCriticalThreshold;
+    }
+
+    public void setSastCriticalThreshold(Integer sastCriticalThreshold) {
+        this.sastCriticalThreshold = sastCriticalThreshold;
+    }
 
     public Integer getSastHighThreshold() {
         return sastHighThreshold;
@@ -529,14 +537,6 @@ public class CxScanConfig implements Serializable {
 
     public void setSastLowThreshold(Integer sastLowThreshold) {
         this.sastLowThreshold = sastLowThreshold;
-    }
-    
-    public Integer getSastCriticalThreshold() {
-        return sastCriticalThreshold;
-    }
-
-    public void setSastCriticalThreshold(Integer sastCriticalThreshold) {
-        this.sastCriticalThreshold = sastCriticalThreshold;
     }
 
     public String getSastNewResultsThresholdSeverity() {
@@ -664,7 +664,7 @@ public class CxScanConfig implements Serializable {
     }
 
     public boolean isSASTThresholdEffectivelyEnabled() {
-        return isSastEnabled() && getSastThresholdsEnabled() && (getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null || getSastCriticalThreshold() != null);
+        return isSastEnabled() && getSastThresholdsEnabled() && (getSastCriticalThreshold() != null || getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null );
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
