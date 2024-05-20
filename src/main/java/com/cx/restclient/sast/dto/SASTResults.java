@@ -124,6 +124,7 @@ public class SASTResults extends Results implements Serializable {
                     Severity sev = Severity.valueOf(result.getSeverity());
                     switch (sev) {
                     	case CRITICAL:
+                    	case Critical:
                     		newCritical++;
                     		break;
                         case High:

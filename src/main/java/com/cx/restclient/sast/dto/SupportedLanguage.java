@@ -22,18 +22,22 @@ public enum SupportedLanguage {
     private final String Information;
     private final String datePattern;
     
-    private SupportedLanguage(Locale locale, String high, String medium, String low, String critical, String information, String datePattern) {
+    private SupportedLanguage(Locale locale, String critical, String high, String medium, String low, String information, String datePattern) {
 		this.locale = locale;
+		this.Critical = critical;
 		this.High = high;
 		this.Medium = medium;
 		this.Low = low;
-		this.Critical = critical;
 		this.Information = information;
 		this.datePattern = datePattern;
 	}
 
 	public Locale getLocale() {
 		return locale;
+	}
+	
+	public String getCritical() {
+		return Critical;
 	}
 
 	public String getHigh() {
@@ -46,10 +50,6 @@ public enum SupportedLanguage {
 
 	public String getLow() {
 		return Low;
-	}
-	
-	public String getCritical() {
-		return Critical;
 	}
 
 	public String getInformation() {
