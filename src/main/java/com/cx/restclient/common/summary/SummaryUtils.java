@@ -69,6 +69,14 @@ public abstract class SummaryUtils {
                 //calculate sast bars:
                 float maxCount = Math.max(sastResults.getHigh(), Math.max(sastResults.getMedium(), sastResults.getLow()));
                 float sastBarNorm = maxCount * 10f / 9f;
+                
+              //sast critical bars
+                float sastCriticalTotalHeight = (float) sastResults.getCritical() / sastBarNorm * 238f;
+                float sastCriticalNewHeight = calculateNewBarHeight(sastResults.getNewCritical(), sastResults.getCritical(), sastCriticalTotalHeight);
+                float sastCriticalRecurrentHeight = sastCriticalTotalHeight - sastCriticalNewHeight;
+                templateData.put("sastCriticalTotalHeight", sastCriticalTotalHeight);
+                templateData.put("sastCriticalNewHeight", sastCriticalNewHeight);
+                templateData.put("sastCriticalRecurrentHeight", sastCriticalRecurrentHeight);
 
                 //sast high bars
                 float sastHighTotalHeight = (float) sastResults.getHigh() / sastBarNorm * 238f;
@@ -94,13 +102,6 @@ public abstract class SummaryUtils {
                 templateData.put("sastLowNewHeight", sastLowNewHeight);
                 templateData.put("sastLowRecurrentHeight", sastLowRecurrentHeight);
                 
-              //sast critical bars
-                float sastCriticalTotalHeight = (float) sastResults.getCritical() / sastBarNorm * 238f;
-                float sastCriticalNewHeight = calculateNewBarHeight(sastResults.getNewCritical(), sastResults.getCritical(), sastCriticalTotalHeight);
-                float sastCriticalRecurrentHeight = sastCriticalTotalHeight - sastCriticalNewHeight;
-                templateData.put("sastCriticalTotalHeight", sastCriticalTotalHeight);
-                templateData.put("sastCriticalNewHeight", sastCriticalNewHeight);
-                templateData.put("sastCriticalRecurrentHeight", sastCriticalRecurrentHeight);
             } else {
                 buildFailed = true;
             }
