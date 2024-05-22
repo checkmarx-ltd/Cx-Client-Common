@@ -100,6 +100,7 @@ public class SASTResults extends Results implements Serializable {
     public enum Severity {
     	Critical, High, Medium, Low, Information;
 
+
     }
     
 
@@ -123,6 +124,7 @@ public class SASTResults extends Results implements Serializable {
                 } else if ("New".equals(result.getStatus())) {
                     Severity sev = Severity.valueOf(result.getSeverity());
                     switch (sev) {
+
                     	case Critical:
                     		newCritical++;
                     		break;
