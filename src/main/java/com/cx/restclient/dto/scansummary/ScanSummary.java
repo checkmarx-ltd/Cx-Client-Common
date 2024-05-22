@@ -94,7 +94,6 @@ public class ScanSummary {
             checkForThresholdError(sastResults.getHigh(), config.getSastHighThreshold(), ErrorSource.SAST, Severity.HIGH);
             checkForThresholdError(sastResults.getMedium(), config.getSastMediumThreshold(), ErrorSource.SAST, Severity.MEDIUM);
             checkForThresholdError(sastResults.getLow(), config.getSastLowThreshold(), ErrorSource.SAST, Severity.LOW);
-            checkForThresholdError(sastResults.getCritical(), config.getSastCriticalThreshold(), ErrorSource.SAST, Severity.CRITICAL);
         }
     }
 
@@ -105,7 +104,6 @@ public class ScanSummary {
             int totalHigh = 0;
             int totalMedium = 0;
             int totalLow = 0;
-            int totalCritical = 0;
             boolean hasSummary = false;
 
             if (scaResults != null) {

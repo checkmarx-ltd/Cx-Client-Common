@@ -2222,7 +2222,7 @@
 						                <th>Issues Found</th>
 						            </tr>
 						            <#list sast.queryList as query>
-						                <#if (query.severity == sast.languageMap["Critical"]) || (query.severity == "CRITICAL")>
+						                <#if query.severity == sast.languageMap["Critical"]>
 						                    <tr>
 						                        <td>${sast.encodeXSS(query.name)}</td>
 						                        <td>${query.result?size}</td>
