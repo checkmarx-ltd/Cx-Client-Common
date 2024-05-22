@@ -98,7 +98,8 @@ public class SASTResults extends Results implements Serializable {
     private List<Policy> sastPolicies = new ArrayList<>();
 
     public enum Severity {
-    	Critical, CRITICAL, High, Medium, Low, Information;
+    	Critical, High, Medium, Low, Information;
+
 
     }
     
@@ -123,7 +124,7 @@ public class SASTResults extends Results implements Serializable {
                 } else if ("New".equals(result.getStatus())) {
                     Severity sev = Severity.valueOf(result.getSeverity());
                     switch (sev) {
-                    	case CRITICAL:
+
                     	case Critical:
                     		newCritical++;
                     		break;
@@ -161,7 +162,6 @@ public class SASTResults extends Results implements Serializable {
         languageMap.put("High", lang.getHigh());
         languageMap.put("Medium", lang.getMedium());
         languageMap.put("Low", lang.getLow());
-        languageMap.put("CRITICAL", lang.getCritical());
 		}
 	}
 	
