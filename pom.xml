@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.checkmarx</groupId>
     <artifactId>cx-client-common</artifactId>
-    <version>${cxcommon.version}</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
     <name>Checkmarx Client</name>
     <description>Web client for interaction with Checkmarx SAST, SCA and OSA products</description>
@@ -164,19 +164,19 @@
                     <artifactId>commons-collections</artifactId>
                     <groupId>commons-collections</groupId>
                 </exclusion>
-                <exclusion>
-                    <artifactId>commons-validator</artifactId>
-                    <groupId>commons-validator</groupId>
-                </exclusion>
+<!--                <exclusion>-->
+<!--                    <artifactId>commons-validator</artifactId>-->
+<!--                    <groupId>commons-validator</groupId>-->
+<!--                </exclusion>-->
             </exclusions>
         </dependency>
-        <!-- excluded dependencies from fsa -->
-        <dependency>
-            <groupId>commons-validator</groupId>
-            <artifactId>commons-validator</artifactId>
-            <version>1.8.0</version>
-        </dependency>
-        <!-- end of excluded dependencies -->        
+<!--         excluded dependencies from fsa -->
+<!--        <dependency>-->
+<!--            <groupId>commons-validator</groupId>-->
+<!--            <artifactId>commons-validator</artifactId>-->
+<!--            <version>1.8.0</version>-->
+<!--        </dependency>-->
+<!--         end of excluded dependencies         -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
