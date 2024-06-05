@@ -164,19 +164,8 @@
                     <artifactId>commons-collections</artifactId>
                     <groupId>commons-collections</groupId>
                 </exclusion>
-                <exclusion>
-                    <artifactId>commons-validator</artifactId>
-                    <groupId>commons-validator</groupId>
-                </exclusion>
             </exclusions>
-        </dependency>
-        <!-- excluded dependencies from fsa -->
-        <dependency>
-            <groupId>commons-validator</groupId>
-            <artifactId>commons-validator</artifactId>
-            <version>1.8.0</version>
-        </dependency>
-        <!-- end of excluded dependencies -->        
+        </dependency>        
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
