@@ -34,5 +34,11 @@ public class SASTParam {
 
     //REPORT PARAMS
     public static final String PDF_REPORT_NAME = "CxSASTReport";
+
+    
+    //PROJECT BRANCHING
+    public static final String PROJECT_BRANCH = "projects/{id}/branch";
+    public static final String PROJECT_BRANCH_ID = "projects/branch/{id}";
+
 }
 
