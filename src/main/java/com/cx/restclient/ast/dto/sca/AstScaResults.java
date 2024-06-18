@@ -170,7 +170,7 @@ public class AstScaResults extends Results implements Serializable {
         int sum;
         if (this.packages != null) {
             for (Package pckg : this.packages) {
-                sum = pckg.getHighVulnerabilityCount() + pckg.getMediumVulnerabilityCount() + pckg.getLowVulnerabilityCount();
+                sum = pckg.getCriticalVulnerabilityCount() + pckg.getHighVulnerabilityCount() + pckg.getMediumVulnerabilityCount() + pckg.getLowVulnerabilityCount();
                 if (sum == 0) {
                     this.nonVulnerableLibraries++;
                 } else if (sum > 0 && pckg.isOutdated()) {
