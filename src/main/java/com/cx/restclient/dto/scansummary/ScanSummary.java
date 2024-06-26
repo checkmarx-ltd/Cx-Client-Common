@@ -101,6 +101,7 @@ public class ScanSummary {
         if (config.isOSAThresholdEffectivelyEnabled() && (scaResults != null || osaResults != null)) {
 
             ErrorSource errorSource = osaResults != null ? ErrorSource.OSA : ErrorSource.SCA;
+            int totalCritical = 0;
             int totalHigh = 0;
             int totalMedium = 0;
             int totalLow = 0;
@@ -110,6 +111,7 @@ public class ScanSummary {
                 AstScaSummaryResults summary = scaResults.getSummary();
                 if (summary != null) {
                     hasSummary = true;
+                    totalCritical = summary.getCriticalVulnerabilityCount();
                     totalHigh = summary.getHighVulnerabilityCount();
                     totalMedium = summary.getMediumVulnerabilityCount();
                     totalLow = summary.getLowVulnerabilityCount();
@@ -118,6 +120,7 @@ public class ScanSummary {
                 OSASummaryResults summary = osaResults.getResults();
                 if (summary != null) {
                     hasSummary = true;
+                    totalCritical = summary.getTotalCriticalVulnerabilities();
                     totalHigh = summary.getTotalHighVulnerabilities();
                     totalMedium = summary.getTotalMediumVulnerabilities();
                     totalLow = summary.getTotalLowVulnerabilities();
@@ -125,6 +128,7 @@ public class ScanSummary {
             }
 
             if (hasSummary) {
+            	checkForThresholdError(totalCritical, config.getOsaCriticalThreshold(), errorSource, Severity.CRITICAL);
                 checkForThresholdError(totalHigh, config.getOsaHighThreshold(), errorSource, Severity.HIGH);
                 checkForThresholdError(totalMedium, config.getOsaMediumThreshold(), errorSource, Severity.MEDIUM);
                 checkForThresholdError(totalLow, config.getOsaLowThreshold(), errorSource, Severity.LOW);
