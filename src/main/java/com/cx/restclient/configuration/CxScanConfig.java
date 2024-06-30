@@ -65,7 +65,8 @@ public class CxScanConfig implements Serializable {
     private Boolean isIncremental = false;
     private Boolean isSynchronous = false;
     private Boolean sastThresholdsEnabled = false;
-    private Integer sastCriticalThreshold;
+    private Boolean sastEnableCriticalSeverity = false;
+	private Integer sastCriticalThreshold;
     private Integer sastHighThreshold;
     private Integer sastMediumThreshold;
     private Integer sastLowThreshold;
@@ -499,6 +500,15 @@ public class CxScanConfig implements Serializable {
     public void setSynchronous(Boolean synchronous) {
         this.isSynchronous = synchronous;
     }
+    
+    public Boolean getSastEnableCriticalSeverity() {
+		return sastEnableCriticalSeverity;
+	}
+
+	public void setSastEnableCriticalSeverity(Boolean sastEnableCriticalSeverity) {
+		this.sastEnableCriticalSeverity = sastEnableCriticalSeverity;
+	}
+
 
     public Boolean getSastThresholdsEnabled() {
         return sastThresholdsEnabled;
