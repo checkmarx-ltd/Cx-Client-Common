@@ -434,7 +434,7 @@ pipeline {
 
                 stage('Maven Central') {
                     environment {
-                        GNUPG_TOKEN = credentials('gnupg-credentials-new')
+                        GNUPG_TOKEN = credentials('gnupg-credentials')
                     }
                     steps {
                         script {
