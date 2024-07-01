@@ -481,8 +481,9 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             if (config.getEnablePolicyViolations()) {
                 resolveSASTViolation(sastResults, projectId);
             }
-            if (sastResults.getSastScanLink() != null)
+            if (sastResults.getSastScanLink() != null) {
                 SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
+            }
 
             if (!config.getReports().isEmpty()) {
                 for (Map.Entry<ReportType, String> report : config.getReports().entrySet()) {
