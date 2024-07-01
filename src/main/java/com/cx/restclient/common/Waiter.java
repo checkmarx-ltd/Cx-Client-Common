@@ -49,9 +49,6 @@ public abstract class Waiter<T extends BaseStatus> {
                     if (statusResponse == null || (statusResponse.getBaseStatus() == null)) {
                         statusResponse = (T) new BaseStatus(Status.SOURCE_PULLING_AND_DEPLOYMENT);
                     }
-                    if (statusResponse == null || (statusResponse.getBaseStatus() == null)) {
-                        statusResponse = (T) new BaseStatus(Status.IN_PROGRESS);
-                    }
                     continue;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
