@@ -1521,9 +1521,10 @@
                             <li>
                                             <span class="bar-2" id="osa-bar-critical"
                                                   style="height: ${dependencyCriticalTotalHeight}px">
-                                                <div id="osa-tooltip-med">
+                                                <div id="osa-tooltip-critical">
                                                     <#if config.osaThresholdsEnabled && config.osaCriticalThreshold??>
-                                                        <@thresholdTooltip threshold=config.osaCriticalThreshold count=dependencyResult.criticakVulnerability/>
+                                                    	<@thresholdTooltip threshold=config.osaCriticalThreshold count=dependencyResult.criticalVulnerability!0/>
+
                                                     </#if>
                                                 </div>
                                             </span>
