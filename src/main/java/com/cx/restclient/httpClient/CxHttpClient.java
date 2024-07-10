@@ -53,6 +53,7 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -595,8 +596,12 @@ public class CxHttpClient implements Closeable {
     }
 
     public <T> T getRequest(String rootURL, String relPath, String acceptHeader, String contentType, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection) throws IOException {
-        HttpGet get = new HttpGet(rootURL + relPath);
+        log.info("rootURL: {}",rootURL);
+        log.info("relPath: {}",relPath);
+    	HttpGet get = new HttpGet(rootURL + relPath);
         get.addHeader(HttpHeaders.ACCEPT, acceptHeader);
+        log.info("acceptHeader: {}",acceptHeader);
+        log.info("OBJECT get: {}",get);
         return request(get, contentType, null, responseType, expectStatus, "get " + failedMsg, isCollection, true);
     }
 
@@ -640,12 +645,15 @@ public class CxHttpClient implements Closeable {
         if (httpMethod.getURI() != null && (StringUtils.isNotEmpty(httpMethod.getURI().getHost()) ||
                 StringUtils.isNotEmpty(httpMethod.getURI().getAuthority()))) {
             URI tmpUri = httpMethod.getURI();
+            log.info("tmpUri: {}", tmpUri);
             String host = StringUtils.isNotEmpty(tmpUri.getAuthority()) ? tmpUri.getAuthority() : tmpUri.getHost();
             host = IDN.toASCII(host, IDN.ALLOW_UNASSIGNED);
+            log.info("host: {}", host);
             try {
                 URI uri = new URI(tmpUri.getScheme(), tmpUri.getUserInfo(), host, tmpUri.getPort(), tmpUri.getPath(),
                         tmpUri.getQuery(), tmpUri.getFragment());
                 httpMethod.setURI(uri);
+                log.info("uri: {}", uri);
             } catch (URISyntaxException e) {
                 log.error("Fail to convert URI: " + httpMethod.getURI().toString());
             }
@@ -656,6 +664,10 @@ public class CxHttpClient implements Closeable {
         if (entity != null && httpMethod instanceof HttpEntityEnclosingRequestBase) { //Entity for Post methods
             ((HttpEntityEnclosingRequestBase) httpMethod).setEntity(entity);
         }
+        
+        log.info("contentType: {}", contentType);
+        log.info("entity: {}", entity);
+        
         HttpResponse response = null;
         int statusCode = 0;
 
@@ -667,12 +679,26 @@ public class CxHttpClient implements Closeable {
                 httpMethod.addHeader(HttpHeaders.AUTHORIZATION, token.getToken_type() + " " + token.getAccess_token());
             }
 
+            log.info("ORIGIN_HEADER: {}", cxOrigin);
+            log.info("ORIGIN_URL_HEADER: {}", cxOriginUrl);
+            log.info("TEAM_PATH: {}", teamPath);
+            
+            log.info("Authorization Header: {}", HttpHeaders.AUTHORIZATION);
+            log.info("Token: {}", token);
+            
             for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
                 httpMethod.addHeader(entry.getKey(), entry.getValue());
+                log.info("entry: {}", entry);
             }
-
+            
+            
             response = apacheClient.execute(httpMethod);
+            
+//            String responseBody = EntityUtils.toString(response.getEntity());
+            log.info("Response Body:");
+            log.info(response.toString());
             statusCode = response.getStatusLine().getStatusCode();
+            log.info("Status Code:{} ", statusCode);
 
             if (statusCode == HttpStatus.SC_UNAUTHORIZED) { // Token has probably expired
                 throw new CxTokenExpiredException(extractResponseBody(response));
