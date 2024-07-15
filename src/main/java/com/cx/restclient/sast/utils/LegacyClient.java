@@ -27,6 +27,7 @@ import java.util.List;
 
 import static com.cx.restclient.common.CxPARAM.*;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V4;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 import static com.cx.restclient.sast.utils.SASTParam.*;
 
@@ -104,7 +105,8 @@ public abstract class LegacyClient {
 						throw new CxClientException(
 								"Branched project could not be created: " + config.getProjectName());
 					}else {
-                        log.info("Created a project with ID {}", projectId);
+						checkCreateBranchProjectStatus(projectId);
+						log.info("Created a project with ID {}", projectId);
                         if(config.isEnableDataRetention()){
                             setRetentionRate(projectId);
                         }
@@ -134,6 +136,50 @@ public abstract class LegacyClient {
         }
 
         return projectId;
+    }
+
+	private void checkCreateBranchProjectStatus(long branchprojectId) throws IOException {
+		// TODO Auto-generated method stub
+		String Status = "";
+		CreateBranchStatus getBranchRequest = null;
+		for (int i = 0; i < 3; i++) {
+			try {
+				getBranchRequest = populateBranchStatusList(branchprojectId);
+			} catch (Exception e) {
+				log.info("Version is less than SAST 9.5 V4");
+				break;
+			}
+			if (getBranchRequest != null) {
+				Status = getBranchRequest.getStatus().getValue();
+				if (Status.equals("Completed")) {
+					log.info("Interval =" + i + "  BranchStatus=" + Status);
+					break;
+				} else {
+					log.info("Interval =" + i + "  BranchStatus=" + Status);
+					waitTime();
+				}
+			}
+
+		}
+	}
+    
+	private void waitTime() {
+		try {
+			int timeout = config.getcopyBranchTimeOutInSeconds();
+			log.info("timeout =" + timeout +" Seconds");
+			if (timeout > 0 && timeout < 60 ) {
+				Thread.sleep(timeout*1000);
+			} else {
+				log.warn("copybranchtimeoutinseconds is more than 60 seconds, using default timeout i.e. 10 seconds");
+				Thread.sleep(10000);
+			}
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+	}
+	
+    private CreateBranchStatus populateBranchStatusList(long branchprojectId) throws IOException, CxClientException {
+        return httpClient.getRequest(PROJECT_BRANCH_ID.replace("{id}", Long.toString(branchprojectId)), CONTENT_TYPE_APPLICATION_JSON_V4, CreateBranchStatus.class, 200, "branch status", false);
     }
 
 
