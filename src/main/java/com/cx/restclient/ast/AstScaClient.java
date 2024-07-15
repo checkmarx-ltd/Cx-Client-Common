@@ -1148,10 +1148,7 @@ public class AstScaClient extends AstClient implements Scanner {
         log.debug("Getting summary report.");
 
         String path = String.format(SUMMARY_REPORT, URLEncoder.encode(scanId, ENCODING));
-        log.debug("=================================================");
-        log.debug("path="+path+"#");
-        log.debug("=================================================");
-        
+
         return httpClient.getRequest(path,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
                 AstScaSummaryResults.class,
