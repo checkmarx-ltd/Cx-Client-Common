@@ -165,13 +165,16 @@ public abstract class LegacyClient {
     
 	private void waitTime() {
 		try {
-			int timeout = config.getcopyBranchTimeOutInSeconds();
+			int timeout = 10;
+			if((config.getcopyBranchTimeOutInSeconds())!=null) {
+				timeout = config.getcopyBranchTimeOutInSeconds();
+			}
 			log.info("timeout =" + timeout +" Seconds");
 			if (timeout > 0 && timeout < 60 ) {
 				Thread.sleep(timeout*1000);
 			} else {
 				log.warn("copybranchtimeoutinseconds is more than 60 seconds, using default timeout i.e. 10 seconds");
-				Thread.sleep(10000);
+				Thread.sleep(timeout*1000);
 			}
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
