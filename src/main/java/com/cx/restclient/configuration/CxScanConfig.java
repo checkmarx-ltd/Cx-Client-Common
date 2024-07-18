@@ -171,6 +171,8 @@ public class CxScanConfig implements Serializable {
     private Boolean enableSastBranching = false;
     
     private String masterBranchProjName;
+    
+    private Integer copyBranchTimeOutInSeconds;
 
     public CxScanConfig() {
     }
@@ -1076,5 +1078,12 @@ public class CxScanConfig implements Serializable {
 		this.scaReportFormat = scaReportFormat;
 	}
 
+    public Integer getcopyBranchTimeOutInSeconds() {
+        return copyBranchTimeOutInSeconds;
+    }
+
+    public void setcopyBranchTimeOutInSeconds(Integer copyBranchTimeOutInSeconds) {
+        this.copyBranchTimeOutInSeconds = copyBranchTimeOutInSeconds;
+    }
 	
 }
