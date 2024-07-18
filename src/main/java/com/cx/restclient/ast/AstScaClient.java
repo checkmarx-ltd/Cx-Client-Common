@@ -12,7 +12,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -916,7 +915,6 @@ public class AstScaClient extends AstClient implements Scanner {
 		
         log.info("Getting project by name: '{}'", projectName);
         String resolvedProjectId = getRiskManagementProjectId(projectName);
-        log.info("resolvedProjectId: {}", resolvedProjectId);
         if (resolvedProjectId == null) {
             log.info("Project not found, creating a new one.");
             resolvedProjectId = createRiskManagementProject(projectName, assignedTeam,projectCustomTag);
@@ -936,13 +934,10 @@ public class AstScaClient extends AstClient implements Scanner {
         }
 
         Project project = sendGetProjectRequest(projectName);
-        
-        log.info("PROJECT: {} ", project);
 
         String result = Optional.ofNullable(project)
                 .map(Project::getId)
                 .orElse(null);
-        log.info("RESULT: {} ", result);
         String message = (result == null ? "Project not found" : String.format("Project ID: %s", result));
         log.info(message);
 
@@ -971,18 +966,13 @@ public class AstScaClient extends AstClient implements Scanner {
     private Project sendGetProjectRequest(String projectName) throws IOException {
         Project result;
         try {
-        	log.info("projectName,(sendGetProjectRequest):{} ", projectName);
             String getProjectByName = String.format("%s?name=%s", PROJECTS, URLEncoder.encode(projectName, ENCODING));
-//        	String getProjectByName = String.format("%s?name=%s", PROJECTS, URLEncoder.encode(projectName, StandardCharsets.UTF_8.toString()));
-            log.info("getProjectByName(encoded):{} ", getProjectByName);
             result = httpClient.getRequest(getProjectByName,
                     ContentType.CONTENT_TYPE_APPLICATION_JSON,
                     Project.class,
                     HttpStatus.SC_OK,
                     "CxSCA project ID by name",
                     false);
-            
-            log.info("getRequest Result:{} ", result);
         } catch (CxHTTPClientException e) {
             if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
                 result = null;
@@ -1038,14 +1028,12 @@ public class AstScaClient extends AstClient implements Scanner {
         }
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
-        log.info("Entity:{} ", entity);
         Project newProject = httpClient.postRequest(PROJECTS,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
                 entity,
                 Project.class,
                 HttpStatus.SC_CREATED,
                 "create a project");
-        log.info("newProject(createRiskManagementProject):{} ", newProject);
         return newProject.getId();
     }
 
