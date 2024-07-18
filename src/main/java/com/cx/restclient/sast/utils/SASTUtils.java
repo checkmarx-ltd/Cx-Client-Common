@@ -47,17 +47,41 @@ public abstract class SASTUtils {
         String lowNew = sastResults.getNewLow() > 0 ? " (" + sastResults.getNewLow() + " new)" : "";
         String criticalNew = sastResults.getNewCritical() > 0 ? " (" + sastResults.getNewCritical() + " new)" : "";
         String infoNew = sastResults.getNewInfo() > 0 ? " (" + sastResults.getNewInfo() + " new)" : "";
-
-        log.info("----------------------------Checkmarx Scan Results(CxSAST):-------------------------------");
+        
         CxVersion cxVersion = config.getCxVersion();
         String sastVersion = cxVersion != null ? cxVersion.getVersion() : null;
+        
 		if (sastVersion != null && !sastVersion.isEmpty()) {
+			
 			String[] versionComponents = sastVersion.split("\\.");
+			
 			if (versionComponents.length >= 2) {
+				
 				String currentVersion = versionComponents[0] + "." + versionComponents[1];
 				float currentVersionFloat = Float.parseFloat(currentVersion);
+				
+		        String cxOrigin = config.getCxOrigin();				
+        
+				if(cxOrigin != null && cxOrigin.equals("cx-CLI") && currentVersionFloat < Float.parseFloat("9.7")){
+					
+					if(config.getSastCriticalThreshold() != null && config.getSastCriticalThreshold() != 0) {
+						log.warn("-SASTCritical parameter only works with SAST >= 9.7");        	
+					}
+				}
+        
+				log.info("----------------------------Checkmarx Scan Results(CxSAST):-------------------------------");
+
+//        CxVersion cxVersion = config.getCxVersion();
+//        String sastVersion = cxVersion != null ? cxVersion.getVersion() : null;
+//		if (sastVersion != null && !sastVersion.isEmpty()) {
+//			String[] versionComponents = sastVersion.split("\\.");
+//			if (versionComponents.length >= 2) {
+//				String currentVersion = versionComponents[0] + "." + versionComponents[1];
+//				float currentVersionFloat = Float.parseFloat(currentVersion);
+        
+        
 				if (currentVersionFloat >= Float.parseFloat("9.7")) {
-        log.info("Critical severity results: " + sastResults.getCritical() + criticalNew);
+					log.info("Critical severity results: " + sastResults.getCritical() + criticalNew);
 				}
 			}
 		}
