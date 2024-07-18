@@ -596,12 +596,8 @@ public class CxHttpClient implements Closeable {
     }
 
     public <T> T getRequest(String rootURL, String relPath, String acceptHeader, String contentType, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection) throws IOException {
-        log.info("rootURL: {}",rootURL);
-        log.info("relPath: {}",relPath);
     	HttpGet get = new HttpGet(rootURL + relPath);
         get.addHeader(HttpHeaders.ACCEPT, acceptHeader);
-        log.info("acceptHeader: {}",acceptHeader);
-        log.info("OBJECT get: {}",get);
         return request(get, contentType, null, responseType, expectStatus, "get " + failedMsg, isCollection, true);
     }
 
@@ -672,11 +668,10 @@ public class CxHttpClient implements Closeable {
             if (token != null) {
                 httpMethod.addHeader(HttpHeaders.AUTHORIZATION, token.getToken_type() + " " + token.getAccess_token());
             }
-            
+
             for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
                 httpMethod.addHeader(entry.getKey(), entry.getValue());
-            }           
-            
+            }            
             response = apacheClient.execute(httpMethod);
             statusCode = response.getStatusLine().getStatusCode();
 
