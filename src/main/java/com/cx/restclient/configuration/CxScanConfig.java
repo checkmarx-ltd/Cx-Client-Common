@@ -103,7 +103,6 @@ public class CxScanConfig implements Serializable {
     private Boolean osaRunInstall = false;
     private Boolean osaThresholdsEnabled = false;
     private Boolean osaFailOnError = false;
-    private Integer osaCriticalThreshold;
     private Integer osaHighThreshold;
     private Integer osaMediumThreshold;
     private Integer osaLowThreshold;
@@ -639,14 +638,6 @@ public class CxScanConfig implements Serializable {
     public void setOsaFailOnError(Boolean osaFailOnError) {
         this.osaFailOnError = osaFailOnError;
     }
-    
-    public Integer getOsaCriticalThreshold() {
-        return osaCriticalThreshold;
-    }
-
-    public void setOsaCriticalThreshold(Integer osaCriticalThreshold) {
-        this.osaCriticalThreshold = osaCriticalThreshold;
-    }
 
     public Integer getOsaHighThreshold() {
         return osaHighThreshold;
@@ -693,7 +684,7 @@ public class CxScanConfig implements Serializable {
     public boolean isOSAThresholdEffectivelyEnabled() {
         return (isOsaEnabled() || isAstScaEnabled()) &&
                 getOsaThresholdsEnabled() &&
-                (getOsaCriticalThreshold() != null ||getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
+                (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
     }
 
     public void setOsaDependenciesJson(String osaDependenciesJson) {
