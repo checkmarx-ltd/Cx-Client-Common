@@ -142,6 +142,7 @@ public abstract class LegacyClient {
 		// TODO Auto-generated method stub
 		String Status = "";
 		CreateBranchStatus getBranchRequest = null;
+		int timeout = checkTimeOut();
 		for (int i = 0; i < 3; i++) {
 			try {
 				getBranchRequest = populateBranchStatusList(branchprojectId);
@@ -151,35 +152,39 @@ public abstract class LegacyClient {
 			}
 			if (getBranchRequest != null) {
 				Status = getBranchRequest.getStatus().getValue();
-				if (Status.equals("Completed")) {
-					log.info("Interval =" + i + "  BranchStatus=" + Status);
+				log.info("Interval =" + i + "  BranchStatus=" + Status);
+				if (Status.equals("Completed")) {					
 					break;
 				} else {
-					log.info("Interval =" + i + "  BranchStatus=" + Status);
-					waitTime();
+					waitTime(timeout);
 				}
 			}
-
 		}
 	}
     
-	private void waitTime() {
+	private void waitTime(int timeout) {
 		try {
-			int timeout = 10;
-			if((config.getcopyBranchTimeOutInSeconds())!=null) {
-				timeout = config.getcopyBranchTimeOutInSeconds();
-			}
 			log.info("timeout =" + timeout +" Seconds");
-			if (timeout > 0 && timeout < 60 ) {
-				Thread.sleep(timeout*1000);
-			} else {
-				log.warn("copybranchtimeoutinseconds is more than 60 seconds, using default timeout i.e. 10 seconds");
-				Thread.sleep(timeout*1000);
-			}
+			Thread.sleep(timeout*1000);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 		}
 	}
+	
+	private int checkTimeOut() {
+			int timeout = 10;
+			if((config.getcopyBranchTimeOutInSeconds())!=null) {
+				timeout = config.getcopyBranchTimeOutInSeconds();
+				log.info("passed timeout =" + timeout +" Seconds");
+			}
+			if (timeout > 0 && timeout < 60 ) {
+				log.info("copybranchtimeoutinseconds is "+ timeout +"seconds");
+			} else {
+				timeout = 10;
+				log.warn("copybranchtimeoutinseconds is not between the range of 0 to 60 seconds, using default timeout i.e. 10 seconds");
+			}
+			return timeout;
+	}	
 	
     private CreateBranchStatus populateBranchStatusList(long branchprojectId) throws IOException, CxClientException {
         return httpClient.getRequest(PROJECT_BRANCH_ID.replace("{id}", Long.toString(branchprojectId)), CONTENT_TYPE_APPLICATION_JSON_V4, CreateBranchStatus.class, 200, "branch status", false);
