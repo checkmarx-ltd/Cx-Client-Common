@@ -175,7 +175,7 @@ public abstract class LegacyClient {
 			int timeout = 10;
 			if((config.getcopyBranchTimeOutInSeconds())!=null) {
 				timeout = config.getcopyBranchTimeOutInSeconds();
-				log.info("passed timeout =" + timeout +" Seconds");
+				log.info("copybranchtimeoutinseconds =" + timeout +" Seconds");
 			}
 			if (timeout > 0 && timeout < 60 ) {
 				log.info("copybranchtimeoutinseconds is "+ timeout +"seconds");
