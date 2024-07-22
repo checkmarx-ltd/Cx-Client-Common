@@ -12,7 +12,6 @@ import java.io.Serializable;
 public class OSASummaryResults implements Serializable {
 
     private int totalLibraries;
-    private int criticalVulnerabilityLibraries;
     private int highVulnerabilityLibraries;
     private int mediumVulnerabilityLibraries;
     private int lowVulnerabilityLibraries;
@@ -20,7 +19,6 @@ public class OSASummaryResults implements Serializable {
     private int vulnerableAndUpdated;
     private int vulnerableAndOutdated;
     private String vulnerabilityScore;
-    private int totalCriticalVulnerabilities;
     private int totalHighVulnerabilities;
     private int totalMediumVulnerabilities;
     private int totalLowVulnerabilities;
@@ -31,14 +29,6 @@ public class OSASummaryResults implements Serializable {
 
     public void setTotalLibraries(int totalLibraries) {
         this.totalLibraries = totalLibraries;
-    }
-    
-    public int getCriticalVulnerabilityLibraries() {
-        return criticalVulnerabilityLibraries;
-    }
-
-    public void setCriticalVulnerabilityLibraries(int criticalVulnerabilityLibraries) {
-        this.criticalVulnerabilityLibraries = criticalVulnerabilityLibraries;
     }
 
     public int getHighVulnerabilityLibraries() {
@@ -95,14 +85,6 @@ public class OSASummaryResults implements Serializable {
 
     public void setVulnerabilityScore(String vulnerabilityScore) {
         this.vulnerabilityScore = vulnerabilityScore;
-    }
-    
-    public int getTotalCriticalVulnerabilities() {
-        return totalCriticalVulnerabilities;
-    }
-
-    public void setTotalCriticalVulnerabilities(int totalCriticalVulnerabilities) {
-        this.totalCriticalVulnerabilities = totalCriticalVulnerabilities;
     }
 
     public int getTotalHighVulnerabilities() {

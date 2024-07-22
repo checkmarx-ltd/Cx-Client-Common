@@ -135,7 +135,6 @@ public abstract class OSAUtils {
         log.info("------------------------");
         log.info("Vulnerabilities Summary:");
         log.info("------------------------");
-        log.info("OSA critical severity results: " + osaSummaryResults.getTotalCriticalVulnerabilities());
         log.info("OSA high severity results: " + osaSummaryResults.getTotalHighVulnerabilities());
         log.info("OSA medium severity results: " + osaSummaryResults.getTotalMediumVulnerabilities());
         log.info("OSA low severity results: " + osaSummaryResults.getTotalLowVulnerabilities());

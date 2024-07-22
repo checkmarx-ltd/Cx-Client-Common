@@ -120,7 +120,6 @@ public class ScanSummary {
                 OSASummaryResults summary = osaResults.getResults();
                 if (summary != null) {
                     hasSummary = true;
-                    totalCritical = summary.getTotalCriticalVulnerabilities();
                     totalHigh = summary.getTotalHighVulnerabilities();
                     totalMedium = summary.getTotalMediumVulnerabilities();
                     totalLow = summary.getTotalLowVulnerabilities();
@@ -128,7 +127,6 @@ public class ScanSummary {
             }
 
             if (hasSummary) {
-            	checkForThresholdError(totalCritical, config.getOsaCriticalThreshold(), errorSource, Severity.CRITICAL);
                 checkForThresholdError(totalHigh, config.getOsaHighThreshold(), errorSource, Severity.HIGH);
                 checkForThresholdError(totalMedium, config.getOsaMediumThreshold(), errorSource, Severity.MEDIUM);
                 checkForThresholdError(totalLow, config.getOsaLowThreshold(), errorSource, Severity.LOW);

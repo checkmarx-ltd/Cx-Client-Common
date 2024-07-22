@@ -54,7 +54,6 @@ public class DependencyScanResult extends Results implements Serializable {
 
     DependencyScanResult(OSAResults osaResults){
         this.scannerType = ScannerType.OSA;
-        this.criticalVulnerability = osaResults.getResults().getTotalCriticalVulnerabilities();
         this.highVulnerability = osaResults.getResults().getTotalHighVulnerabilities();
         this.mediumVulnerability = osaResults.getResults().getTotalMediumVulnerabilities();
         this.lowVulnerability = osaResults.getResults().getTotalLowVulnerabilities();

@@ -1516,8 +1516,8 @@
                     <!--osa-chart-->
                     <div class="osa-chart">
                         <ul class="osa-chart chart">
-                        
                         <!--osa-critical-->
+                        <#if sca.scaResultReady>
                             <li>
                                             <span class="bar-2" id="osa-bar-critical"
                                                   style="height: ${dependencyCriticalTotalHeight}px">
@@ -1585,7 +1585,7 @@
                                     </div>
                                 </div>
                             </li>
-                        
+                            </#if>
                         
                             <!--osa-high-->
                             <li>
@@ -2710,6 +2710,7 @@
                             </div>
                         </div>
                         
+                        <#if sca.scaResultReady>
                         <#if dependencyResult.dependencyCriticalCVEReportTable?size gt 0>
                             <div id="osa-cve-table-critical-container">
                                 <div class="full-severity-title">
@@ -2764,6 +2765,7 @@
                                     </#list>
                                 </table>
                             </div>
+                        </#if>
                         </#if>
                         
                         <#if dependencyResult.dependencyHighCVEReportTable?size gt 0>
