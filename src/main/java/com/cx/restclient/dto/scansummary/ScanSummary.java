@@ -127,6 +127,9 @@ public class ScanSummary {
             }
 
             if (hasSummary) {
+            	if (scaResults != null) {
+            	checkForThresholdError(totalCritical, config.getOsaCriticalThreshold(), errorSource, Severity.CRITICAL);
+            	}
                 checkForThresholdError(totalHigh, config.getOsaHighThreshold(), errorSource, Severity.HIGH);
                 checkForThresholdError(totalMedium, config.getOsaMediumThreshold(), errorSource, Severity.MEDIUM);
                 checkForThresholdError(totalLow, config.getOsaLowThreshold(), errorSource, Severity.LOW);
