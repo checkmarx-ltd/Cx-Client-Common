@@ -1,61 +1,12 @@
 package com.cx.restclient;
 
-import static com.cx.restclient.cxArm.dto.CxProviders.SAST;
-import static com.cx.restclient.cxArm.utils.CxARMUtils.getProjectViolatedPolicies;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_API_VERSION_1_2;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_API_VERSION_1_1;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_PDF_V1;
-import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_XML_V1;
-import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
-import static com.cx.restclient.sast.utils.SASTParam.LINK_FORMAT;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REMOTE_SOURCE_SCAN;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_REPORT;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_CREATE_SCAN;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_RETENTION_RATE;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_EXCLUDE_FOLDERS_FILES_PATTERNS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_PROJECT_SCANS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_QUEUED_SCANS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_REPORT;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_GET_SCAN_SETTINGS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_QUEUE_SCAN_STATUS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_SCAN_RESULTS_STATISTICS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_SCAN_STATUS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_UPDATE_SCAN_SETTINGS;
-import static com.cx.restclient.sast.utils.SASTParam.SAST_ZIP_ATTACHMENTS;
-import static com.cx.restclient.sast.utils.SASTUtils.convertToXMLResult;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.InputStreamBody;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-
 import com.cx.restclient.common.Scanner;
 import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
-import com.cx.restclient.dto.CxVersion;
-import com.cx.restclient.dto.PathFilter;
-import com.cx.restclient.dto.RemoteSourceRequest;
-import com.cx.restclient.dto.RemoteSourceTypes;
-import com.cx.restclient.dto.Results;
-import com.cx.restclient.dto.Status;
+import com.cx.restclient.dto.*;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
-import com.cx.restclient.osa.dto.CVE;
 import com.cx.restclient.sast.dto.*;
 import com.cx.restclient.sast.utils.LegacyClient;
 import com.cx.restclient.sast.utils.SASTUtils;
@@ -69,10 +20,12 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
+import org.awaitility.core.ConditionTimeoutException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -87,7 +40,6 @@ import static com.cx.restclient.httpClient.utils.ContentType.*;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 import static com.cx.restclient.sast.utils.SASTParam.*;
 import static com.cx.restclient.sast.utils.SASTUtils.*;
-import org.awaitility.core.ConditionTimeoutException;
 
 
 /**
@@ -384,7 +336,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
         }
     }
-    
+
     /**
     * Determine the appropriate content type and API version based on the provided configuration and API name.
     * 
@@ -508,7 +460,6 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 		return suppressed;
 	}
 
-   
     //GET SAST results + reports
     @Override
     public Results waitForScanResults() {
@@ -540,21 +491,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 			if (sastResults.getSastScanLink() != null)
 				SASTUtils.printSASTResultsToConsole(config, sastResults, config.getEnablePolicyViolations(), log);
 
-            //PDF report
-            if (config.getGeneratePDFReport()) {
-                log.info("Generating PDF report");
-                byte[] pdfReport = getScanReport(sastResults.getScanId(), ReportType.PDF, CONTENT_TYPE_APPLICATION_PDF_V1);
-                sastResults.setPDFReport(pdfReport);
-                if (config.getReportsDir() != null) {
-                    String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
-                    String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
-                    String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log, "PDF");
-                    sastResults.setSastPDFLink(pdfLink);
-                    sastResults.setPdfFileName(pdfFileName);
-                }
-            }
-            // CLI report/s
-            else if (!config.getReports().isEmpty()) {
+			if (!config.getReports().isEmpty()) {
                 for (Map.Entry<ReportType, String> report : config.getReports().entrySet()) {
                     if (report != null) {
                         log.info("Generating " + report.getKey().value() + " report");
@@ -566,6 +503,18 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                         }
                     }
                 }
+            } else if (config.getGeneratePDFReport()) {
+                log.info("Generating PDF report");
+                byte[] pdfReport = getScanReport(sastResults.getScanId(), ReportType.PDF, CONTENT_TYPE_APPLICATION_PDF_V1);
+                sastResults.setPDFReport(pdfReport);
+                if (config.getReportsDir() == null) {
+                    config.setReportsDir(new File(System.getProperty("user.dir")));
+                }
+                String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
+                String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
+                String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
+                sastResults.setSastPDFLink(pdfLink);
+                sastResults.setPdfFileName(pdfFileName);
             }
         } catch (Exception e) {            
             if(!errorToBeSuppressed(e))
@@ -888,6 +837,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         }
         return customFieldMap;
     }
+
     private ScanWithSettingsResponse scanWithSettings(byte[] zipFile, long projectId, boolean isRemote) throws IOException {
         log.info("Uploading zip file");
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
