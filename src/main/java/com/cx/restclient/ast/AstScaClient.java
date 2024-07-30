@@ -308,7 +308,7 @@ public class AstScaClient extends AstClient implements Scanner {
 				}
 
 				fileName = PDF_REPORT_NAME + "_" + now + "." + reportFormat.toLowerCase();
-				String pdfLink = SASTUtils.writePDFReport(scanReport, config.getReportsDir(), fileName, log);
+				String pdfLink = SASTUtils.writePDFReport(scanReport, config.getReportsDir(), fileName, log, reportFormat);
 				if (reportFormat.toLowerCase().equals("pdf")) {
 					scaResults.setScaPDFLink(pdfLink);
 					scaResults.setPdfFileName(fileName);
@@ -921,7 +921,7 @@ public class AstScaClient extends AstClient implements Scanner {
             log.info("Created a project with ID {}", resolvedProjectId);
         } else {
             log.info("Project already exists with ID {}", resolvedProjectId);
-            UpdateRiskManagementProject(resolvedProjectId,projectCustomTag);
+            UpdateRiskManagementProject(resolvedProjectId,projectCustomTag,assignedTeam);
         }
         return resolvedProjectId;
     }
@@ -938,7 +938,6 @@ public class AstScaClient extends AstClient implements Scanner {
         String result = Optional.ofNullable(project)
                 .map(Project::getId)
                 .orElse(null);
-
         String message = (result == null ? "Project not found" : String.format("Project ID: %s", result));
         log.info(message);
 
@@ -1029,23 +1028,25 @@ public class AstScaClient extends AstClient implements Scanner {
         }
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
-
         Project newProject = httpClient.postRequest(PROJECTS,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
                 entity,
                 Project.class,
                 HttpStatus.SC_CREATED,
                 "create a project");
-
         return newProject.getId();
     }
 
-   private void UpdateRiskManagementProject(String projectId, String customTags) throws IOException {
+   private void UpdateRiskManagementProject(String projectId, String customTags, String assignedTeam) throws IOException {
        Project existingProject = httpClient.getRequest(PROJECTID.replace("id",projectId),ContentType.CONTENT_TYPE_APPLICATION_JSON,Project.class,
                HttpStatus.SC_OK,"got project details",false);
 
      UpdateProjectRequest request = new UpdateProjectRequest();
      request.setName(existingProject.getName());
+		if (!StringUtils.isEmpty(assignedTeam)) {
+			request.addAssignedTeams(assignedTeam);
+			log.info("Team name: {}", assignedTeam);
+		}
 
      log.info("Project level custom tag name: {}",customTags);
        if(existingProject.getTags()!=null){
@@ -1219,6 +1220,7 @@ public class AstScaClient extends AstClient implements Scanner {
             log.info("----CxSCA risk report summary----");
             log.info("Created on: {}", summary.getCreatedOn());
             log.info("Direct packages: {}", summary.getDirectPackages());
+            log.info("Critical vulnerabilities: {}", summary.getCriticalVulnerabilityCount());
             log.info("High vulnerabilities: {}", summary.getHighVulnerabilityCount());
             log.info("Medium vulnerabilities: {}", summary.getMediumVulnerabilityCount());
             log.info("Low vulnerabilities: {}", summary.getLowVulnerabilityCount());

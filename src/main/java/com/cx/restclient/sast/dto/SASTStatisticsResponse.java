@@ -10,6 +10,7 @@ public class SASTStatisticsResponse {
     private int highSeverity;
     private int mediumSeverity;
     private int lowSeverity;
+    private int criticalSeverity;
     private int infoSeverity;
 
     public int getHighSeverity() {
@@ -34,6 +35,14 @@ public class SASTStatisticsResponse {
 
     public void setLowSeverity(int lowSeverity) {
         this.lowSeverity = lowSeverity;
+    }
+    
+    public int getCriticalSeverity() {
+        return criticalSeverity;
+    }
+
+    public void setCriticalSeverity(int criticalSeverity) {
+        this.criticalSeverity = criticalSeverity;
     }
 
     public int getInfoSeverity() {

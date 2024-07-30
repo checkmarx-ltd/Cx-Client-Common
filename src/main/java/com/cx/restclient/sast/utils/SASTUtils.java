@@ -10,6 +10,8 @@ import org.apache.commons.io.FileUtils;
 import org.glassfish.jaxb.runtime.v2.JAXBContextFactory;
 import org.slf4j.Logger;
 
+import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.CxVersion;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.sast.dto.CxXMLResults;
 import com.cx.restclient.sast.dto.SASTResults;
@@ -38,14 +40,51 @@ public abstract class SASTUtils {
         return reportObj;
     }
 
-    public static void printSASTResultsToConsole(SASTResults sastResults, boolean enableViolations, Logger log) {
+    public static void printSASTResultsToConsole(CxScanConfig config, SASTResults sastResults, boolean enableViolations, Logger log) {
 
         String highNew = sastResults.getNewHigh() > 0 ? " (" + sastResults.getNewHigh() + " new)" : "";
         String mediumNew = sastResults.getNewMedium() > 0 ? " (" + sastResults.getNewMedium() + " new)" : "";
         String lowNew = sastResults.getNewLow() > 0 ? " (" + sastResults.getNewLow() + " new)" : "";
+        String criticalNew = sastResults.getNewCritical() > 0 ? " (" + sastResults.getNewCritical() + " new)" : "";
         String infoNew = sastResults.getNewInfo() > 0 ? " (" + sastResults.getNewInfo() + " new)" : "";
+        
+        CxVersion cxVersion = config.getCxVersion();
+        String sastVersion = cxVersion != null ? cxVersion.getVersion() : null;
+        
+		if (sastVersion != null && !sastVersion.isEmpty()) {
+			
+			String[] versionComponents = sastVersion.split("\\.");
+			
+			if (versionComponents.length >= 2) {
+				
+				String currentVersion = versionComponents[0] + "." + versionComponents[1];
+				float currentVersionFloat = Float.parseFloat(currentVersion);
+				
+		        String cxOrigin = config.getCxOrigin();				
+        
+				if(cxOrigin != null && cxOrigin.equals("cx-CLI") && currentVersionFloat < Float.parseFloat("9.7")){
+					
+					if(config.getSastCriticalThreshold() != null && config.getSastCriticalThreshold() != 0) {
+						log.warn("-SASTCritical parameter only works with SAST >= 9.7");        	
+					}
+				}
+        
+				log.info("----------------------------Checkmarx Scan Results(CxSAST):-------------------------------");
 
-        log.info("----------------------------Checkmarx Scan Results(CxSAST):-------------------------------");
+//        CxVersion cxVersion = config.getCxVersion();
+//        String sastVersion = cxVersion != null ? cxVersion.getVersion() : null;
+//		if (sastVersion != null && !sastVersion.isEmpty()) {
+//			String[] versionComponents = sastVersion.split("\\.");
+//			if (versionComponents.length >= 2) {
+//				String currentVersion = versionComponents[0] + "." + versionComponents[1];
+//				float currentVersionFloat = Float.parseFloat(currentVersion);
+        
+        
+				if (currentVersionFloat >= Float.parseFloat("9.7")) {
+					log.info("Critical severity results: " + sastResults.getCritical() + criticalNew);
+				}
+			}
+		}
         log.info("High severity results: " + sastResults.getHigh() + highNew);
         log.info("Medium severity results: " + sastResults.getMedium() + mediumNew);
         log.info("Low severity results: " + sastResults.getLow() + lowNew);
@@ -57,12 +96,13 @@ public abstract class SASTUtils {
     }
 
     //PDF Report
-    public static String writePDFReport(byte[] scanReport, File workspace, String pdfFileName, Logger log) {
+  //This method is used for generate report for other file formats(CSV , XML, JSON etc) as well not only PDF file format.
+    public static String writePDFReport(byte[] scanReport, File workspace, String pdfFileName, Logger log, String reportFormat) {
         try {
-            FileUtils.writeByteArrayToFile(new File(workspace + CX_REPORT_LOCATION, pdfFileName), scanReport);
-            log.info("PDF report location: " + workspace + CX_REPORT_LOCATION + File.separator + pdfFileName);
+        	FileUtils.writeByteArrayToFile(new File(workspace + CX_REPORT_LOCATION, pdfFileName), scanReport);
+            log.info("" +reportFormat + " Report Location: " + workspace + CX_REPORT_LOCATION+ File.separator+ pdfFileName);
         } catch (Exception e) {
-            log.error("Failed to write PDF report to workspace: ", e.getMessage());
+        	log.error("Failed to write "+reportFormat+" report to workspace: ", e.getMessage());
             pdfFileName = "";
         }
         return pdfFileName;

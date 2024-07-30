@@ -19,8 +19,18 @@ public class CxScanConfig implements Serializable {
     private String cxOrigin;
     private String cxOriginUrl;
     private CxVersion cxVersion;
+    private boolean showCriticalLabel = false;
+    
 
-    private Integer projectRetentionRate;
+    public boolean isShowCriticalLabel() {
+		return showCriticalLabel;
+	}
+
+	public void setShowCriticalLabel(boolean showCriticalLabel) {
+		this.showCriticalLabel = showCriticalLabel;
+	}
+
+	private Integer projectRetentionRate;
     private boolean enableDataRetention;
     private boolean disableCertificateValidation = false;
     private boolean useSSOLogin = false;
@@ -55,6 +65,8 @@ public class CxScanConfig implements Serializable {
     private Boolean isIncremental = false;
     private Boolean isSynchronous = false;
     private Boolean sastThresholdsEnabled = false;
+    private Boolean sastEnableCriticalSeverity = false;
+	private Integer sastCriticalThreshold;
     private Integer sastHighThreshold;
     private Integer sastMediumThreshold;
     private Integer sastLowThreshold;
@@ -91,7 +103,8 @@ public class CxScanConfig implements Serializable {
     private Boolean osaRunInstall = false;
     private Boolean osaThresholdsEnabled = false;
     private Boolean osaFailOnError = false;
-    private Integer osaHighThreshold;
+    private Integer osaCriticalThreshold;
+	private Integer osaHighThreshold;
     private Integer osaMediumThreshold;
     private Integer osaLowThreshold;
     private Properties osaFsaConfig; //for MAVEN
@@ -158,6 +171,8 @@ public class CxScanConfig implements Serializable {
     private Boolean enableSastBranching = false;
     
     private String masterBranchProjName;
+    
+    private Integer copyBranchTimeOutInSeconds;
 
     public CxScanConfig() {
     }
@@ -487,6 +502,15 @@ public class CxScanConfig implements Serializable {
     public void setSynchronous(Boolean synchronous) {
         this.isSynchronous = synchronous;
     }
+    
+    public Boolean getSastEnableCriticalSeverity() {
+		return sastEnableCriticalSeverity;
+	}
+
+	public void setSastEnableCriticalSeverity(Boolean sastEnableCriticalSeverity) {
+		this.sastEnableCriticalSeverity = sastEnableCriticalSeverity;
+	}
+
 
     public Boolean getSastThresholdsEnabled() {
         return sastThresholdsEnabled;
@@ -494,6 +518,14 @@ public class CxScanConfig implements Serializable {
 
     public void setSastThresholdsEnabled(Boolean sastThresholdsEnabled) {
         this.sastThresholdsEnabled = sastThresholdsEnabled;
+    }
+    
+    public Integer getSastCriticalThreshold() {
+        return sastCriticalThreshold;
+    }
+
+    public void setSastCriticalThreshold(Integer sastCriticalThreshold) {
+        this.sastCriticalThreshold = sastCriticalThreshold;
     }
 
     public Integer getSastHighThreshold() {
@@ -607,6 +639,14 @@ public class CxScanConfig implements Serializable {
     public void setOsaFailOnError(Boolean osaFailOnError) {
         this.osaFailOnError = osaFailOnError;
     }
+    
+    public Integer getOsaCriticalThreshold() {
+		return osaCriticalThreshold;
+	}
+
+	public void setOsaCriticalThreshold(Integer osaCriticalThreshold) {
+		this.osaCriticalThreshold = osaCriticalThreshold;
+	}
 
     public Integer getOsaHighThreshold() {
         return osaHighThreshold;
@@ -645,13 +685,15 @@ public class CxScanConfig implements Serializable {
     }
 
     public boolean isSASTThresholdEffectivelyEnabled() {
-        return isSastEnabled() && getSastThresholdsEnabled() && (getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null);
+
+        return isSastEnabled() && getSastThresholdsEnabled() && (getSastCriticalThreshold() != null || getSastHighThreshold() != null || getSastMediumThreshold() != null || getSastLowThreshold() != null );
+
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
         return (isOsaEnabled() || isAstScaEnabled()) &&
                 getOsaThresholdsEnabled() &&
-                (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
+                (getOsaCriticalThreshold() != null || getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
     }
 
     public void setOsaDependenciesJson(String osaDependenciesJson) {
@@ -1036,5 +1078,12 @@ public class CxScanConfig implements Serializable {
 		this.scaReportFormat = scaReportFormat;
 	}
 
+    public Integer getcopyBranchTimeOutInSeconds() {
+        return copyBranchTimeOutInSeconds;
+    }
+
+    public void setcopyBranchTimeOutInSeconds(Integer copyBranchTimeOutInSeconds) {
+        this.copyBranchTimeOutInSeconds = copyBranchTimeOutInSeconds;
+    }
 	
 }
