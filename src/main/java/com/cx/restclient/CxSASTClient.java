@@ -5,6 +5,7 @@ import com.cx.restclient.common.ShragaUtils;
 import com.cx.restclient.common.Waiter;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.*;
+import com.cx.restclient.dto.Status;
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
 import com.cx.restclient.sast.dto.*;
@@ -488,7 +489,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 resolveSASTViolation(sastResults, projectId);
             }
             if (sastResults.getSastScanLink() != null) {
-                SASTUtils.printSASTResultsToConsole(sastResults, config.getEnablePolicyViolations(), log);
+                SASTUtils.printSASTResultsToConsole(config, sastResults, config.getEnablePolicyViolations(), log);
             }
 
             if (!config.getReports().isEmpty()) {
@@ -512,7 +513,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
                 }
                 String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
                 String pdfFileName = PDF_REPORT_NAME + "_" + now + ".pdf";
-                String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log);
+                String pdfLink = writePDFReport(pdfReport, config.getReportsDir(), pdfFileName, log, "PDF");
                 sastResults.setSastPDFLink(pdfLink);
                 sastResults.setPdfFileName(pdfFileName);
             }

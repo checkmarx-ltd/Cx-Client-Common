@@ -196,7 +196,7 @@ public abstract class OSAUtils {
                 String fileName = name + "_" + now + JSON_EXTENSION;
                 File jsonFile = new File(workDirectory + CX_REPORT_LOCATION, fileName);
                 FileUtils.writeStringToFile(jsonFile, json);
-                log.info("Report '{}' saved under location: {}", name, workDirectory + CX_REPORT_LOCATION + File.separator + fileName);
+                log.info("Report (" + name + ") saved under location: {}", workDirectory + CX_REPORT_LOCATION + File.separator + fileName);
             }
         } catch (Exception ex) {
             log.warn("Failed to write OSA JSON report (" + name + ") to file: " + ex.getMessage());
