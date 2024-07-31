@@ -23,7 +23,6 @@ public class Package implements Serializable {
      */
     private String matchType;
 
-    private int criticalVulnerabilityCount;
     private int highVulnerabilityCount;
     private int mediumVulnerabilityCount;
     private int lowVulnerabilityCount;

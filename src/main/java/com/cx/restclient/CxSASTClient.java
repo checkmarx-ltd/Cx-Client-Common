@@ -385,6 +385,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
         return apiVersion;
     }
 
+
     private void configureScanSettings(long projectId) throws IOException {
         ScanSettingResponse scanSettingResponse = getScanSetting(projectId);
         ScanSettingRequest scanSettingRequest = new ScanSettingRequest();
@@ -653,8 +654,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     }
 
     private SASTStatisticsResponse getScanStatistics(long scanId) throws IOException {
-    	String apiVersion = getContentTypeAndApiVersion(config, SAST_SCAN_RESULTS_STATISTICS);
-        return httpClient.getRequest(SAST_SCAN_RESULTS_STATISTICS.replace(SCAN_ID_PATH_PARAM, Long.toString(scanId)), apiVersion, SASTStatisticsResponse.class, 200, "SAST scan statistics", false);
+        return httpClient.getRequest(SAST_SCAN_RESULTS_STATISTICS.replace(SCAN_ID_PATH_PARAM, Long.toString(scanId)), CONTENT_TYPE_APPLICATION_JSON_V1, SASTStatisticsResponse.class, 200, "SAST scan statistics", false);
     }
 
     public List<LastScanResponse> getLatestSASTStatus(long projectId) throws IOException {

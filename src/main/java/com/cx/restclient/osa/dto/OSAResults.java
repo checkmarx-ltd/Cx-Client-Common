@@ -25,7 +25,6 @@ public class OSAResults extends Results implements Serializable {
     private OSAScanStatus osaScanStatus;
     private String osaProjectSummaryLink;
     private boolean osaResultsReady = false;
-    private List<CVEReportTableRow> osaCriticalCVEReportTable = new ArrayList<CVEReportTableRow>();
     private List<CVEReportTableRow> osaHighCVEReportTable = new ArrayList<CVEReportTableRow>();
     private List<CVEReportTableRow> osaMediumCVEReportTable = new ArrayList<CVEReportTableRow>();
     private List<CVEReportTableRow> osaLowCVEReportTable = new ArrayList<CVEReportTableRow>();
@@ -112,10 +111,6 @@ public class OSAResults extends Results implements Serializable {
     public void setOsaScanId(String osaScanId) {
         this.osaScanId = osaScanId;
     }
-    
-    public List<CVEReportTableRow> getOsaCriticalCVEReportTable() {
-        return osaCriticalCVEReportTable;
-    }
 
     public List<CVEReportTableRow> getOsaHighCVEReportTable() {
         return osaHighCVEReportTable;
@@ -153,10 +148,7 @@ public class OSAResults extends Results implements Serializable {
         }
 
         for (CVEReportTableRow row : cveMap.values()) {
-        	if ("Critical".equals(row.getSeverity())) {
-                osaCriticalCVEReportTable.add(row);
-            }
-        	else if ("High".equals(row.getSeverity())) {
+            if ("High".equals(row.getSeverity())) {
                 osaHighCVEReportTable.add(row);
             } else if ("Medium".equals(row.getSeverity())) {
                 osaMediumCVEReportTable.add(row);
@@ -170,10 +162,6 @@ public class OSAResults extends Results implements Serializable {
     public void setDates(OSAScanStatus status) {
         this.scanStartTime = formatDate(status.getStartAnalyzeTime(), "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "dd/MM/yy HH:mm");
         this.scanEndTime = formatDate(status.getEndAnalyzeTime(), "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "dd/MM/yy HH:mm");
-    }
-    
-    public void setOsaCriticalCVEReportTable(List<CVEReportTableRow> osaCriticalCVEReportTable) {
-        this.osaCriticalCVEReportTable = osaCriticalCVEReportTable;
     }
 
     public void setOsaHighCVEReportTable(List<CVEReportTableRow> osaHighCVEReportTable) {

@@ -73,8 +73,7 @@ public  abstract class ScaTestsBase extends CommonClientTest {
         assertNotNull("SCA summary is null", summary);
         assertTrue("SCA hasn't found any packages.", summary.getTotalPackages() > 0);
 
-        boolean anyVulnerabilitiesDetected = summary.getCriticalVulnerabilityCount() > 0 ||
-        		summary.getHighVulnerabilityCount() > 0 ||
+        boolean anyVulnerabilitiesDetected = summary.getHighVulnerabilityCount() > 0 ||
                 summary.getMediumVulnerabilityCount() > 0 ||
                 summary.getLowVulnerabilityCount() > 0;
         assertTrue("Expected that at least one vulnerability would be detected.", anyVulnerabilitiesDetected);

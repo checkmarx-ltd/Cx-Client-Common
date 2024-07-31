@@ -11,8 +11,6 @@ public class Library implements Serializable {
     private String id;//:"36b32b00-9ee6-4e2f-85c9-3f03f26519a9",
     private String name;//:"lib-name",
     private String version;//:"lib-version",
-    @JsonProperty("criticalUniqueVulnerabilityCount")
-    private int criticalVulnerabilityCount;//:1,
     @JsonProperty("highUniqueVulnerabilityCount")
     private int highVulnerabilityCount;//:1,
     @JsonProperty("mediumUniqueVulnerabilityCount")
@@ -47,14 +45,6 @@ public class Library implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
-    }
-    
-    public int getCriticalVulnerabilityCount() {
-        return this.criticalVulnerabilityCount;
-    }
-
-    public void setCriticalVulnerabilityCount(int criticalVulnerabilityCount) {
-        this.criticalVulnerabilityCount = criticalVulnerabilityCount;
     }
 
     public int getHighVulnerabilityCount() {

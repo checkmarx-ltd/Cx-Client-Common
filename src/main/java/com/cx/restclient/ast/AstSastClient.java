@@ -463,10 +463,7 @@ public class AstSastClient extends AstClient implements Scanner {
             Severity parsedSeverity = EnumUtils.getEnum(Severity.class, counter.getSeverity());
             int value = counter.getCounter();
             if (parsedSeverity != null) {
-            	if (parsedSeverity == Severity.CRITICAL) {
-                    target.setCriticalVulnerabilityCount(value);
-                }
-            	else if (parsedSeverity == Severity.HIGH) {
+                if (parsedSeverity == Severity.HIGH) {
                     target.setHighVulnerabilityCount(value);
                 } else if (parsedSeverity == Severity.MEDIUM) {
                     target.setMediumVulnerabilityCount(value);
