@@ -62,10 +62,9 @@ public abstract class SASTUtils {
 				
 		        String cxOrigin = config.getCxOrigin();				
         
-				if(cxOrigin != null && cxOrigin.equals("cx-CLI") && currentVersionFloat < Float.parseFloat("9.7")){
-					
+				if(currentVersionFloat < Float.parseFloat("9.7")){
 					if(config.getSastCriticalThreshold() != null && config.getSastCriticalThreshold() != 0) {
-						log.warn("-SASTCritical parameter only works with SAST >= 9.7");        	
+						log.warn("SAST Critical Threshold only works with SAST version >= 9.7");        	
 					}
 				}
         
