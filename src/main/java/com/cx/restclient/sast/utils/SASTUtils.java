@@ -64,7 +64,7 @@ public abstract class SASTUtils {
         
 				if(currentVersionFloat < Float.parseFloat("9.7")){
 					if(config.getSastCriticalThreshold() != null && config.getSastCriticalThreshold() != 0) {
-						log.warn("SAST Critical Threshold only works with SAST version >= 9.7");        	
+						log.warn("SAST Critical Threshold is not supported for SAST versions prior to 9.7");        	
 					}
 				}
         
