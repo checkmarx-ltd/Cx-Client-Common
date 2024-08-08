@@ -327,6 +327,7 @@ public class AstScaClient extends AstClient implements Scanner {
         	log.error(e.getMessage());
             scaResults = new AstScaResults();
         	scaResults.setException(new CxClientException(e));
+        	return scaResults;
         } 
         return new AstScaResults();
        // return scaResults;

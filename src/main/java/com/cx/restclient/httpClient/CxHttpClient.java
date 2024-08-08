@@ -643,8 +643,15 @@ public class CxHttpClient implements Closeable {
             URI tmpUri = httpMethod.getURI();
             String host = StringUtils.isNotEmpty(tmpUri.getAuthority()) ? tmpUri.getAuthority() : tmpUri.getHost();
             host = IDN.toASCII(host, IDN.ALLOW_UNASSIGNED);
+            String hostname = host;
+            String portNumber = "" + tmpUri.getPort();
+            String[] arr = host.split(":");
+            if(arr != null && arr.length>1) {
+            	hostname = arr[0];
+            	portNumber = arr[1];
+            }
             try {               
-                URIBuilder uriBuilder = new URIBuilder(tmpUri).setHost(host);
+                URIBuilder uriBuilder = new URIBuilder(tmpUri).setHost(hostname).setPort(Integer.parseInt(portNumber));
                 URI uri = uriBuilder.build();
                 httpMethod.setURI(uri);
             } catch (URISyntaxException e) {
