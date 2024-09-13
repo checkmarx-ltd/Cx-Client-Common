@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class CxVersion {
     private String version;
     private String hotFix;
+    private String enginePackVersion;
 
     public String getVersion() {
         return version;
@@ -25,4 +26,12 @@ public class CxVersion {
     public void setHotFix(String hotFix) {
         this.hotFix = hotFix;
     }
+
+	public String getEnginePackVersion() {
+		return enginePackVersion;
+	}
+
+	public void setEnginePackVersion(String enginePackVersion) {
+		this.enginePackVersion = enginePackVersion;
+	}
 }
