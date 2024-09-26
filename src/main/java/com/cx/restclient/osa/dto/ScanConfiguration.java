@@ -14,7 +14,16 @@ public class ScanConfiguration {
 
     private boolean SASTEnabled;
     private String cxOrigin;
-    private String sourceDir;
+    private String pluginVersion;
+    public String getPluginVersion() {
+		return pluginVersion;
+	}
+
+	public void setPluginVersion(String pluginVersion) {
+		this.pluginVersion = pluginVersion;
+	}
+
+	private String sourceDir;
     private String tempDir;
     private String reportsDir;
     private String username;
