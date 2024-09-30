@@ -253,12 +253,8 @@ public abstract class LegacyClient {
     }
 
     private void initHttpClient(CxScanConfig config, Logger log) throws MalformedURLException {
-    	log.info("plugin  name******** " + config.getCxOrigin());
-    	log.info("plugin  version-1 " + config.getPluginVersion());
-        if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
-        	log.info("plugin  version config version-2" + config.getPluginVersion());
-        	log.info("plugin  name plugin-2" + config.getCxOrigin());
-            httpClient = new CxHttpClient(
+    	if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
+        	httpClient = new CxHttpClient(
             		
                     UrlUtils.parseURLToString(config.getUrl(), "CxRestAPI/"),
                     config.getCxOrigin(),
@@ -271,8 +267,6 @@ public abstract class LegacyClient {
                     log,
                     config.getNTLM(),
                     config.getPluginVersion());
-            log.info("plugin  version config version-3" + config.getPluginVersion());
-        	log.info("plugin  name plugin-3" + config.getCxOrigin());
         }
     }
 
