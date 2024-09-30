@@ -172,7 +172,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
     };
 
 
-    CxSASTClient(CxScanConfig config, Logger log) throws MalformedURLException {
+    public CxSASTClient(CxScanConfig config, Logger log) throws MalformedURLException {
         super(config, log);
 
 
