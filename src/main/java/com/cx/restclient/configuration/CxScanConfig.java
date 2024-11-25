@@ -5,6 +5,8 @@ import com.cx.restclient.sca.dto.SCAConfig;
 import com.cx.restclient.sast.dto.ReportType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.cookie.Cookie;
+import org.slf4j.Logger;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
@@ -94,6 +96,16 @@ public class CxScanConfig implements Serializable {
 
 
     private String osaFolderExclusions;
+    
+    private String pluginVersion;
+
+    public String getPluginVersion() {
+		return pluginVersion;
+	}
+
+	public void setPluginVersion(String pluginVersion) {
+		this.pluginVersion = pluginVersion;
+	}
 
     public String getEngineConfigurationName() {
         return engineConfigurationName;

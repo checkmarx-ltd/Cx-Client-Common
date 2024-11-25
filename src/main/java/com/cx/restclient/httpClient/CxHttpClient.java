@@ -11,6 +11,8 @@ import com.cx.restclient.exception.CxTokenExpiredException;
 import com.cx.restclient.osa.dto.ClientType;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
+import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.CxVersion;
 import org.apache.http.*;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
@@ -90,14 +92,17 @@ public class CxHttpClient {
     private CookieStore cookieStore = new BasicCookieStore();
     private HttpClientBuilder cb = HttpClients.custom();
     private final Map<String, String> customHeaders = new HashMap<>();
+    private CxVersion cxVersion;
+    private String pluginVersion;
 
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log) throws CxClientException {
+                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, String pluginVersion) throws CxClientException {
         this.log = log;
         this.rootUri = rootUri;
         this.refreshToken = refreshToken;
         this.cxOrigin = origin;
         this.useSSo = isSSO;
+        this.pluginVersion = pluginVersion;
         //create httpclient
         cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
         setSSLTls("TLSv1.2", log);
@@ -135,12 +140,13 @@ public class CxHttpClient {
 
     @Deprecated
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-                        @Nullable ProxyConfig proxyConfig, Logger log) throws CxClientException {
+                        @Nullable ProxyConfig proxyConfig, Logger log, String pluginVersion) throws CxClientException {
         this.log = log;
         this.rootUri = rootUri;
         this.refreshToken = refreshToken;
         this.cxOrigin = origin;
         this.useSSo = isSSO;
+        this.pluginVersion = pluginVersion;
         //create httpclient
         cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
         setSSLTls("TLSv1.2", log);
@@ -495,9 +501,23 @@ public class CxHttpClient {
         log.debug(String.format("Adding a custom header: %s: %s", name, value));
         customHeaders.put(name, value);
     }
+    
+    private String getUserAgentValue() {
+    	if (cxOrigin == null) {
+            log.warn("cxOrigin is null");
+            cxOrigin = "unknown"; // Or handle as appropriate
+        }
+        
+        String version = (pluginVersion != null ) ? pluginVersion : "unknown"; // Ensure cxVersion is not null
+        
+        return "plugin_name=" + cxOrigin + ";plugin_version=" + version;
+    }
 
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException, CxClientException {
-        if (contentType != null) {
+    	if (getUserAgentValue() != null) {
+            httpMethod.addHeader("User-Agent", getUserAgentValue());
+    	}
+    	if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
         }
         if (entity != null && httpMethod instanceof HttpEntityEnclosingRequestBase) { //Entity for Post methods
