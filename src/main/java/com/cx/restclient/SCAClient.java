@@ -664,7 +664,8 @@ public class SCAClient implements DependencyScanner {
                 null,
                 config.isProxy(),
                 config.getProxyConfig(),
-                log);
+                log,
+                config.getPluginVersion());
     }
 
     public CxSCAResolvingConfiguration getCxSCAResolvingConfigurationForProject(String projectId) throws IOException{

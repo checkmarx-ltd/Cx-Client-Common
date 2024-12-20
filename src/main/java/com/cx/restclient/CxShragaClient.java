@@ -67,7 +67,7 @@ public class CxShragaClient {
                     config.getRefreshToken(),
                     config.isProxy(),
                     config.getProxyConfig(),
-                    log);
+                    log, config.getPluginVersion());
         }
 
         if (config.getSastEnabled()) {
