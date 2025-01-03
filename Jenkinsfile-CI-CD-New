@@ -20,6 +20,7 @@ def automationBranch = "9.0.0"
 pipeline {
     parameters {
         gitParameter(name: 'Tag',type: 'PT_BRANCH_TAG',defaultValue: '',description: 'Enter the Git Tag to use (e.g., v1.0.0)')
+        booleanParam(name: 'AutomationRun', defaultValue: false, description: 'Enable or disable the automation run')
     }
     agent { node { label 'CxSDLC-Slave' } }
     options {
@@ -52,6 +53,8 @@ pipeline {
                         env.automationBranch = automationBranch
                     }
                     sh 'printenv'
+                    echo "The branch name is: ${params.Tag}"
+                    echo "The automation run is: ${params.AutomationRun}"
                 }
             }
         }
