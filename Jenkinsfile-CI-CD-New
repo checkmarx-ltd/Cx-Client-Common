@@ -18,8 +18,6 @@ def vmwareNetwork = "Lab"
 def automationBranch = "9.0.0"
 
 pipeline {
-    parameters {
-    }
     agent { node { label 'CxSDLC-Slave' } }
     options {
         timestamps()
