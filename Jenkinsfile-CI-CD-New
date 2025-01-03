@@ -18,6 +18,9 @@ def vmwareNetwork = "Lab"
 def automationBranch = "9.0.0"
 
 pipeline {
+    parameters {
+        gitParameter(name: 'Tag',type: 'PT_BRANCH_TAG',defaultValue: '',description: 'Enter the Git Tag to use (e.g., v1.0.0)')
+    }
     agent { node { label 'CxSDLC-Slave' } }
     options {
         timestamps()
@@ -31,7 +34,7 @@ pipeline {
                 script {
                     env.PIPELINE_STATUS = "Success"
                     env.STAGE_NAME_FAILED = "None"
-                    if (BRANCH_NAME == 'master') {
+                    if (params.Tag == 'master') {
                         Calendar cal = Calendar.getInstance(Locale.US)
                         int quarter = (cal.get(Calendar.MONTH) / 3) + 1
                         int year = cal.get(Calendar.YEAR)
@@ -132,7 +135,7 @@ pipeline {
         stage('Install CxCommon in Local Repository') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-")  && CHANGE_TARGET == 'master'
+                    params.Tag == 'master' || params.Tag.startsWith("PR-")  && CHANGE_TARGET == 'master'
                 }
             }
             steps {
@@ -146,7 +149,7 @@ pipeline {
         stage('System Tests') {
             when {
                 expression {
-                    BRANCH_NAME == 'master' || BRANCH_NAME.startsWith("PR-") && CHANGE_TARGET == 'master' 
+                    params.Tag == 'master' || params.Tag.startsWith("PR-") && CHANGE_TARGET == 'master' 
                 }
             }
             parallel {
@@ -397,7 +400,7 @@ pipeline {
         stage('Publish') {
             when {
                 expression {
-                    BRANCH_NAME == 'master'
+                    params.Tag == 'master'
                 }
             }
             parallel {
