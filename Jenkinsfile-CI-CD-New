@@ -138,7 +138,8 @@ pipeline {
         stage('Install CxCommon in Local Repository') {
             when {
                 expression {
-                    params.Tag == 'master' || params.Tag.startsWith("PR-")  && CHANGE_TARGET == 'master'
+                    params.AutomationRun == true
+                    //params.Tag == 'master' || params.Tag.startsWith("PR-")  && CHANGE_TARGET == 'master'
                 }
             }
             steps {
@@ -152,7 +153,7 @@ pipeline {
         stage('System Tests') {
             when {
                 expression {
-                    params.Tag == 'master' || params.Tag.startsWith("PR-") && CHANGE_TARGET == 'master' 
+                     params.AutomationRun == true   //params.Tag == 'master' || params.Tag.startsWith("PR-")  && CHANGE_TARGET == 'master'
                 }
             }
             parallel {
