@@ -19,6 +19,7 @@ def automationBranch = "9.0.0"
 
 pipeline {
     parameters {
+        booleanParam(name: 'IsReleaseBuild', defaultValue: false, description: 'Check the box if you want to create a release build(Remove -SNAPSHOT before build)')
         gitParameter(name: 'Tag',type: 'PT_BRANCH_TAG',defaultValue: '',description: 'Enter the Git Tag to use (e.g., v1.0.0)')
         booleanParam(name: 'AutomationRun', defaultValue: false, description: 'Enable or disable the automation run')
     }
@@ -404,7 +405,7 @@ pipeline {
         stage('Publish') {
             when {
                 expression {
-                    params.Tag == 'master'
+                    params.Tag == 'master' && params.IsReleaseBuild
                 }
             }
             parallel {
