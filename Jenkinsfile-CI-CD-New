@@ -322,7 +322,7 @@ pipeline {
 
                 stage('9.6') {
                     when {
-                        expression { false }
+                        expression { true }
                     }
                     stages {
                         stage('Create VM') {
@@ -402,7 +402,7 @@ pipeline {
                 }
                 stage('9.7') {
                     when {
-                        expression { false }
+                        expression { true }
                     }
                     stages {
                         stage('Create VM') {
