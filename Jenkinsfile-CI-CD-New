@@ -10,6 +10,8 @@ def vmTemplate95 = "CxSDLC-Template-CxSAST-9-5"
 def ipAddress95
 def vmTemplate96 = "CxSDLC-Template-CxSAST-9-6-1"
 def ipAddress96
+def vmTemplate97 = "CxSDLC-Template-CxSAST-9-7"
+def ipAddress97
 def ram = "12000"
 def cpu = "8"
 def provider = "VMWARE"
@@ -398,7 +400,86 @@ pipeline {
                         }
                     }
                 }
-
+                stage('9.7') {
+                    when {
+                        expression { false }
+                    }
+                    stages {
+                        stage('Create VM') {
+                            steps {
+                                script {
+                                    kit.Create_Vm_Terraform(vmName + "-9.7", vmTemplate97, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
+                                    ipAddress97 = kit.getIpAddress(vmName + "-9.7", provider)
+                                    node('install01') {
+                                        kit.Create_Jenkins_Slave_On_Master(vmName + "-9.7")
+                                        kit.Start_Jenkins_Slave_On_Windows_Pstools(ipAddress97, vmName + "-9.7")
+                                    }
+                                }
+                            }
+                        }
+                        stage('Pull Automation Code') {
+                            steps {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    git branch: "${env.automationBranch}", credentialsId: 'TFS-Test', poll: false, url: 'http://tfs2013:8080/tfs/DefaultCollection/Automation/_git/Checkmarx-System-Test'
+                                    sh "cp -r ../../../env ."
+                                    sh "sed -e 's/<CxSastIpAddress>/${ipAddress97}/g' -i ./env/topology.xml"
+                                }
+                            }
+                        }
+                        stage('Plugins API Sanity Test') {
+                            steps {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    sh "docker run --rm --memory 2gb --name plugins-api-sanity-test-9.7-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.7/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress97} maven:3.6.1-jdk-8-alpine \
+                                        mvn -q clean test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.7 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                }
+                            }
+                        }
+                        stage('Plugins API Smoke Tests') {
+                            steps {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    sh "docker run --rm --memory 2gb --name plugins-api-smoke-tests-9.7-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.7/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress97} maven:3.6.1-jdk-8-alpine \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.7 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
+                                            -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                }
+                            }
+                        }
+                        stage('Plugins CxCommonClient All Tests') {
+                            steps {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    sh "docker run --rm --memory 2gb --name plugins-cxcommonclient-all-tests-9.7-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.7/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress97} maven:3.6.1-jdk-8-alpine \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.7 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
+                                            -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            script {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    junit '**/PluginsCommonClient/target/surefire-reports/**/*.xml'
+                                }
+                                if (ipAddress97 != null) {
+                                    try {
+                                        node(vmName + "-9.7") {
+                                            kit.zipStashInstallationLogs("CxSAST-9.7-Logs")
+                                        }
+                                        unstash "CxSAST-9.7-Logs"
+                                    } catch (Exception e) {
+                    kit.Warning_Msg("Could not stash CxSAST-9.7-Logs, error:\n" + e.toString())
+                }
+                                    deleteVm(provider, ipAddress97, vmName + "-9.7")
+                                }
+                            }
+                        }
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
+                            }
+                        }
+                    }
+                }
             }
         }
 
