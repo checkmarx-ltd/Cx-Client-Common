@@ -141,27 +141,9 @@ public class SpawnScaResolver {
                 log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
                 throw new CxClientException(e);
             }
-            if (System.getProperty("JenkinsScaResolverTimer") != null) {
-                int JenkinsScaResolverTimer = Integer.parseInt(System.getProperty("JenkinsScaResolverTimer"));
-                log.info("JenkinsScaResolverTimer property detected. Enforcing {} minute timeout.", System.getProperty("JenkinsScaResolverTimer"));
 
-                boolean finishedInTime = process.waitFor(JenkinsScaResolverTimer, TimeUnit.MINUTES);
-                if (!finishedInTime) {
-                    log.error("SCA Resolver process exceeded the timeout and will be terminated.");
-                    log.info("JVM Memory Details - Total: {} bytes, Free: {} bytes, Max: {} bytes",
-                            Runtime.getRuntime().totalMemory(),
-                            Runtime.getRuntime().freeMemory(),
-                            Runtime.getRuntime().maxMemory());
-                    process.destroyForcibly();
-                    throw new CxClientException("Process exceeded the allowed timeout");
-                }
-                exitCode = process.exitValue();
-                log.info("SCA Resolver process exited with code: " + exitCode);
-            } else {
-                log.info("JenkinsScaResolverTimer property not detected.");
-                exitCode = process.waitFor();
-                log.info("SCA Resolver process exited with code: " + exitCode);
-            }
+            exitCode = process.waitFor();
+
         } catch (IOException | InterruptedException e) {
             log.error("Failed to execute next command : " + scaResolverCommand, e.getMessage(), e.getStackTrace());
             Thread.currentThread().interrupt();
