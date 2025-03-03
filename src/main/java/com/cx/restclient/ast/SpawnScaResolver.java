@@ -121,26 +121,27 @@ public class SpawnScaResolver {
             }
 
             log.debug("Executing ScaResolver command.");
+            log.debug("Check logs in ScaResolver log directory");
             process = Runtime.getRuntime().exec(command);
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                    log.info(line);
-                }
-            } catch (IOException e) {
-                log.error("Error while reading standard output: " + e.getMessage(), e.getStackTrace());
-                throw new CxClientException(e);
-            }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    log.debug(line);
-                }
-            } catch (IOException e) {
-                log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
-                throw new CxClientException(e);
-            }
+            // try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            //     String line = null;
+            //     while ((line = reader.readLine()) != null) {
+            //         log.info(line);
+            //     }
+            // } catch (IOException e) {
+            //     log.error("Error while reading standard output: " + e.getMessage(), e.getStackTrace());
+            //     throw new CxClientException(e);
+            // }
+            // try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            //     String line;
+            //     while ((line = reader.readLine()) != null) {
+            //         log.debug(line);
+            //     }
+            // } catch (IOException e) {
+            //     log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
+            //     throw new CxClientException(e);
+            // }
 
             exitCode = process.waitFor();
 
