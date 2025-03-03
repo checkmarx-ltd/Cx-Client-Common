@@ -142,8 +142,33 @@ public class SpawnScaResolver {
             //     log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
             //     throw new CxClientException(e);
             // }
+            Thread outputReaderThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        log.info(line);
+                    }
+                } catch (IOException e) {
+                    log.error("Error while reading standard output: " + e.getMessage(), e);
+                }
+            });
 
+            Thread errorReaderThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        log.debug(line);
+                    }
+                } catch (IOException e) {
+                    log.error("Error while reading error output: " + e.getMessage(), e);
+                }
+            });
+
+            outputReaderThread.start();
+            errorReaderThread.start();
             exitCode = process.waitFor();
+            outputReaderThread.join();
+            errorReaderThread.join();
 
         } catch (IOException | InterruptedException e) {
             log.error("Failed to execute next command : " + scaResolverCommand, e.getMessage(), e.getStackTrace());
