@@ -142,6 +142,7 @@ public class SpawnScaResolver {
             //     log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
             //     throw new CxClientException(e);
             // }
+            log.debug("outputReaderThread");
             Thread outputReaderThread = new Thread(() -> {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                     String line;
@@ -153,6 +154,7 @@ public class SpawnScaResolver {
                 }
             });
 
+            log.debug("errorReaderThread");
             Thread errorReaderThread = new Thread(() -> {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
                     String line;
@@ -164,9 +166,13 @@ public class SpawnScaResolver {
                 }
             });
 
+            log.debug("Starting threads");
             outputReaderThread.start();
             errorReaderThread.start();
+            log.debug("Waiting for process to finish");
             exitCode = process.waitFor();
+            log.debug("Process finished with exit code: " + exitCode);
+            log.debug("Waiting for threads to finish");
             outputReaderThread.join();
             errorReaderThread.join();
 
