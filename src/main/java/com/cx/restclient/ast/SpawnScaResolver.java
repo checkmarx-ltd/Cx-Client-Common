@@ -124,63 +124,38 @@ public class SpawnScaResolver {
             log.debug("Check logs in ScaResolver log directory");
             process = Runtime.getRuntime().exec(command);
 
-            // try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            //     String line = null;
-            //     while ((line = reader.readLine()) != null) {
-            //         log.info(line);
-            //     }
-            // } catch (IOException e) {
-            //     log.error("Error while reading standard output: " + e.getMessage(), e.getStackTrace());
-            //     throw new CxClientException(e);
-            // }
-            // try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            //     String line;
-            //     while ((line = reader.readLine()) != null) {
-            //         log.debug(line);
-            //     }
-            // } catch (IOException e) {
-            //     log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
-            //     throw new CxClientException(e);
-            // }
-            log.debug("outputReaderThread");
-            Thread outputReaderThread = new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        log.info(line);
-                    }
-                } catch (IOException e) {
-                    log.error("Error while reading standard output: " + e.getMessage(), e);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    log.info(line);
                 }
-            });
-
-            log.debug("errorReaderThread");
-            Thread errorReaderThread = new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        log.debug(line);
-                    }
-                } catch (IOException e) {
-                    log.error("Error while reading error output: " + e.getMessage(), e);
+            } catch (IOException e) {
+                log.error("Error while reading standard output: " + e.getMessage(), e.getStackTrace());
+                throw new CxClientException(e);
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.debug(line);
                 }
-            });
-
-            log.debug("Starting threads");
-            outputReaderThread.start();
-            errorReaderThread.start();
-            log.debug("Waiting for process to finish");
+            } catch (IOException e) {
+                log.error("Error while reading error output: " + e.getMessage(), e.getStackTrace());
+                throw new CxClientException(e);
+            }
             exitCode = process.waitFor();
-            log.debug("Process finished with exit code: " + exitCode);
-            log.debug("Waiting for threads to finish");
-            outputReaderThread.join();
-            errorReaderThread.join();
+            log.debug("ScaResolver command executed with exit code: " + exitCode);
 
         } catch (IOException | InterruptedException e) {
             log.error("Failed to execute next command : " + scaResolverCommand, e.getMessage(), e.getStackTrace());
             Thread.currentThread().interrupt();
             if (Thread.interrupted()) {
                 throw new CxClientException(e);
+            }
+        } catch (Exception ex) {
+            log.error("Failed to execute scaResolver command : " + scaResolverCommand, ex.getMessage(), ex.getStackTrace());
+            Thread.currentThread().interrupt();
+            if (Thread.interrupted()) {
+                throw new CxClientException(ex);
             }
         }
         return exitCode;
