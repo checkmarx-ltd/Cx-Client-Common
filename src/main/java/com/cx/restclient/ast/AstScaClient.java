@@ -22,7 +22,6 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -327,6 +326,7 @@ public class AstScaClient extends AstClient implements Scanner {
         	log.error(e.getMessage());
             scaResults = new AstScaResults();
         	scaResults.setException(new CxClientException(e));
+            return scaResults;
         } 
         return new AstScaResults();
        // return scaResults;
@@ -1223,6 +1223,7 @@ public class AstScaClient extends AstClient implements Scanner {
             log.info("----CxSCA risk report summary----");
             log.info("Created on: {}", summary.getCreatedOn());
             log.info("Direct packages: {}", summary.getDirectPackages());
+            log.info("Critical vulnerabilities: {}", summary.getCriticalVulnerabilityCount());
             log.info("High vulnerabilities: {}", summary.getHighVulnerabilityCount());
             log.info("Medium vulnerabilities: {}", summary.getMediumVulnerabilityCount());
             log.info("Low vulnerabilities: {}", summary.getLowVulnerabilityCount());

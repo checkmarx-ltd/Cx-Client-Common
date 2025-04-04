@@ -14,7 +14,16 @@ public class ScanConfiguration {
 
     private boolean SASTEnabled;
     private String cxOrigin;
-    private String sourceDir;
+    private String pluginVersion;
+    public String getPluginVersion() {
+		return pluginVersion;
+	}
+
+	public void setPluginVersion(String pluginVersion) {
+		this.pluginVersion = pluginVersion;
+	}
+
+	private String sourceDir;
     private String tempDir;
     private String reportsDir;
     private String username;
@@ -32,6 +41,7 @@ public class ScanConfiguration {
     private boolean isIncremental = false;
     private boolean isSynchronous = false;
     private boolean thresholdsEnabled = false;
+    private Integer criticalThreshold;
     private Integer highThreshold;
     private Integer mediumThreshold;
     private Integer lowThreshold;
@@ -41,6 +51,7 @@ public class ScanConfiguration {
     private String osaArchiveIncludePatterns;
     private boolean osaInstallBeforeScan;
     private boolean osaThresholdsEnabled = false;
+    private Integer osaCriticalThreshold;
     private Integer osaHighThreshold;
     private Integer osaMediumThreshold;
     private Integer osaLowThreshold;
@@ -191,6 +202,18 @@ public class ScanConfiguration {
     public void setThresholdsEnabled(boolean thresholdsEnabled) {
         this.thresholdsEnabled = thresholdsEnabled;
     }
+    
+    public Integer getCriticalThreshold() {
+        return criticalThreshold;
+    }
+
+    public void setCriticalThreshold(Integer criticalThreshold) {
+        this.criticalThreshold = criticalThreshold;
+    }
+
+    private void setCriticalThreshold(String criticalSeveritiesThreshold) {
+        this.criticalThreshold = getAsInteger(criticalSeveritiesThreshold);
+    }
 
     public Integer getHighThreshold() {
         return highThreshold;
@@ -291,6 +314,18 @@ public class ScanConfiguration {
     public void setOsaThresholdsEnabled(boolean osaThresholdsEnabled) {
         this.osaThresholdsEnabled = osaThresholdsEnabled;
     }
+    
+    public Integer getOsaCriticalThreshold() {
+        return osaCriticalThreshold;
+    }
+
+    public void setOsaCriticalThreshold(Integer osaCriticalThreshold) {
+        this.osaCriticalThreshold = osaCriticalThreshold;
+    }
+
+    private void setOsaCriticalSeveritiesThreshold(String osaCriticalSeveritiesThreshold) {
+        this.osaCriticalThreshold = getAsInteger(osaCriticalSeveritiesThreshold);
+    }
 
     public Integer getOsaHighThreshold() {
         return osaHighThreshold;
@@ -341,11 +376,11 @@ public class ScanConfiguration {
     }
 
     public boolean isSASTThresholdEffectivelyEnabled() {
-        return isThresholdsEnabled() && (getLowThreshold() != null || getMediumThreshold() != null || getHighThreshold() != null);
+        return isThresholdsEnabled() && (getLowThreshold() != null || getMediumThreshold() != null || getHighThreshold() != null || getCriticalThreshold() != null);
     }
 
     public boolean isOSAThresholdEffectivelyEnabled() {
-        return isOsaEnabled() && isOsaThresholdsEnabled() && (getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
+        return isOsaEnabled() && isOsaThresholdsEnabled() && (getOsaCriticalThreshold() != null || getOsaHighThreshold() != null || getOsaMediumThreshold() != null || getOsaLowThreshold() != null);
     }
 
     public String getReportsDir() {

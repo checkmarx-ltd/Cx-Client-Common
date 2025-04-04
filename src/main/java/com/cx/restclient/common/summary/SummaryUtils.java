@@ -70,6 +70,14 @@ public abstract class SummaryUtils {
                 float maxCount = Math.max(sastResults.getHigh(), Math.max(sastResults.getMedium(), sastResults.getLow()));
                 float sastBarNorm = maxCount * 10f / 9f;
 
+                //sast critical bars
+                float sastCriticalTotalHeight = (float) sastResults.getCritical() / sastBarNorm * 238f;
+                float sastCriticalNewHeight = calculateNewBarHeight(sastResults.getNewCritical(), sastResults.getCritical(), sastCriticalTotalHeight);
+                float sastCriticalRecurrentHeight = sastCriticalTotalHeight - sastCriticalNewHeight;
+                templateData.put("sastCriticalTotalHeight", sastCriticalTotalHeight);
+                templateData.put("sastCriticalNewHeight", sastCriticalNewHeight);
+                templateData.put("sastCriticalRecurrentHeight", sastCriticalRecurrentHeight);
+
                 //sast high bars
                 float sastHighTotalHeight = (float) sastResults.getHigh() / sastBarNorm * 238f;
                 float sastHighNewHeight = calculateNewBarHeight(sastResults.getNewHigh(), sastResults.getHigh(), sastHighTotalHeight);
@@ -160,17 +168,19 @@ public abstract class SummaryUtils {
                 }
 
                 //calculate dependency results bars:
+                int dependencyCritical = dependencyScanResult.getCriticalVulnerability();
                 int dependencyHigh = dependencyScanResult.getHighVulnerability();
                 int dependencyMedium = dependencyScanResult.getMediumVulnerability();
                 int dependencyLow = dependencyScanResult.getLowVulnerability();
                 float dependencyMaxCount = Math.max(dependencyHigh, Math.max(dependencyMedium, dependencyLow));
                 float dependencyBarNorm = dependencyMaxCount * 10f / 9f;
 
-
+                float dependencyCriticalTotalHeight = (float) dependencyCritical / dependencyBarNorm * 238f;
                 float dependencyHighTotalHeight = (float) dependencyHigh / dependencyBarNorm * 238f;
                 float dependencyMediumTotalHeight = (float) dependencyMedium / dependencyBarNorm * 238f;
                 float dependencyLowTotalHeight = (float) dependencyLow / dependencyBarNorm * 238f;
 
+                templateData.put("dependencyCriticalTotalHeight", dependencyCriticalTotalHeight);
                 templateData.put("dependencyHighTotalHeight", dependencyHighTotalHeight);
                 templateData.put("dependencyMediumTotalHeight", dependencyMediumTotalHeight);
                 templateData.put("dependencyLowTotalHeight", dependencyLowTotalHeight);
