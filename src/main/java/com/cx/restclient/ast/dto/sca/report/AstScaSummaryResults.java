@@ -1,5 +1,6 @@
 package com.cx.restclient.ast.dto.sca.report;
 
+
 import java.io.Serializable;
 
 public class AstScaSummaryResults implements Serializable {
@@ -16,9 +17,7 @@ public class AstScaSummaryResults implements Serializable {
     public AstScaSummaryResults() {
     }
 
-    public AstScaSummaryResults(int totalPackages, int directPackages, String createdOn, double riskScore,
-            int totalOutdatedPackages, int criticalVulnerabilityCount, int highVulnerabilityCount,
-            int mediumVulnerabilityCount, int lowVulnerabilityCount) {
+    public AstScaSummaryResults(int totalPackages, int directPackages, String createdOn, double riskScore, int totalOutdatedPackages, int criticalVulnerabilityCount, int highVulnerabilityCount, int mediumVulnerabilityCount, int lowVulnerabilityCount) {
         this.totalPackages = totalPackages;
         this.directPackages = directPackages;
         this.createdOn = createdOn;
@@ -71,6 +70,10 @@ public class AstScaSummaryResults implements Serializable {
     public int getTotalOutdatedPackages() {
         return totalOutdatedPackages;
     }
+
+    public void setTotalOutdatedPackages(int totalOutdatedPackages) {
+        this.totalOutdatedPackages = totalOutdatedPackages;
+    }
     
     public int getCriticalVulnerabilityCount() {
         return criticalVulnerabilityCount;
@@ -78,10 +81,6 @@ public class AstScaSummaryResults implements Serializable {
 
     public void setCriticalVulnerabilityCount(int criticalVulnerabilityCount) {
         this.criticalVulnerabilityCount = criticalVulnerabilityCount;
-    }
-
-    public void setTotalOutdatedPackages(int totalOutdatedPackages) {
-        this.totalOutdatedPackages = totalOutdatedPackages;
     }
 
     public int getHighVulnerabilityCount() {

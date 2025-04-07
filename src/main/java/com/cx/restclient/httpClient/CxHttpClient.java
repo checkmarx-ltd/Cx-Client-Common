@@ -1,6 +1,8 @@
 package com.cx.restclient.httpClient;
 
 import com.cx.restclient.common.ErrorMessage;
+import com.cx.restclient.configuration.CxScanConfig;
+import com.cx.restclient.dto.CxVersion;
 import com.cx.restclient.dto.LoginSettings;
 import com.cx.restclient.dto.ProxyConfig;
 import com.cx.restclient.dto.TokenLoginResponse;
@@ -26,6 +28,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.routing.HttpRoute;
@@ -120,10 +123,12 @@ public class CxHttpClient implements Closeable {
     private CookieStore cookieStore = new BasicCookieStore();
     private HttpClientBuilder cb = HttpClients.custom();
     private final Map<String, String> customHeaders = new HashMap<>();
+    private CxVersion cxVersion;
+    private String pluginVersion;
 
 
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
+                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion) throws CxClientException {
     	   	   	
         this.log = log;
         this.rootUri = rootUri;
@@ -131,6 +136,7 @@ public class CxHttpClient implements Closeable {
         this.cxOrigin = origin;
         this.useSSo = isSSO;
         this.useNTLM = useNTLM;
+        this.pluginVersion = pluginVersion;
         //create httpclient
         cb.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
         setSSLTls("TLSv1.2", log);
@@ -181,8 +187,8 @@ public class CxHttpClient implements Closeable {
     }
 
     public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
-                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM) throws CxClientException {
-        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM);
+                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion) throws CxClientException {
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion);
         this.cxOriginUrl = originUrl;
     }
 
@@ -595,7 +601,7 @@ public class CxHttpClient implements Closeable {
     }
 
     public <T> T getRequest(String rootURL, String relPath, String acceptHeader, String contentType, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection) throws IOException {
-        HttpGet get = new HttpGet(rootURL + relPath);
+    	HttpGet get = new HttpGet(rootURL + relPath);
         get.addHeader(HttpHeaders.ACCEPT, acceptHeader);
         return request(get, contentType, null, responseType, expectStatus, "get " + failedMsg, isCollection, true);
     }
@@ -634,6 +640,17 @@ public class CxHttpClient implements Closeable {
         log.debug(String.format("Adding a custom header: %s: %s", name, value));
         customHeaders.put(name, value);
     }
+    
+    private String getUserAgentValue() {
+    	if (cxOrigin == null) {
+            log.warn("cxOrigin is null");
+            cxOrigin = "unknown"; // Or handle as appropriate
+        }
+        
+        String version = (pluginVersion != null ) ? pluginVersion : "unknown"; // Ensure cxVersion is not null
+        
+        return "plugin_name=" + cxOrigin + ";plugin_version=" + version;
+    }
 
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
     	//Support unicode characters
@@ -642,9 +659,16 @@ public class CxHttpClient implements Closeable {
             URI tmpUri = httpMethod.getURI();
             String host = StringUtils.isNotEmpty(tmpUri.getAuthority()) ? tmpUri.getAuthority() : tmpUri.getHost();
             host = IDN.toASCII(host, IDN.ALLOW_UNASSIGNED);
-            try {
-                URI uri = new URI(tmpUri.getScheme(), tmpUri.getUserInfo(), host, tmpUri.getPort(), tmpUri.getPath(),
-                        tmpUri.getQuery(), tmpUri.getFragment());
+            String hostname = host;
+            String portNumber = "" + tmpUri.getPort();
+            String[] arr = host.split(":");
+            if(arr != null && arr.length>1) {
+            	hostname = arr[0];
+            	portNumber = arr[1];
+            }
+            try {               
+                URIBuilder uriBuilder = new URIBuilder(tmpUri).setHost(hostname).setPort(Integer.parseInt(portNumber));
+                URI uri = uriBuilder.build();
                 httpMethod.setURI(uri);
             } catch (URISyntaxException e) {
                 log.error("Fail to convert URI: " + httpMethod.getURI().toString());
@@ -653,9 +677,13 @@ public class CxHttpClient implements Closeable {
     	if (contentType != null) {
             httpMethod.addHeader("Content-type", contentType);
         }
+    	if (getUserAgentValue() != null) {
+            httpMethod.addHeader("User-Agent", getUserAgentValue());
+    	}
         if (entity != null && httpMethod instanceof HttpEntityEnclosingRequestBase) { //Entity for Post methods
             ((HttpEntityEnclosingRequestBase) httpMethod).setEntity(entity);
         }
+        
         HttpResponse response = null;
         int statusCode = 0;
 
@@ -669,8 +697,7 @@ public class CxHttpClient implements Closeable {
 
             for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
                 httpMethod.addHeader(entry.getKey(), entry.getValue());
-            }
-
+            }            
             response = apacheClient.execute(httpMethod);
             statusCode = response.getStatusLine().getStatusCode();
 

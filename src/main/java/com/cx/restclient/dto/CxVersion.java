@@ -11,7 +11,6 @@ public class CxVersion {
     private String hotFix;
     private String enginePackVersion;
 
-
     public String getVersion() {
         return version;
     }

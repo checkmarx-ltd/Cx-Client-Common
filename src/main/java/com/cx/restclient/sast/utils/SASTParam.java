@@ -55,5 +55,5 @@ public class SASTParam {
     
     //PROJECT BRANCHING
     public static final String PROJECT_BRANCH = "projects/{id}/branch";
+    public static final String PROJECT_BRANCH_ID = "projects/branch/{id}";
 }
-

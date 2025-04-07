@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -326,7 +327,7 @@ public class AstScaClient extends AstClient implements Scanner {
         	log.error(e.getMessage());
             scaResults = new AstScaResults();
         	scaResults.setException(new CxClientException(e));
-            return scaResults;
+        	return scaResults;
         } 
         return new AstScaResults();
        // return scaResults;
@@ -938,7 +939,6 @@ public class AstScaClient extends AstClient implements Scanner {
         String result = Optional.ofNullable(project)
                 .map(Project::getId)
                 .orElse(null);
-
         String message = (result == null ? "Project not found" : String.format("Project ID: %s", result));
         log.info(message);
 
@@ -1029,14 +1029,12 @@ public class AstScaClient extends AstClient implements Scanner {
         }
 
         StringEntity entity = HttpClientHelper.convertToStringEntity(request);
-
         Project newProject = httpClient.postRequest(PROJECTS,
                 ContentType.CONTENT_TYPE_APPLICATION_JSON,
                 entity,
                 Project.class,
                 HttpStatus.SC_CREATED,
                 "create a project");
-
         return newProject.getId();
     }
 

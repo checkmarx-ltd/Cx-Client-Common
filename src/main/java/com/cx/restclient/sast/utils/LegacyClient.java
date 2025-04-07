@@ -26,7 +26,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static com.cx.restclient.common.CxPARAM.*;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_API_VERSION_1_1;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V4;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 import static com.cx.restclient.sast.utils.SASTParam.*;
 
@@ -104,7 +106,8 @@ public abstract class LegacyClient {
 						throw new CxClientException(
 								"Branched project could not be created: " + config.getProjectName());
 					}else {
-                        log.info("Created a project with ID {}", projectId);
+						checkCreateBranchProjectStatus(projectId);
+						log.info("Created a project with ID {}", projectId);
                         if(config.isEnableDataRetention()){
                             setRetentionRate(projectId);
                         }
@@ -134,6 +137,58 @@ public abstract class LegacyClient {
         }
 
         return projectId;
+    }
+
+	private void checkCreateBranchProjectStatus(long branchprojectId) throws IOException {
+		// TODO Auto-generated method stub
+		String Status = "";
+		CreateBranchStatus getBranchRequest = null;
+		int timeout = checkTimeOut();
+		for (int i = 0; i < 3; i++) {
+			try {
+				getBranchRequest = populateBranchStatusList(branchprojectId);
+			} catch (Exception e) {
+				log.info("Version is less than SAST 9.5 V4");
+				break;
+			}
+			if (getBranchRequest != null) {
+				Status = getBranchRequest.getStatus().getValue();
+				log.info("Interval =" + i + "  BranchStatus=" + Status);
+				if (Status.equals("Completed")) {					
+					break;
+				} else {
+					waitTime(timeout);
+				}
+			}
+		}
+	}
+    
+	private void waitTime(int timeout) {
+		try {
+			log.info("timeout =" + timeout +" Seconds");
+			Thread.sleep(timeout*1000);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+	}
+	
+	private int checkTimeOut() {
+			int timeout = 10;
+			if((config.getcopyBranchTimeOutInSeconds())!=null) {
+				timeout = config.getcopyBranchTimeOutInSeconds();
+				log.info("copybranchtimeoutinseconds =" + timeout +" Seconds");
+			}
+			if (timeout > 0 && timeout < 60 ) {
+				log.info("copybranchtimeoutinseconds is "+ timeout +"seconds");
+			} else {
+				timeout = 10;
+				log.warn("copybranchtimeoutinseconds is not between the range of 0 to 60 seconds, using default timeout i.e. 10 seconds");
+			}
+			return timeout;
+	}	
+	
+    private CreateBranchStatus populateBranchStatusList(long branchprojectId) throws IOException, CxClientException {
+        return httpClient.getRequest(PROJECT_BRANCH_ID.replace("{id}", Long.toString(branchprojectId)), CONTENT_TYPE_APPLICATION_JSON_V4, CreateBranchStatus.class, 200, "branch status", false);
     }
 
 
@@ -198,9 +253,9 @@ public abstract class LegacyClient {
     }
 
     private void initHttpClient(CxScanConfig config, Logger log) throws MalformedURLException {
-
-        if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
-            httpClient = new CxHttpClient(
+    	if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
+        	httpClient = new CxHttpClient(
+            		
                     UrlUtils.parseURLToString(config.getUrl(), "CxRestAPI/"),
                     config.getCxOrigin(),
                     config.getCxOriginUrl(),
@@ -210,7 +265,8 @@ public abstract class LegacyClient {
                     config.isProxy(),
                     config.getProxyConfig(),
                     log,
-                    config.getNTLM());
+                    config.getNTLM(),
+                    config.getPluginVersion());
         }
     }
 
@@ -239,7 +295,7 @@ public abstract class LegacyClient {
     public String getCxVersion() throws IOException, CxClientException {
         String version;
         try {
-            config.setCxVersion(httpClient.getRequest(CX_VERSION, CONTENT_TYPE_APPLICATION_JSON_V1, CxVersion.class, 200, "cx Version", false));
+            config.setCxVersion(httpClient.getRequest(CX_VERSION, CONTENT_TYPE_API_VERSION_1_1, CxVersion.class, 200, "cx Version", false));
             String hotfix = "";
             try {
                 if (config.getCxVersion().getHotFix() != null && Integer.parseInt(config.getCxVersion().getHotFix()) > 0) {
@@ -250,6 +306,7 @@ public abstract class LegacyClient {
 
             version = config.getCxVersion().getVersion();
             log.info("Checkmarx server version [" + config.getCxVersion().getVersion() + "]." + hotfix);
+            log.info("Checkmarx Engine Pack Version [" + config.getCxVersion().getEnginePackVersion() + "].");
 
         } catch (Exception ex) {
             version = "lower than 9.0";
@@ -258,6 +315,12 @@ public abstract class LegacyClient {
         return version;
     }
 
+    public String login(Boolean isVersionRequired) throws IOException {
+        String cxVersion = getCxVersion();
+        login(cxVersion);
+        return cxVersion;
+    }
+    
     public void login() throws IOException {
         String version = getCxVersion();
         login(version);

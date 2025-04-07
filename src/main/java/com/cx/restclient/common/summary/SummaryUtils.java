@@ -69,8 +69,8 @@ public abstract class SummaryUtils {
                 //calculate sast bars:
                 float maxCount = Math.max(sastResults.getHigh(), Math.max(sastResults.getMedium(), sastResults.getLow()));
                 float sastBarNorm = maxCount * 10f / 9f;
-
-                //sast critical bars
+                
+              //sast critical bars
                 float sastCriticalTotalHeight = (float) sastResults.getCritical() / sastBarNorm * 238f;
                 float sastCriticalNewHeight = calculateNewBarHeight(sastResults.getNewCritical(), sastResults.getCritical(), sastCriticalTotalHeight);
                 float sastCriticalRecurrentHeight = sastCriticalTotalHeight - sastCriticalNewHeight;
@@ -101,6 +101,7 @@ public abstract class SummaryUtils {
                 templateData.put("sastLowTotalHeight", sastLowTotalHeight);
                 templateData.put("sastLowNewHeight", sastLowNewHeight);
                 templateData.put("sastLowRecurrentHeight", sastLowRecurrentHeight);
+                
             } else {
                 buildFailed = true;
             }
@@ -174,6 +175,7 @@ public abstract class SummaryUtils {
                 int dependencyLow = dependencyScanResult.getLowVulnerability();
                 float dependencyMaxCount = Math.max(dependencyHigh, Math.max(dependencyMedium, dependencyLow));
                 float dependencyBarNorm = dependencyMaxCount * 10f / 9f;
+
 
                 float dependencyCriticalTotalHeight = (float) dependencyCritical / dependencyBarNorm * 238f;
                 float dependencyHighTotalHeight = (float) dependencyHigh / dependencyBarNorm * 238f;
