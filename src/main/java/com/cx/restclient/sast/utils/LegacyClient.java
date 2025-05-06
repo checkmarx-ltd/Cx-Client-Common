@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static com.cx.restclient.common.CxPARAM.*;
+import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_API_VERSION_1_1;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V1;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON_V4;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
@@ -252,9 +253,9 @@ public abstract class LegacyClient {
     }
 
     private void initHttpClient(CxScanConfig config, Logger log) throws MalformedURLException {
-
-        if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
-            httpClient = new CxHttpClient(
+    	if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
+        	httpClient = new CxHttpClient(
+            		
                     UrlUtils.parseURLToString(config.getUrl(), "CxRestAPI/"),
                     config.getCxOrigin(),
                     config.getCxOriginUrl(),
@@ -264,7 +265,8 @@ public abstract class LegacyClient {
                     config.isProxy(),
                     config.getProxyConfig(),
                     log,
-                    config.getNTLM());
+                    config.getNTLM(),
+                    config.getPluginVersion());
         }
     }
 
@@ -293,7 +295,7 @@ public abstract class LegacyClient {
     public String getCxVersion() throws IOException, CxClientException {
         String version;
         try {
-            config.setCxVersion(httpClient.getRequest(CX_VERSION, CONTENT_TYPE_APPLICATION_JSON_V1, CxVersion.class, 200, "cx Version", false));
+            config.setCxVersion(httpClient.getRequest(CX_VERSION, CONTENT_TYPE_API_VERSION_1_1, CxVersion.class, 200, "cx Version", false));
             String hotfix = "";
             try {
                 if (config.getCxVersion().getHotFix() != null && Integer.parseInt(config.getCxVersion().getHotFix()) > 0) {
@@ -304,6 +306,7 @@ public abstract class LegacyClient {
 
             version = config.getCxVersion().getVersion();
             log.info("Checkmarx server version [" + config.getCxVersion().getVersion() + "]." + hotfix);
+            log.info("Checkmarx Engine Pack Version [" + config.getCxVersion().getEnginePackVersion() + "].");
 
         } catch (Exception ex) {
             version = "lower than 9.0";

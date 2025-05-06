@@ -97,7 +97,8 @@ public class ClientTypeResolver {
                     config.isScaProxy(),
                     config.getScaProxyConfig(),
                     log,
-                    config.getNTLM());
+                    config.getNTLM(),
+                    config.getPluginVersion());
         }
         return httpClient;
     }

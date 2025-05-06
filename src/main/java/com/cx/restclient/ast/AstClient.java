@@ -84,7 +84,8 @@ public abstract class AstClient {
                 config.isScaProxy(),
                 config.getScaProxyConfig(),
                 log,
-                config.getNTLM());
+                config.getNTLM(),
+                config.getPluginVersion());
         //initializing Team Path to prevent null pointer in login when called from automation
         client.setTeamPathHeader("");
 

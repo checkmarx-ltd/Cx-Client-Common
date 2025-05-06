@@ -79,8 +79,17 @@ public class CxScanConfig implements Serializable {
     private String engineConfigurationName;
     private String projectCustomFields;
     private boolean ignoreBenignErrors = false;
+    private String pluginVersion;
 
-    private String osaFolderExclusions;    
+    public String getPluginVersion() {
+		return pluginVersion;
+	}
+
+	public void setPluginVersion(String pluginVersion) {
+		this.pluginVersion = pluginVersion;
+	}
+
+	private String osaFolderExclusions;    
     public String getEngineConfigurationName() {
         return engineConfigurationName;
     }
