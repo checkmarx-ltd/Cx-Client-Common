@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.checkmarx</groupId>
     <artifactId>cx-client-common</artifactId>
-    <version>${cxcommon.version}</version>
+    <version>00233634_master_selected_lib</version>
     <packaging>jar</packaging>
     <name>Checkmarx Client</name>
     <description>Web client for interaction with Checkmarx SAST, SCA and OSA products</description>
@@ -155,6 +155,7 @@
             <groupId>com.checkmarx</groupId>
             <artifactId>cx-ws-fs-agent</artifactId>
             <version>${cx.ws.fs.agent.version}</version>
+            <scope>provided</scope>
             <exclusions>
                 <exclusion>
                     <groupId>javax.xml.bind</groupId>
