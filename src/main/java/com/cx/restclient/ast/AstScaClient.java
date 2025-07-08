@@ -21,6 +21,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.sql.Timestamp;
 import java.util.*;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -39,6 +40,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.velocity.runtime.parser.node.SetExecutor;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -188,7 +190,7 @@ public class AstScaClient extends AstClient implements Scanner {
         if (StringUtils.isNotEmpty(repoInfo.getBranch())) {
             // If we pass the branch to start scan API, the API will return an error:
             // "Git references (branch, commit ID, etc.) are not yet supported."
-            //
+            // 
             // We can't just ignore the branch, because it will lead to confusion.
             String message = String.format("Branch specification is not yet supported by %s.", getScannerDisplayName());
             throw new CxClientException(message);
@@ -253,13 +255,42 @@ public class AstScaClient extends AstClient implements Scanner {
                 false);
     }
 
-    
-	private byte[] getReport(String scanId, String contentType) throws IOException {
-		String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
+    private byte[] getCyclonexReport(String scanId, String contentType) {
+        String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
 
-		return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
-				contentType, byte[].class, 200, " scan report: " + reportId, false);
-	}
+        return Awaitility.await()
+                .atMost(Duration.ofMinutes(2))
+                .pollInterval(Duration.ofSeconds(3))
+                .pollDelay(Duration.ZERO)
+                .until(() -> {
+                    try {
+                        return httpClient.getRequest(
+                        		SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
+                                contentType, byte[].class, 200, " scan report: " + scanId, false
+                        );
+                    } catch (Exception e) {
+                    	log.error("Failed to getCyclonexReport :: ", e.getMessage());
+                        return null;
+                    }
+                }, Objects::nonNull);
+    }
+
+
+    
+    private byte[] getReport(String scanId, String contentType) throws IOException {
+        String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
+
+        if (contentType.equalsIgnoreCase("cyclonedxjson") || contentType.equalsIgnoreCase("cyclonedxxml")) {
+        	return getCyclonexReport(scanId, contentType) ;
+        }
+
+        // For other content types, no retry needed
+        return httpClient.getRequest(
+            SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
+            contentType, byte[].class, 200, " scan report: " + scanId, false
+        );
+    }
+
 	//cli reports
 	 public static void writeReport(byte[] scanReport, String reportName, Logger log) {
 	        try {
@@ -298,7 +329,12 @@ public class AstScaClient extends AstClient implements Scanner {
 			if (config.isGenerateScaReport()) {
 				String reportFormat = config.getScaReportFormat();
 				log.info("Generating SCA report. Report type: " + reportFormat);
+//				Generating SCA report. Report type: cyclonedxjson
+				
+				log.info(" reportFormat :: " +reportFormat);
+				log.info(" scanID :: " +scaResults.getScanId());
 				byte[] scanReport = getReport(scaResults.getScanId(), reportFormat);
+
 				scaResults.setPDFReport(scanReport);
 				String now = new SimpleDateFormat("dd_MM_yyyy-HH_mm_ss").format(new Date());
 				String PDF_REPORT_NAME = "AstScaReport";
