@@ -9,7 +9,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -124,4 +129,18 @@ public abstract class HttpClientHelper {
         }
     }
 
+    public static byte[] getSBOMReport(String fileUrl) throws IOException {
+        HttpGet get = new HttpGet(fileUrl);
+        try (CloseableHttpClient client = HttpClients.createDefault();
+             CloseableHttpResponse response = client.execute(get)) {
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == 200) {
+                return EntityUtils.toByteArray(response.getEntity());
+            } else {
+                throw new IOException("Failed to fetch file. Status code: " + statusCode);
+            }
+        }
+    }
+    
 }
