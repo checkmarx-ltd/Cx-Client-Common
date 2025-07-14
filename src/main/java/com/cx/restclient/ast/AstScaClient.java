@@ -318,7 +318,15 @@ public class AstScaClient extends AstClient implements Scanner {
     * It will first fetch the exportId for the report with the help of scanId and contentType and then will fetch the report. 
     */
     private byte[] getReport(String scanId, String contentType) throws IOException {
+
+    	if(contentType.equalsIgnoreCase("cyclonedxjson") || contentType.equalsIgnoreCase("cyclonedxxml") || contentType.equalsIgnoreCase("spdxJson") )
     		return getExportIdForReport(scanId, contentType) ;
+    	else {
+    		String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
+    		return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
+    				contentType, byte[].class, 200, " scan report: " + reportId, false);
+    	}
+
         }
 
     /*
