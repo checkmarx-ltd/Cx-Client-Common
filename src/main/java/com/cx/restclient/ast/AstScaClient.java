@@ -279,8 +279,9 @@ public class AstScaClient extends AstClient implements Scanner {
 	        return HttpClientHelper.getSBOMReport(sbomReportResponse.getFileUrl());
         
     	}catch(Exception e ) {
-    		throw new IOException("Failed to getExportIdForReport :: ", e);
+    		log.error("Failed to getExportIdForReport :: ", e);
     	}
+		return null;
     }
     
     private SbomReportResponse getReportByExportId(String exportId, String contentType) throws IOException {
@@ -312,22 +313,33 @@ public class AstScaClient extends AstClient implements Scanner {
                 }, Objects::nonNull);
     }
 
-
-    /* The getReport Method is called by waitForScanResults in ASTSCAClient for getting the report such as PDF,
-    *	XML, JSON, CyclonexJson, CyclonexXml, SPdxjson.
+    
+    /* The getReport Method is called by waitForScanResults in ASTSCAClient for getting the report such as PDF,CSV,
+    *	XML, JSON, CyclonedxJson, CyclonedxXml, SPdxjson.
     * It will first fetch the exportId for the report with the help of scanId and contentType and then will fetch the report. 
     */
     private byte[] getReport(String scanId, String contentType) throws IOException {
+    	contentType = getContentType(contentType);
+    	return getExportIdForReport(scanId, contentType) ;
+    }
 
-    	if(contentType.equalsIgnoreCase("cyclonedxjson") || contentType.equalsIgnoreCase("cyclonedxxml") || contentType.equalsIgnoreCase("spdxJson") )
-    		return getExportIdForReport(scanId, contentType) ;
-    	else {
-    		String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
-    		return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
-    				contentType, byte[].class, 200, " scan report: " + reportId, false);
-    	}
+    private String getContentType(String contentType) {
+        if (contentType == null) return null;
 
+        switch (contentType.toUpperCase()) {
+            case "PDF":
+                return "ScanReportPdf";
+            case "XML":
+                return "ScanReportXml";
+            case "CSV":
+                return "ScanReportCsv";
+            case "JSON":
+                return "ScanReportJson";
+            default:
+                return contentType;
         }
+    }
+
 
     /*
 //    Depricated Method
