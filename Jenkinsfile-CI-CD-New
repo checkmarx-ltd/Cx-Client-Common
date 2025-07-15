@@ -486,7 +486,7 @@ pipeline {
         stage('Publish') {
             when {
                 expression {
-                    params.Tag == 'master' && params.IsReleaseBuild
+                    params.Tag == 'origin/master' && params.IsReleaseBuild
                 }
             }
             parallel {
