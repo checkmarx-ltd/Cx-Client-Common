@@ -6,12 +6,15 @@ import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_SCA_RESOL
 import static com.cx.restclient.sast.utils.SASTParam.TEMP_FILE_NAME_TO_ZIP;
 import static com.cx.restclient.common.CxPARAM.CX_REPORT_LOCATION;
 import static com.cx.restclient.httpClient.utils.ContentType.*;
+import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +24,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.sql.Timestamp;
 import java.util.*;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -39,6 +43,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.velocity.runtime.parser.node.SetExecutor;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -81,7 +86,8 @@ import com.cx.restclient.sast.utils.zip.NewCxZipFile;
 import com.cx.restclient.sast.utils.zip.Zipper;
 
 import com.cx.restclient.sca.dto.CxSCAResolvingConfiguration;
-
+import com.cx.restclient.sca.dto.ScanReportExportIdRequester;
+import com.cx.restclient.sca.dto.SbomReportResponse;
 import com.cx.restclient.sca.utils.CxSCAFileSystemUtils;
 import com.cx.restclient.sca.utils.fingerprints.CxSCAScanFingerprints;
 import com.cx.restclient.sca.utils.fingerprints.FingerprintCollector;
@@ -253,13 +259,97 @@ public class AstScaClient extends AstClient implements Scanner {
                 false);
     }
 
+    private byte[] getExportIdForReport(String scanId, String contentType) throws IOException {
+    	
+    	try {	
+			ScanReportExportIdRequester scanReportExportIdRequester = new ScanReportExportIdRequester(scanId, contentType) ;
+			StringEntity entity = new StringEntity(convertToJson(scanReportExportIdRequester), StandardCharsets.UTF_8);
+	        
+	        String jsonResponse = httpClient.postRequest(CxPARAM.SCA_GET_EXPORT_ID, CONTENT_TYPE_APPLICATION_JSON, entity, 
+					String.class, HttpStatus.SC_ACCEPTED, "failed to fetch export id" );
+	        
+	        ObjectMapper mapper = new ObjectMapper();
+	        JsonNode root = mapper.readTree(jsonResponse);
+	        String exportId = root.get("exportId").asText();
+	
+	        log.info("Export Id generated for "+ contentType + " :: "+exportId) ;
+	    	
+	        // getting Cyclonex Report by export Id 
+	        SbomReportResponse sbomReportResponse = getReportByExportId(exportId, contentType);
+	        return HttpClientHelper.getSBOMReport(sbomReportResponse.getFileUrl());
+        
+    	}catch(Exception e ) {
+    		log.error("Failed to getExportIdForReport :: ", e);
+    	}
+		return null;
+    }
     
+    private SbomReportResponse getReportByExportId(String exportId, String contentType) throws IOException {
+        
+    	return Awaitility.await()
+                .atMost(Duration.ofMinutes(2))
+                .pollInterval(Duration.ofSeconds(3))
+                .pollDelay(Duration.ZERO)
+                .until(() -> {
+                    try {
+                    	SbomReportResponse response = httpClient.getRequest(
+                                CxPARAM.SCA_GET_SBOM_REPORT.replace("{export_id}", exportId),
+                                contentType,
+                                SbomReportResponse.class,
+                                200,
+                                " failed to fetch scan report for exportId :: " + exportId,
+                                false
+                        );
+
+                    	if (response != null && response.getFileUrl() != null && !response.getFileUrl().isEmpty()) {
+                            return response;
+                        }
+
+                    } catch (Exception e) {
+                        log.warn("Still waiting for report (exportId={})... {}", exportId, e.getMessage());
+                    }
+
+                    return null;
+                }, Objects::nonNull);
+    }
+
+    
+    /* The getReport Method is called by waitForScanResults in ASTSCAClient for getting the report such as PDF,CSV,
+    *	XML, JSON, CyclonedxJson, CyclonedxXml, SPdxjson.
+    * It will first fetch the exportId for the report with the help of scanId and contentType and then will fetch the report. 
+    */
+    private byte[] getReport(String scanId, String contentType) throws IOException {
+    	contentType = getContentType(contentType);
+    	return getExportIdForReport(scanId, contentType) ;
+    }
+
+    private String getContentType(String contentType) {
+        if (contentType == null) return null;
+
+        switch (contentType.toUpperCase()) {
+            case "PDF":
+                return "ScanReportPdf";
+            case "XML":
+                return "ScanReportXml";
+            case "CSV":
+                return "ScanReportCsv";
+            case "JSON":
+                return "ScanReportJson";
+            default:
+                return contentType;
+        }
+    }
+
+
+    /*
+//    Depricated Method
 	private byte[] getReport(String scanId, String contentType) throws IOException {
 		String SCA_GET_REPORT = "/risk-management/risk-reports/{scan_id}/export?format={file_type}";
 
 		return httpClient.getRequest(SCA_GET_REPORT.replace("{scan_id}", scanId).replace("{file_type}", contentType),
 				contentType, byte[].class, 200, " scan report: " + reportId, false);
-	}
+	}*/
+	
 	//cli reports
 	 public static void writeReport(byte[] scanReport, String reportName, Logger log) {
 	        try {
