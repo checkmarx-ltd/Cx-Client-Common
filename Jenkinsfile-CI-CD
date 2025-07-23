@@ -249,7 +249,7 @@ pipeline {
                                     ipAddress96 = kit.getIpAddress(vmName + "-9.6", provider)
                                     node('install01') {
                                         kit.Create_Jenkins_Slave_On_Master_cx_operation(vmName + "-9.6")
-                                        kit.Create_Jenkins_Slave_On_Master_cx_operation(ipAddress96, vmName + "-9.6")
+                                        kit.Start_Jenkins_Slave_On_Windows_Pstools_cx_operation(ipAddress96, vmName + "-9.6")
                                     }
                                 }
                             }
