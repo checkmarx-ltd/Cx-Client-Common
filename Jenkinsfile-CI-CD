@@ -4,12 +4,12 @@ import java.time.*
 
 def workspace
 def vmName = "${BUILD_TAG}-CxSAST"
-def vmTemplate94 = "CxSDLC-Template-CxSAST-9-4"
-def ipAddress94
 def vmTemplate95 = "CxSDLC-Template-CxSAST-9-5"
 def ipAddress95
 def vmTemplate96 = "CxSDLC-Template-CxSAST-9-6-1"
 def ipAddress96
+def vmTemplate97 = "CxSDLC-Template-CxSAST-9-7"
+def ipAddress97
 def ram = "12000"
 def cpu = "8"
 def provider = "VMWARE"
@@ -19,9 +19,9 @@ def automationBranch = "9.0.0"
 
 pipeline {
     parameters {
-        string(name: "vmTemplate94",defaultValue: "${vmTemplate94}", description: "Template for 9.4 VM")
         string(name: "vmTemplate95",defaultValue: "${vmTemplate95}", description: "Template for 9.5 VM")
         string(name: "vmTemplate96",defaultValue: "${vmTemplate96}", description: "Template for 9.6 VM")
+        string(name: "vmTemplate97",defaultValue: "${vmTemplate97}", description: "Template for 9.7 VM")
         string(name: "ram",defaultValue: "${ram}", description: "Server memory")
         string(name: "cpu",defaultValue: "${cpu}", description: "")
         string(name: "provider",defaultValue: "${provider}", description: "IAAS platform to be used")
@@ -162,87 +162,6 @@ pipeline {
             }
             parallel {
 
-                stage('9.4') {
-                    when {
-                        expression { false }
-                    }
-                    stages {
-                        stage('Create VM') {
-                            steps {
-                                script {
-                                    kit.Create_Vm_Terraform(vmName + "-9.4", vmTemplate94, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
-                                    ipAddress94 = kit.getIpAddress(vmName + "-9.4", provider)
-                                    node('install01') {
-                                        kit.Create_Jenkins_Slave_On_Master_cx_operation(vmName + "-9.4")
-                                        kit.Start_Jenkins_Slave_On_Windows_Pstools_cx_operation(ipAddress94, vmName + "-9.4")
-                                    }
-                                }
-                            }
-                        }
-                        stage('Pull Automation Code') {
-                            steps {
-                                dir("${workspace}/9.4/Checkmarx-System-Test") {
-                                    git branch: "${env.automationBranch}", credentialsId: 'TFS-Test', poll: false, url: 'http://tfs2013:8080/tfs/DefaultCollection/Automation/_git/Checkmarx-System-Test'
-                                    sh "cp -r ../../../env ."
-                                    sh "sed -e 's/<CxSastIpAddress>/${ipAddress94}/g' -i ./env/topology.xml"
-                                }
-                            }
-                        }
-                        stage('Plugins API Sanity Test') {
-                            steps {
-                                dir("${workspace}/9.4/Checkmarx-System-Test") {
-                                    sh "docker run --rm --memory 2gb --name plugins-api-sanity-test-9.4-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.4/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress94} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q clean test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.4 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
-                                }
-                            }
-                        }
-                        stage('Plugins API Smoke Tests') {
-                            steps {
-                                dir("${workspace}/9.4/Checkmarx-System-Test") {
-                                    sh "docker run --rm --memory 2gb --name plugins-api-smoke-tests-9.4-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.4/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress94} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.4 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
-                                            -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
-                                }
-                            }
-                        }
-                        stage('Plugins CxCommonClient All Tests') {
-                            steps {
-                                dir("${workspace}/9.4/Checkmarx-System-Test") {
-                                    sh "docker run --rm --memory 2gb --name plugins-cxcommonclient-all-tests-9.4-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.4/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress94} maven:3.6.1-jdk-8-alpine \
-                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.4 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
-                                            -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
-                                }
-                            }
-                        }
-                    }
-                    post {
-                        always {
-                            script {
-                                dir("${workspace}/9.4/Checkmarx-System-Test") {
-                                    junit '**/PluginsCommonClient/target/surefire-reports/**/*.xml'
-                                }
-                                if (ipAddress94 != null) {
-                                    try {
-                                        node(vmName + "-9.4") {
-                                            kit.zipStashInstallationLogs("CxSAST-9.4-Logs")
-                                        }
-                                        unstash "CxSAST-9.4-Logs"
-                                    } catch (Exception e) {
-                    kit.Warning_Msg("Could not stash CxSAST-9.4-Logs, error:\n" + e.toString())
-                }
-                                    deleteVm(provider, ipAddress94, vmName + "-9.4")
-                                }
-                            }
-                        }
-                        failure {
-                            script {
-                                env.PIPELINE_STATUS = "Failure"
-                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
-                            }
-                        }
-                    }
-                }
-
                 stage('9.5') {
                     stages {
                         stage('Create VM') {
@@ -306,8 +225,8 @@ pipeline {
                                         }
                                         unstash "CxSAST-9.5-Logs"
                                     } catch (Exception e) {
-                    kit.Warning_Msg("Could not stash CxSAST-9.5-Logs, error:\n" + e.toString())
-                }
+                                        kit.Warning_Msg("Could not stash CxSAST-9.5-Logs, error:\n" + e.toString())
+                                    }
                                     deleteVm(provider, ipAddress95, vmName + "-9.5")
                                 }
                             }
@@ -315,16 +234,13 @@ pipeline {
                         failure {
                             script {
                                 env.PIPELINE_STATUS = "Failure"
-                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
+                                env.STAGE_NAME_FAILED = "${STAGE_NAME}"
                             }
                         }
                     }
                 }
 
                 stage('9.6') {
-                    when {
-                        expression { false }
-                    }
                     stages {
                         stage('Create VM') {
                             steps {
@@ -387,8 +303,8 @@ pipeline {
                                         }
                                         unstash "CxSAST-9.6-Logs"
                                     } catch (Exception e) {
-                    kit.Warning_Msg("Could not stash CxSAST-9.6-Logs, error:\n" + e.toString())
-                }
+                                        kit.Warning_Msg("Could not stash CxSAST-9.6-Logs, error:\n" + e.toString())
+                                    }
                                     deleteVm(provider, ipAddress96, vmName + "-9.6")
                                 }
                             }
@@ -396,12 +312,91 @@ pipeline {
                         failure {
                             script {
                                 env.PIPELINE_STATUS = "Failure"
-                                env.STAGE_NAME_FAILED="${STAGE_NAME}"
+                                env.STAGE_NAME_FAILED = "${STAGE_NAME}"
                             }
                         }
                     }
                 }
 
+                stage('9.7') {
+                    stages {
+                        stage('Create VM') {
+                            steps {
+                                script {
+                                    kit.Create_Vm_Terraform(vmName + "-9.7", vmTemplate97, ram, cpu, provider, decommissionPeriod, "Auto", "Plugins-CI", vmwareNetwork)
+                                    ipAddress97 = kit.getIpAddress(vmName + "-9.7", provider)
+                                    node('install01') {
+                                        kit.Create_Jenkins_Slave_On_Master_cx_operation(vmName + "-9.7")
+                                        kit.Start_Jenkins_Slave_On_Windows_Pstools_cx_operation(ipAddress97, vmName + "-9.7")
+                                    }
+                                }
+                            }
+                        }
+                        stage('Pull Automation Code') {
+                            steps {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    git branch: "${env.automationBranch}", credentialsId: 'TFS-Test', poll: false, url: 'http://tfs2013:8080/tfs/DefaultCollection/Automation/_git/Checkmarx-System-Test'
+                                    sh "cp -r ../../../env ."
+                                    sh "sed -e 's/<CxSastIpAddress>/${ipAddress97}/g' -i ./env/topology.xml"
+                                }
+                            }
+                        }
+                        stage('Plugins API Sanity Test') {
+                            steps {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    sh "docker run --rm --memory 2gb --name plugins-api-sanity-test-9.7-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.7/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress97} maven:3.6.1-jdk-8-alpine \
+                                        mvn -q clean test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.7 -Dtest=com.cx.automation.plugin.test.cxcommonclient.sanity.* -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                }
+                            }
+                        }
+                        stage('Plugins API Smoke Tests') {
+                            steps {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    sh "docker run --rm --memory 2gb --name plugins-api-smoke-tests-9.7-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.7/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress97} maven:3.6.1-jdk-8-alpine \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.7 -Dtest=com.cx.automation.plugin.test.cxcommonclient.PluginsCxSASTSmokeTests,com.cx.automation.plugin.test.cxcommonclient.PluginsCxMandOAndOSASmokeTests \
+                                            -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                }
+                            }
+                        }
+                        stage('Plugins CxCommonClient All Tests') {
+                            steps {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    sh "docker run --rm --memory 2gb --name plugins-cxcommonclient-all-tests-9.7-${BUILD_TAG} -v maven-repo:/root/.m2 -v ${workspace}/9.7/Checkmarx-System-Test:/usr/src/automation -w /usr/src/automation --add-host WIN2012-ENV9-B:${ipAddress97} maven:3.6.1-jdk-8-alpine \
+                                        mvn -q test -Dcxcommon.version=${env.cxCommonVersion} -Dsast.version=9.7 -Dtest=com.cx.automation.plugin.test.cxcommonclient.scan.*,com.cx.automation.plugin.test.cxcommonclient.osa.* \
+                                            -Dtopology.xml.ref=/usr/src/automation/env/topology.xml -Denv=hardening_env -DfailIfNoTests=false -Dmaven.test.failure.ignore=false -DskipTests=false"
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            script {
+                                dir("${workspace}/9.7/Checkmarx-System-Test") {
+                                    junit '**/PluginsCommonClient/target/surefire-reports/**/*.xml'
+                                }
+                                if (ipAddress97 != null) {
+                                    try {
+                                        node(vmName + "-9.7") {
+                                            kit.zipStashInstallationLogs("CxSAST-9.7-Logs")
+                                        }
+                                        unstash "CxSAST-9.7-Logs"
+                                    } catch (Exception e) {
+                                        kit.Warning_Msg("Could not stash CxSAST-9.7-Logs, error:\n" + e.toString())
+                                    }
+                                    deleteVm(provider, ipAddress97, vmName + "-9.7")
+                                }
+                            }
+                        }
+                        failure {
+                            script {
+                                env.PIPELINE_STATUS = "Failure"
+                                env.STAGE_NAME_FAILED = "${STAGE_NAME}"
+                            }
+                        }
+                    }
+
+
+                }
             }
         }
 
