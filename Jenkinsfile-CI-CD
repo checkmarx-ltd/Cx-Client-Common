@@ -241,9 +241,6 @@ pipeline {
                 }
 
                 stage('9.6') {
-                    when {
-                        expression { true }
-                    }
                     stages {
                         stage('Create VM') {
                             steps {
@@ -322,9 +319,6 @@ pipeline {
                 }
 
                 stage('9.7') {
-                    when {
-                        expression { true }
-                    }
                     stages {
                         stage('Create VM') {
                             steps {
