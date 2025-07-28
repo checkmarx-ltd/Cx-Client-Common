@@ -17,6 +17,7 @@ def decommissionPeriod = "3 hour"
 def vmwareNetwork = "Lab"
 def automationBranch = "9.0.0"
 
+
 pipeline {
     parameters {
         string(name: "vmTemplate95",defaultValue: "${vmTemplate95}", description: "Template for 9.5 VM")
