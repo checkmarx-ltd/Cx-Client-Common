@@ -1,5 +1,6 @@
 package com.cx.restclient.httpClient;
 
+import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.common.ErrorMessage;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.CxVersion;
@@ -646,12 +647,17 @@ public class CxHttpClient implements Closeable {
             log.warn("cxOrigin is null");
             cxOrigin = "unknown"; // Or handle as appropriate
         }
-        
-        String version = (pluginVersion != null ) ? pluginVersion : "unknown"; // Ensure cxVersion is not null
-        
-        return "plugin_name=" + cxOrigin + ";plugin_version=" + version;
+    	String version = null;
+    	if(System.getProperty(CxPARAM.CX_PLUGIN_VERSION) != null ) {
+    		version = System.getProperty(CxPARAM.CX_PLUGIN_VERSION);
+    	}else if(pluginVersion != null ) {
+    		version = pluginVersion;
+    	}else {
+    		version = "unknown";
+    	}
+        return PLUGIN_NAME + cxOrigin + PLUGIN_VERSION + version;
     }
-
+    
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
     	//Support unicode characters
         if (httpMethod.getURI() != null && (StringUtils.isNotEmpty(httpMethod.getURI().getHost()) ||
