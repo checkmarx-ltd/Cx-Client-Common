@@ -655,7 +655,7 @@ public class CxHttpClient implements Closeable {
     	}else {
     		version = "unknown";
     	}
-        return PLUGIN_NAME + cxOrigin + PLUGIN_VERSION + version;
+        return CxPARAM.PLUGIN_NAME + cxOrigin + CxPARAM.PLUGIN_VERSION + version;
     }
     
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
