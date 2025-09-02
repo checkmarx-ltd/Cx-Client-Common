@@ -2956,26 +2956,49 @@
                 <div class="detailed-report">
                     <div class="full-downloads osa-downloads">
                         <div class="report-link">
-                      
-                        <#if (config.cxARMUrl)??>                   
-                            <a href="${config.cxARMUrl}/cxarm/webclient/" class="html-report" id="arm-html-link">
-                                <div class="link-to-result">
-                                    <div class="results-link-icon link-icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="14"
+    
+    <#if (config.cxARMUrl)?has_content>
+       <#if sast.sastPolicies?size gt 0>
+            <a href="${config.cxARMUrl}" class="html-report" id="arm-html-link">
+                <div class="link-to-result">
+                    <div class="results-link-icon link-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="14"
                                              viewBox="0 0 12 14">
-                                            <title>analyze</title>
-                                            <g fill="none" fill-rule="evenodd">
-                                                <circle stroke="#4A90E2" stroke-width="2" cx="5" cy="5" r="4"/>
-                                                <path fill="#4A90E2"
+                            <title>analyze-sast</title>
+                            <g fill="none" fill-rule="evenodd">
+                                <circle stroke="#4A90E2" stroke-width="2" cx="5" cy="5" r="4"/>
+                                <path fill="#4A90E2"
                                                       d="M6.366 8.366l1.732-1 3.268 5.66-1.732 1z"/>
-                                            </g>
-                                        </svg>
-                                    </div>
-                                    <div class="link-text">Analyze Results</div>
-                                </div>
-                            </a>
-                            </#if>
-                        </div>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="link-text">Analyze SAST Results</div>
+                </div>
+            </a>
+        </#if>
+                   
+        <!-- Show "Analyze SCA Results" if sca.policyEvaluations exists -->
+        <#if (sca.policyEvaluations)??> 
+        	<#if sca.policyEvaluations?size gt 0>
+            <a href="${dependencyResult.summaryLink}/policies" class="html-report" id="osa-html-link">
+                <div class="link-to-result">
+                    <div class="results-link-icon link-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="14" viewBox="0 0 12 14">
+                            <title>analyze-sca</title>
+                            <g fill="none" fill-rule="evenodd">
+                                <circle stroke="#4A90E2" stroke-width="2" cx="5" cy="5" r="4"/>
+                                <path fill="#4A90E2" d="M6.366 8.366l1.732-1 3.268 5.66-1.732 1z"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="link-text">Analyze SCA Results</div>
+                </div>
+            </a>
+            </#if>
+        </#if>
+
+    </#if>
+</div>
                     </div>
                 </div>
             </div>
