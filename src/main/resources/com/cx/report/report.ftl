@@ -2978,7 +2978,7 @@
         </#if>
                    
         <!-- Show "Analyze SCA Results" if sca.policyEvaluations exists -->
-        <#if (sca.policyEvaluations)??> 
+        <#if (sca.policyEvaluations)?has_content>
         	<#if sca.policyEvaluations?size gt 0>
             <a href="${dependencyResult.summaryLink}/policies" class="html-report" id="osa-html-link">
                 <div class="link-to-result">
