@@ -42,7 +42,7 @@ public class SpawnScaResolver {
         String[] scaResolverCommand;
 
         List<String> arguments = new ArrayList<String>();
-        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(scaResolverAddParams);
+        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(scaResolverAddParams.trim());
         while (m.find())
             arguments.add(m.group(1));
 		/*
