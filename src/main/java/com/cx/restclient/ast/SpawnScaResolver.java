@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.FileWriter;
 
+import com.cx.restclient.sast.utils.zip.CxZipUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 
@@ -49,6 +50,20 @@ public class SpawnScaResolver {
 		 Convert path and additional parameters into a single CMD command
 		 */
         scaResolverCommand = new String[arguments.size() + 2];
+        try {
+            for (int i = 0; i < arguments.size() - 1; i++) {
+                log.info(arguments.get(i));
+                if ("-s".equals(arguments.get(i))) {
+                    String src = arguments.get(i + 1).replace("\"", "");
+                    if (src.toLowerCase().endsWith(".zip")) {
+                        String tempDir = CxZipUtils.extractZipToTempDirectory(src, log, "sca");
+                        arguments.set(i + 1, tempDir);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new CxClientException("Failed to unzip source archive", e);
+        }
 
         if (!SystemUtils.IS_OS_UNIX) {
             //Add "ScaResolver.exe" to cmd command on Windows
@@ -118,7 +133,7 @@ public class SpawnScaResolver {
                 printExecCommandOutput(tempPermissionValidation, log);
             }
             
-            log.debug("Executing ScaResolver command.");
+            log.info("Executing ScaResolver command.");
             process = Runtime.getRuntime().exec(command);
             
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {

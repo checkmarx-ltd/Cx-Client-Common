@@ -159,7 +159,7 @@ public class AstSastClient extends AstClient implements Scanner {
 
         PathFilter filter = new PathFilter("", "", log);
         String sourceDir = config.getSourceDir();
-        byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
+        byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log,"astsast");
 
         return initiateScanForUpload(projectId, zipFile, config.getAstSastConfig(),config.getAstScaConfig().getScaScanCustomTags());
     }
