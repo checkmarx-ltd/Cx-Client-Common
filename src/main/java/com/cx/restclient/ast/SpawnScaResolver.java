@@ -52,8 +52,9 @@ public class SpawnScaResolver {
         scaResolverCommand = new String[arguments.size() + 2];
         try {
             for (int i = 0; i < arguments.size() - 1; i++) {
-                log.info(arguments.get(i));
-                if ("-s".equals(arguments.get(i))) {
+                String arg = arguments.get(i);
+                log.info(arg);
+                if ("-s".equals(arg)) {
                     String src = arguments.get(i + 1).replace("\"", "");
                     if (src.toLowerCase().endsWith(".zip")) {
                         String tempDir = CxZipUtils.extractZipToTempDirectory(src, log, "sca");
@@ -62,6 +63,7 @@ public class SpawnScaResolver {
                 }
             }
         } catch (IOException e) {
+            CxZipUtils.cleanupTempExtractedDir(log);
             throw new CxClientException("Failed to unzip source archive", e);
         }
 

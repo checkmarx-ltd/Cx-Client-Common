@@ -28,15 +28,21 @@ public abstract class CxZipUtils {
         byte[] zipFile;
         try {
             if (config.getZipFile() != null) {
-                log.info("ZIP file provided, extracting to temporary directory");
-                sourceDir = extractZipToTempDirectory(config.getZipFile().getAbsolutePath(), log, prefix);
+                try{
+                    sourceDir = extractZipToTempDirectory(config.getZipFile().getAbsolutePath(), log, prefix);
+                } catch (IOException e) {
+                    log.error("Failed to extract ZIP file: {}", config.getZipFile().getAbsolutePath(), e);
+                    throw new IOException("Error extracting ZIP file for scanning", e);
+                }
+            }else {
+                log.info("Uploading the zipped source code.");
             }
             log.debug("----------------------------------- Start zipping files :------------------------------------");
             Long maxZipSize = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
 
             CxZip cxZip = new CxZip(TEMP_FILE_NAME_TO_ZIP, maxZipSize, log);
             zipFile = cxZip.zipWorkspaceFolder(new File(sourceDir), filter);
-            log.info("sourceDir:" + sourceDir);
+            log.debug("sourceDir:" + sourceDir);
             log.debug("----------------------------------- Finish zipping files :------------------------------------");
 
             return zipFile;
@@ -46,7 +52,6 @@ public abstract class CxZipUtils {
     }
 
     public static String extractZipToTempDirectory(String zipFilePath, Logger log, String prefix) throws IOException {
-        log.info("Extracting ZIP file to temporary directory: {}", zipFilePath);
 
         tempExtractedDir = Files.createTempDirectory(prefix + "_extracted_").toFile();
         log.info("Created temporary directory: {}", tempExtractedDir.getAbsolutePath());

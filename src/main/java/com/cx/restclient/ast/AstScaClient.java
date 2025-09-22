@@ -8,7 +8,9 @@ import static com.cx.restclient.common.CxPARAM.CX_REPORT_LOCATION;
 import static com.cx.restclient.httpClient.utils.ContentType.*;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.convertToJson;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -492,7 +494,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
 //        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
-        String sourceDir = getEffectiveSourceDirForDependencyScanWithZipHandling();
+        String sourceDir = getResolvedDependencySourceDir();
 
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
 
@@ -678,7 +680,7 @@ public class AstScaClient extends AstClient implements Scanner {
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
 //        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
-        String sourceDir = getEffectiveSourceDirForDependencyScanWithZipHandling();
+        String sourceDir = getResolvedDependencySourceDir();
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
         String additinalFilters = getAdditionalManifestFilters();
         String finalFilters =  additinalFilters + getManifestsIncludePattern();
@@ -718,14 +720,19 @@ public class AstScaClient extends AstClient implements Scanner {
         return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig,config.getAstScaConfig().getScaScanCustomTags());
     }
 
-    private String getEffectiveSourceDirForDependencyScanWithZipHandling() throws IOException {
+    private String getResolvedDependencySourceDir() throws IOException {
         String effectiveDir = config.getEffectiveSourceDirForDependencyScan();
         if(effectiveDir == null){
             effectiveDir = config.getZipFile().getAbsolutePath();
         }
         log.info("Effective Dir: {}", effectiveDir);
         if(CxZipUtils.isZip(effectiveDir, log)){
-            effectiveDir = CxZipUtils.extractZipToTempDirectory(effectiveDir, log, "astsca");
+            try{
+                effectiveDir = CxZipUtils.extractZipToTempDirectory(effectiveDir, log, "astsca");
+            }catch (IOException e) {
+                log.error("Failed to extract ZIP file: {}", config.getZipFile().getAbsolutePath(), e);
+                throw new IOException("Error extracting ZIP file for scanning", e);
+            }
         }
         return effectiveDir;
     }
