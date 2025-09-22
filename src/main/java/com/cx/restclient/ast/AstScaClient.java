@@ -493,7 +493,6 @@ public class AstScaClient extends AstClient implements Scanner {
         log.info("Using local directory flow.");
 
         PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
-//        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
         String sourceDir = getResolvedDependencySourceDir();
 
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
@@ -679,7 +678,6 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
-//        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
         String sourceDir = getResolvedDependencySourceDir();
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
         String additinalFilters = getAdditionalManifestFilters();
