@@ -63,7 +63,7 @@ public abstract class ShragaUtils {
             }
         }
 
-        log.info("Exclude folders converted to: '" + result.toString() + "'");
+        log.info("These files/folders will be skipped:: '" + result.toString() + "'");
         return result.toString();
     }
 
