@@ -523,12 +523,10 @@ public class CxHttpClient implements Closeable {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
-            log.info("----------CxHttpClient-generateToken-CxClientException-----------");
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            log.error("Cx-Client-Common:CxHttpClient:generateToken - CxClientException stack trace: {}", sw.toString());
-            log.info("----------------------");
+            log.error(sw.toString());
             if (!e.getMessage().contains("invalid_scope")) {
                 throw new CxClientException(String.format("Failed to generate access token, failure error was: %s", e.getMessage()), e);
             }
@@ -539,13 +537,10 @@ public class CxHttpClient implements Closeable {
             return request(post_1, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntityForSecondLoginRetry,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (Exception e) {
-            //log.error("Cx-Client-Common:CxHttpClient:generateToken - Exception caught : {}", e);
-            log.info("-----------CxHttpClient-generateToken-Exception-----------");
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            log.error("Cx-Client-Common:CxHttpClient:generateToken - Exception stack trace: {}", sw.toString());
-            log.info("----------------------");
+            log.error(sw.toString());
             ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
             settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
             UrlEncodedFormEntity requestEntityForSecondLoginRetry = getAuthRequest(settings);
@@ -740,7 +735,7 @@ public class CxHttpClient implements Closeable {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            log.error("Cx-Client-Common:CxHttpClient:request - UnknownHostException", sw.toString());
+            log.error(sw.toString());
             throw new CxHTTPClientException(ErrorMessage.CHECKMARX_SERVER_CONNECTION_FAILED.getErrorMessage(), e);
         } catch (CxTokenExpiredException ex) {
             if (retry) {
@@ -754,7 +749,7 @@ public class CxHttpClient implements Closeable {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             ex.printStackTrace(pw);
-            log.error("Cx-Client-Common:CxHttpClient:request - CxTokenExpiredException", sw.toString());
+            log.error(sw.toString());
             throw ex;
         } finally {
             httpMethod.releaseConnection();
