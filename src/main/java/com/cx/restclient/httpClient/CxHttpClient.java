@@ -84,7 +84,8 @@ import java.util.regex.PatternSyntaxException;
 import static com.cx.restclient.common.CxPARAM.*;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.*;
-
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  * Created by Galn on 05/02/2018.
@@ -522,9 +523,29 @@ public class CxHttpClient implements Closeable {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
+            log.info("----------CxHttpClient-generateToken-CxClientException-----------");
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.error("Cx-Client-Common:CxHttpClient:generateToken - CxClientException stack trace: {}", sw.toString());
+            log.info("----------------------");
             if (!e.getMessage().contains("invalid_scope")) {
                 throw new CxClientException(String.format("Failed to generate access token, failure error was: %s", e.getMessage()), e);
             }
+            ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
+            settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
+            UrlEncodedFormEntity requestEntityForSecondLoginRetry = getAuthRequest(settings);
+            HttpPost post_1 = new HttpPost(settings.getAccessControlBaseUrl());
+            return request(post_1, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntityForSecondLoginRetry,
+                    TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
+        } catch (Exception e) {
+            //log.error("Cx-Client-Common:CxHttpClient:generateToken - Exception caught : {}", e);
+            log.info("-----------CxHttpClient-generateToken-Exception-----------");
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.error("Cx-Client-Common:CxHttpClient:generateToken - Exception stack trace: {}", sw.toString());
+            log.info("----------------------");
             ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
             settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
             UrlEncodedFormEntity requestEntityForSecondLoginRetry = getAuthRequest(settings);
@@ -716,7 +737,10 @@ public class CxHttpClient implements Closeable {
             //extract response as object and return the link
             return convertToObject(response, responseType, isCollection);
         } catch (UnknownHostException e) {
-            log.error(e.getMessage());
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.error("Cx-Client-Common:CxHttpClient:request - UnknownHostException", sw.toString());
             throw new CxHTTPClientException(ErrorMessage.CHECKMARX_SERVER_CONNECTION_FAILED.getErrorMessage(), e);
         } catch (CxTokenExpiredException ex) {
             if (retry) {
@@ -727,6 +751,10 @@ public class CxHttpClient implements Closeable {
                     return request(httpMethod, contentType, entity, responseType, expectStatus, failedMsg, isCollection, false);
                 }
             }
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            log.error("Cx-Client-Common:CxHttpClient:request - CxTokenExpiredException", sw.toString());
             throw ex;
         } finally {
             httpMethod.releaseConnection();
