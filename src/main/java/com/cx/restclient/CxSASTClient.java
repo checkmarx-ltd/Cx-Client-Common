@@ -254,16 +254,15 @@ public class CxSASTClient extends LegacyClient implements Scanner {
 
     private long createLocalSASTScan(long projectId) throws IOException {
         if (isScanWithSettingsSupported()) {
-            log.info("Uploading the zipped source code.");
             PathFilter filter = new PathFilter(config.getSastFolderExclusions(), config.getSastFilterPattern(), log);
-            byte[] zipFile = CxZipUtils.getZippedSources(config, filter, config.getSourceDir(), log);
+            byte[] zipFile = CxZipUtils.getZippedSources(config, filter, config.getSourceDir(), log, "cxsast");
             ScanWithSettingsResponse response = scanWithSettings(zipFile, projectId, false);
             return response.getId();
         } else {
             configureScanSettings(projectId);
             //prepare sources for scan
             PathFilter filter = new PathFilter(config.getSastFolderExclusions(), config.getSastFilterPattern(), log);
-            byte[] zipFile = CxZipUtils.getZippedSources(config, filter, config.getSourceDir(), log);
+            byte[] zipFile = CxZipUtils.getZippedSources(config, filter, config.getSourceDir(), log, "cxsast");
             uploadZipFile(zipFile, projectId);
 
             return createScan(projectId);

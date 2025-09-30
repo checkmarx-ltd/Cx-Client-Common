@@ -493,14 +493,15 @@ public class AstScaClient extends AstClient implements Scanner {
         log.info("Using local directory flow.");
 
         PathFilter filter = new PathFilter(config.getOsaFolderExclusions(), config.getOsaFilterPattern(), log);
-        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
+        String sourceDir = getResolvedDependencySourceDir();
 
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
 
-        byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log);
+        byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log, "astsca");
 
         
         FileUtils.deleteDirectory(configFileDestination.toFile());
+        CxZipUtils.cleanupTempExtractedDir(log);
 
         return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig(),config.getAstScaConfig().getScaScanCustomTags());
     }
@@ -597,6 +598,7 @@ public class AstScaClient extends AstClient implements Scanner {
 		}else{
             throw new CxClientException("Error while running sca resolver executable. Exit code: "+exitCode);
         }
+        CxZipUtils.cleanupTempExtractedDir(log);
     	return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), config.getAstScaConfig(),config.getAstScaConfig().getScaScanCustomTags());
     }
 
@@ -676,7 +678,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private HttpResponse submitManifestsAndFingerprintsFromLocalDir(String projectId) throws IOException {
         log.info("Using manifest only and fingerprint flow");
-        String sourceDir = config.getEffectiveSourceDirForDependencyScan();
+        String sourceDir = getResolvedDependencySourceDir();
         Path configFileDestination = copyConfigFileToSourceDir(sourceDir);
         String additinalFilters = getAdditionalManifestFilters();
         String finalFilters =  additinalFilters + getManifestsIncludePattern();
@@ -711,8 +713,26 @@ public class AstScaClient extends AstClient implements Scanner {
 
 
         FileUtils.deleteDirectory(configFileDestination.toFile());
+        CxZipUtils.cleanupTempExtractedDir(log);
 
         return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig,config.getAstScaConfig().getScaScanCustomTags());
+    }
+
+    private String getResolvedDependencySourceDir() throws IOException {
+        String effectiveDir = config.getEffectiveSourceDirForDependencyScan();
+        if(effectiveDir == null){
+            effectiveDir = config.getZipFile().getAbsolutePath();
+        }
+        log.info("Effective Dir: {}", effectiveDir);
+        if(CxZipUtils.isZip(effectiveDir, log)){
+            try{
+                effectiveDir = CxZipUtils.extractZipToTempDirectory(effectiveDir, log, "astsca");
+            }catch (IOException e) {
+                log.error("Failed to extract ZIP file: {}", config.getZipFile().getAbsolutePath(), e);
+                throw new IOException("Error extracting ZIP file for scanning", e);
+            }
+        }
+        return effectiveDir;
     }
 
     /**

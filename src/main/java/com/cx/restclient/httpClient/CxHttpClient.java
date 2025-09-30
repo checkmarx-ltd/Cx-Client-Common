@@ -1,5 +1,6 @@
 package com.cx.restclient.httpClient;
 
+import com.cx.restclient.common.CxPARAM;
 import com.cx.restclient.common.ErrorMessage;
 import com.cx.restclient.configuration.CxScanConfig;
 import com.cx.restclient.dto.CxVersion;
@@ -83,7 +84,8 @@ import java.util.regex.PatternSyntaxException;
 import static com.cx.restclient.common.CxPARAM.*;
 import static com.cx.restclient.httpClient.utils.ContentType.CONTENT_TYPE_APPLICATION_JSON;
 import static com.cx.restclient.httpClient.utils.HttpClientHelper.*;
-
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  * Created by Galn on 05/02/2018.
@@ -521,9 +523,24 @@ public class CxHttpClient implements Closeable {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.error(sw.toString());
             if (!e.getMessage().contains("invalid_scope")) {
                 throw new CxClientException(String.format("Failed to generate access token, failure error was: %s", e.getMessage()), e);
             }
+            ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
+            settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
+            UrlEncodedFormEntity requestEntityForSecondLoginRetry = getAuthRequest(settings);
+            HttpPost post_1 = new HttpPost(settings.getAccessControlBaseUrl());
+            return request(post_1, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntityForSecondLoginRetry,
+                    TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.error(sw.toString());
             ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
             settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
             UrlEncodedFormEntity requestEntityForSecondLoginRetry = getAuthRequest(settings);
@@ -646,12 +663,17 @@ public class CxHttpClient implements Closeable {
             log.warn("cxOrigin is null");
             cxOrigin = "unknown"; // Or handle as appropriate
         }
-        
-        String version = (pluginVersion != null ) ? pluginVersion : "unknown"; // Ensure cxVersion is not null
-        
-        return "plugin_name=" + cxOrigin + ";plugin_version=" + version;
+    	String version = null;
+    	if(System.getProperty(CxPARAM.CX_PLUGIN_VERSION) != null ) {
+    		version = System.getProperty(CxPARAM.CX_PLUGIN_VERSION);
+    	}else if(pluginVersion != null ) {
+    		version = pluginVersion;
+    	}else {
+    		version = "unknown";
+    	}
+        return CxPARAM.PLUGIN_NAME + cxOrigin + CxPARAM.PLUGIN_VERSION + version;
     }
-
+    
     private <T> T request(HttpRequestBase httpMethod, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg, boolean isCollection, boolean retry) throws IOException {
     	//Support unicode characters
         if (httpMethod.getURI() != null && (StringUtils.isNotEmpty(httpMethod.getURI().getHost()) ||
@@ -710,7 +732,10 @@ public class CxHttpClient implements Closeable {
             //extract response as object and return the link
             return convertToObject(response, responseType, isCollection);
         } catch (UnknownHostException e) {
-            log.error(e.getMessage());
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.error(sw.toString());
             throw new CxHTTPClientException(ErrorMessage.CHECKMARX_SERVER_CONNECTION_FAILED.getErrorMessage(), e);
         } catch (CxTokenExpiredException ex) {
             if (retry) {
@@ -721,6 +746,10 @@ public class CxHttpClient implements Closeable {
                     return request(httpMethod, contentType, entity, responseType, expectStatus, failedMsg, isCollection, false);
                 }
             }
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            log.error(sw.toString());
             throw ex;
         } finally {
             httpMethod.releaseConnection();
