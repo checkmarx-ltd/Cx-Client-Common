@@ -302,6 +302,7 @@ public abstract class LegacyClient {
                     hotfix = " Hotfix [" + config.getCxVersion().getHotFix() + "].";
                 }
             } catch (Exception ex) {
+                log.debug("Checking hotfix version error:", ex);
             }
 
             version = config.getCxVersion().getVersion();
@@ -310,7 +311,7 @@ public abstract class LegacyClient {
 
         } catch (Exception ex) {
             version = "lower than 9.0";
-            log.debug("Checkmarx server version [lower than 9.0]");
+            log.debug("Checkmarx server version [lower than 9.0]", ex);
         }
         return version;
     }
