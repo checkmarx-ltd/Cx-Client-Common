@@ -523,10 +523,6 @@ public class CxHttpClient implements Closeable {
             return request(post, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntity,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (CxClientException e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.error(sw.toString());
             if (!e.getMessage().contains("invalid_scope")) {
                 throw new CxClientException(String.format("Failed to generate access token, failure error was: %s", e.getMessage()), e);
             }
@@ -537,16 +533,8 @@ public class CxHttpClient implements Closeable {
             return request(post_1, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntityForSecondLoginRetry,
                     TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
         } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.error(sw.toString());
-            ClientType.RESOURCE_OWNER.setScopes("sast_rest_api");
-            settings.setClientTypeForPasswordAuth(ClientType.RESOURCE_OWNER);
-            UrlEncodedFormEntity requestEntityForSecondLoginRetry = getAuthRequest(settings);
-            HttpPost post_1 = new HttpPost(settings.getAccessControlBaseUrl());
-            return request(post_1, ContentType.APPLICATION_FORM_URLENCODED.toString(), requestEntityForSecondLoginRetry,
-                    TokenLoginResponse.class, HttpStatus.SC_OK, AUTH_MESSAGE, false, false);
+            log.error(e.getMessage(),e);
+            throw e;
         }
     }
 
