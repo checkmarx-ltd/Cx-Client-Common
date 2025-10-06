@@ -707,6 +707,7 @@ public class AstScaClient extends AstClient implements Scanner {
 
         CxSCAScanFingerprints fingerprints = fingerprintCollector.collectFingerprints(sourceDir, filesToFingerprint);
 
+        config.setZipFile(null);
         File zipFile = zipDirectoryAndFingerprints(sourceDir, filesToZip, fingerprints);
 
         optionallyWriteFingerprintsToFile(fingerprints);
@@ -723,7 +724,7 @@ public class AstScaClient extends AstClient implements Scanner {
         if(effectiveDir == null){
             effectiveDir = config.getZipFile().getAbsolutePath();
         }
-        log.info("Effective Dir: {}", effectiveDir);
+        log.debug("Effective Dir: {}", effectiveDir);
         if(CxZipUtils.isZip(effectiveDir, log)){
             try{
                 effectiveDir = CxZipUtils.extractZipToTempDirectory(effectiveDir, log, "astsca");
