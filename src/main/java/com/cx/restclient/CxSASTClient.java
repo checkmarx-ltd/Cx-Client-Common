@@ -215,7 +215,7 @@ public class CxSASTClient extends LegacyClient implements Scanner {
             language = httpClient.getLanguageFromAccessToken();
             initSastResults.setSastLanguage(language);
         } catch (CxClientException e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(),e);
             setState(State.FAILED);
             initSastResults.setException(e);
         }
