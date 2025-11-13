@@ -305,14 +305,28 @@ public abstract class LegacyClient {
             }
 
             version = config.getCxVersion().getVersion();
-            log.info("Checkmarx server version [" + config.getCxVersion().getVersion() + "]." + hotfix);
+            if(isLowerThanNine(version)){
+                log.info("Checkmarx server version [lower than 9]");
+            }else{
+                log.info("Checkmarx server version [" + config.getCxVersion().getVersion() + "]." + hotfix);
+            }
             log.info("Checkmarx Engine Pack Version [" + config.getCxVersion().getEnginePackVersion() + "].");
 
         } catch (Exception ex) {
             version = "lower than 9.0";
-            log.debug("Checkmarx server version [lower than 9.0]");
+            log.error("Failed to retrieve Checkmarx version: {}", ex.getMessage(), ex);
         }
         return version;
+    }
+
+    private boolean isLowerThanNine(String version) {
+        try{
+            String majorPart = version.split("\\.")[0];
+            int majorVersion = Integer.parseInt(majorPart);
+            return majorVersion < 9;
+        }catch(Exception e){
+            return true;
+        }
     }
 
     public String login(Boolean isVersionRequired) throws IOException {
