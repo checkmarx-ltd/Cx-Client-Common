@@ -379,6 +379,11 @@ public abstract class LegacyClient {
             config.setEngineConfigurationId(1);
         } else if (config.getEngineConfigurationName() != null) {
             final List<EngineConfiguration> engineConfigurations = getEngineConfiguration();
+            boolean exists = engineConfigurations.stream()
+                    .anyMatch(a -> a.getName().equalsIgnoreCase(config.getEngineConfigurationName()));
+            if (!exists) {
+                throw new CxClientException("Engine configuration: \"" + config.getEngineConfigurationName() + "\" was not found in server");
+            }
             for (EngineConfiguration engineConfiguration : engineConfigurations) {
                 if (engineConfiguration.getName().equalsIgnoreCase(config.getEngineConfigurationName())) {
                     config.setEngineConfigurationId(engineConfiguration.getId());
