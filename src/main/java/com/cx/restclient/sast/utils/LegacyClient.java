@@ -381,7 +381,7 @@ public abstract class LegacyClient {
             final List<EngineConfiguration> engineConfigurations = getEngineConfiguration();
             boolean exists = engineConfigurations.stream()
                     .anyMatch(a -> a.getName().equalsIgnoreCase(config.getEngineConfigurationName()));
-            if (!exists) {
+            if (!exists && !"Improved Scan Flow".equalsIgnoreCase(config.getEngineConfigurationName())) {
                 throw new CxClientException("Engine configuration: \"" + config.getEngineConfigurationName() + "\" was not found in server");
             }
             for (EngineConfiguration engineConfiguration : engineConfigurations) {

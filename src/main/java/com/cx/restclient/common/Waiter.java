@@ -46,18 +46,17 @@ public abstract class Waiter<T extends BaseStatus> {
                     if (retry <= 0) {
                         throw new CxClientException(FAILED_MSG + scanType + ". Error message: " + e.getMessage(), e);
                     }
-                    if (statusResponse == null || (statusResponse.getBaseStatus() == null)) {
-                        statusResponse = (T) new BaseStatus(Status.SOURCE_PULLING_AND_DEPLOYMENT);
-                    }
                     continue;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    if (Thread.interrupted()) {
+                    if (Thread.currentThread().isInterrupted()) {
                         throw new CxClientException(e.getMessage());
                     }
                 }
                 elapsedTimeSec = (new Date()).getTime() / 1000 - startTimeSec;
-                printProgress(statusResponse);
+                if (statusResponse != null) {
+                    printProgress(statusResponse);
+                }
             } while (isTaskInProgress(statusResponse) && (scanTimeoutSec <= 0 || elapsedTimeSec < scanTimeoutSec));
 
             if (scanTimeoutSec > 0 && scanTimeoutSec <= elapsedTimeSec) {
@@ -65,6 +64,9 @@ public abstract class Waiter<T extends BaseStatus> {
             }
         } catch (CxClientException e) {
             throw new CxClientException(FAILED_MSG + scanType + ". Error message: " + e.getMessage(), e);
+        }
+        if (statusResponse == null) {
+            throw new CxClientException("Unable to obtain status for " + scanType + " after all retries/timeouts.");
         }
         return resolveStatus(statusResponse);
     }
@@ -76,6 +78,10 @@ public abstract class Waiter<T extends BaseStatus> {
     public abstract T resolveStatus(T status) throws CxClientException;
 
     public boolean isTaskInProgress(T statusResponse) {
+        if (statusResponse == null) {
+            // This allows retry logic to continue
+            return true;
+        }
         Status status = statusResponse.getBaseStatus();
         return status.equals(Status.IN_PROGRESS);
     }
