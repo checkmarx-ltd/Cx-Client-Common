@@ -36,5 +36,9 @@ public abstract class CxPARAM {
             "Please use an existing project. \nYou can enable the creation of new projects by disabling" + "" +
             " the Deny new Checkmarx projects creation checkbox in the Checkmarx plugin global settings.\n";
     public static final String TEAM_PATH = "cxTeamPath";
-
+    public static final String SCA_GET_EXPORT_ID = "/export/requests";
+    public static final String SCA_GET_SBOM_REPORT = "/export/requests?exportId={export_id}";
+    public static final String PLUGIN_VERSION = ";plugin_version=";
+	public static final String PLUGIN_NAME = "plugin_name=";
+	public static final String CX_PLUGIN_VERSION = "CxPluginVersion";
 }
