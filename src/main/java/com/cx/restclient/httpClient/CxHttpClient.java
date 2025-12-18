@@ -611,6 +611,28 @@ public class CxHttpClient implements Closeable {
         return request(get, contentType, null, responseType, expectStatus, "get " + failedMsg, isCollection, true);
     }
 
+    /**
+     * GET request for external URLs (e.g., pre-signed S3 URLs) without adding Authorization header.
+     * Uses the configured HTTP client (with proxy, SSL settings, etc.) but skips auth.
+     */
+    public <T> T getExternalRequest(String fullUrl, String acceptHeader, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
+        HttpGet get = new HttpGet(fullUrl);
+        if (acceptHeader != null) {
+            get.addHeader(HttpHeaders.ACCEPT, acceptHeader);
+        }
+        HttpResponse response = null;
+        try {
+            response = apacheClient.execute(get);
+            validateResponse(response, expectStatus, "Failed to " + failedMsg);
+            return convertToObject(response, responseType, false);
+        } catch (UnknownHostException e) {
+            throw new CxHTTPClientException(ErrorMessage.CHECKMARX_SERVER_CONNECTION_FAILED.getErrorMessage(), e);
+        } finally {
+            get.releaseConnection();
+            HttpClientUtils.closeQuietly(response);
+        }
+    }
+
     //POST REQUEST
     public <T> T postRequest(String relPath, String contentType, HttpEntity entity, Class<T> responseType, int expectStatus, String failedMsg) throws IOException {
         HttpPost post = new HttpPost(rootUri + relPath);

@@ -131,7 +131,8 @@ public abstract class HttpClientHelper {
     }
 
     public static byte[] getSBOMReport(CxHttpClient httpClient, String fileUrl) throws IOException {
-      byte[] scaReport = httpClient.getRequest(fileUrl, null,byte[].class, 200, " SCA Report: ", false);
+      // Use getExternalRequest for pre-signed S3 URLs - no Authorization header needed
+      byte[] scaReport = httpClient.getExternalRequest(fileUrl, "*/*", byte[].class, 200, " SCA Report: ");
       if(scaReport != null && scaReport.length >0){
           return scaReport;
       } else {
