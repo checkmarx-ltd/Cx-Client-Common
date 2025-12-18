@@ -261,27 +261,27 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private byte[] getExportIdForReport(String scanId, String contentType) throws IOException {
     	
-    	try {	
-			ScanReportExportIdRequester scanReportExportIdRequester = new ScanReportExportIdRequester(scanId, contentType) ;
-			StringEntity entity = new StringEntity(convertToJson(scanReportExportIdRequester), StandardCharsets.UTF_8);
+    	try { 
+            ScanReportExportIdRequester scanReportExportIdRequester = new ScanReportExportIdRequester(scanId, contentType) ;
+            StringEntity entity = new StringEntity(convertToJson(scanReportExportIdRequester), StandardCharsets.UTF_8);
 	        
-	        String jsonResponse = httpClient.postRequest(CxPARAM.SCA_GET_EXPORT_ID, CONTENT_TYPE_APPLICATION_JSON, entity, 
-					String.class, HttpStatus.SC_ACCEPTED, "failed to fetch export id" );
+            String jsonResponse = httpClient.postRequest(CxPARAM.SCA_GET_EXPORT_ID, CONTENT_TYPE_APPLICATION_JSON, entity, 
+                    String.class, HttpStatus.SC_ACCEPTED, "failed to fetch export id" );
 	        
-	        ObjectMapper mapper = new ObjectMapper();
-	        JsonNode root = mapper.readTree(jsonResponse);
-	        String exportId = root.get("exportId").asText();
-	
-	        log.info("Export Id generated for "+ contentType + " :: "+exportId) ;
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(jsonResponse);
+            String exportId = root.get("exportId").asText();
+
+            log.info("Export Id generated for "+ contentType + " :: "+exportId) ;
 	    	
-	        // getting Cyclonex Report by export Id 
-	        SbomReportResponse sbomReportResponse = getReportByExportId(exportId, contentType);
-	        return HttpClientHelper.getSBOMReport(sbomReportResponse.getFileUrl());
+            // getting Cyclonex Report by export Id 
+            SbomReportResponse sbomReportResponse = getReportByExportId(exportId, contentType);
+            return HttpClientHelper.getSBOMReport(httpClient, sbomReportResponse.getFileUrl());
         
     	}catch(Exception e ) {
     		log.error("Failed to getExportIdForReport :: ", e);
     	}
-		return null;
+        return null;
     }
     
     private SbomReportResponse getReportByExportId(String exportId, String contentType) throws IOException {
