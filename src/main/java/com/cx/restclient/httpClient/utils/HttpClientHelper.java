@@ -3,6 +3,7 @@ package com.cx.restclient.httpClient.utils;
 
 import com.cx.restclient.exception.CxClientException;
 import com.cx.restclient.exception.CxHTTPClientException;
+import com.cx.restclient.httpClient.CxHttpClient;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -129,18 +130,15 @@ public abstract class HttpClientHelper {
         }
     }
 
-    public static byte[] getSBOMReport(String fileUrl) throws IOException {
-        HttpGet get = new HttpGet(fileUrl);
-        try (CloseableHttpClient client = HttpClients.createDefault();
-             CloseableHttpResponse response = client.execute(get)) {
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode == 200) {
-                return EntityUtils.toByteArray(response.getEntity());
-            } else {
-                throw new IOException("Failed to fetch file. Status code: " + statusCode);
-            }
+    public static byte[] getSBOMReport(CxHttpClient httpClient, String fileUrl) throws IOException {
+        // Use getExternalRequest for pre-signed S3 URLs - no Authorization header needed
+        byte[] scaReport = httpClient.getExternalRequest(fileUrl, "*/*", byte[].class, 200, " SCA Report: ");
+        if(scaReport != null && scaReport.length >0){
+            return scaReport;
+        } else {
+            throw new IOException("Failed to fetch file: " + fileUrl);
         }
+
     }
-    
+
 }

@@ -276,7 +276,7 @@ public class AstScaClient extends AstClient implements Scanner {
 	    	
 	        // getting Cyclonex Report by export Id 
 	        SbomReportResponse sbomReportResponse = getReportByExportId(exportId, contentType);
-	        return HttpClientHelper.getSBOMReport(sbomReportResponse.getFileUrl());
+	        return HttpClientHelper.getSBOMReport(httpClient,sbomReportResponse.getFileUrl());
         
     	}catch(Exception e ) {
     		log.error("Failed to getExportIdForReport :: ", e);

@@ -305,14 +305,28 @@ public abstract class LegacyClient {
             }
 
             version = config.getCxVersion().getVersion();
-            log.info("Checkmarx server version [" + config.getCxVersion().getVersion() + "]." + hotfix);
+            if(isLowerThanNine(version)){
+                log.info("Checkmarx server version [lower than 9]");
+            }else{
+                log.info("Checkmarx server version [" + config.getCxVersion().getVersion() + "]." + hotfix);
+            }
             log.info("Checkmarx Engine Pack Version [" + config.getCxVersion().getEnginePackVersion() + "].");
 
         } catch (Exception ex) {
             version = "lower than 9.0";
-            log.debug("Checkmarx server version [lower than 9.0]");
+            log.error("Failed to retrieve Checkmarx version: {}", ex.getMessage(), ex);
         }
         return version;
+    }
+
+    private boolean isLowerThanNine(String version) {
+        try{
+            String majorPart = version.split("\\.")[0];
+            int majorVersion = Integer.parseInt(majorPart);
+            return majorVersion < 9;
+        }catch(Exception e){
+            return true;
+        }
     }
 
     public String login(Boolean isVersionRequired) throws IOException {
@@ -365,6 +379,11 @@ public abstract class LegacyClient {
             config.setEngineConfigurationId(1);
         } else if (config.getEngineConfigurationName() != null) {
             final List<EngineConfiguration> engineConfigurations = getEngineConfiguration();
+            boolean exists = engineConfigurations.stream()
+                    .anyMatch(a -> a.getName().equalsIgnoreCase(config.getEngineConfigurationName()));
+            if (!exists && !"Improved Scan Flow".equalsIgnoreCase(config.getEngineConfigurationName())) {
+                throw new CxClientException("Engine configuration: \"" + config.getEngineConfigurationName() + "\" was not found in server");
+            }
             for (EngineConfiguration engineConfiguration : engineConfigurations) {
                 if (engineConfiguration.getName().equalsIgnoreCase(config.getEngineConfigurationName())) {
                     config.setEngineConfigurationId(engineConfiguration.getId());
