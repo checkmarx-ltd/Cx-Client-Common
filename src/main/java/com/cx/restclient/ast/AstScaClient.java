@@ -26,13 +26,13 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.sca.dto.Tags;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +42,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.tools.ant.taskdefs.Replace;
 import org.apache.velocity.runtime.parser.node.SetExecutor;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
@@ -52,12 +53,6 @@ import com.cx.restclient.ast.dto.common.HandlerRef;
 import com.cx.restclient.ast.dto.common.RemoteRepositoryInfo;
 import com.cx.restclient.ast.dto.common.ScanConfig;
 import com.cx.restclient.ast.dto.common.ScanConfigValue;
-import com.cx.restclient.ast.dto.sca.AstScaConfig;
-import com.cx.restclient.ast.dto.sca.AstScaResults;
-import com.cx.restclient.ast.dto.sca.CreateProjectRequest;
-import com.cx.restclient.ast.dto.sca.Project;
-import com.cx.restclient.ast.dto.sca.ScaScanConfigValue;
-import com.cx.restclient.ast.dto.sca.Team;
 import com.cx.restclient.ast.dto.sca.report.AstScaSummaryResults;
 import com.cx.restclient.ast.dto.sca.report.Finding;
 import com.cx.restclient.ast.dto.sca.report.Package;
@@ -749,9 +744,54 @@ public class AstScaClient extends AstClient implements Scanner {
 
         log.info("Collecting files to zip archive: {}", tempUploadFile.getAbsolutePath());
 
-        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
-        
-        List<String> paths = Arrays.asList(filePath.list());
+        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024
+                : MAX_ZIP_SIZE_BYTES;
+
+        List<String> paths = new ArrayList<>(Arrays.asList(filePath.list()));
+
+        // Add manifest files for remediation support
+        try {
+            String sourceDirPath = getResolvedDependencySourceDir();
+            log.info("Scanning for manifest files for SCA remediation support");
+
+            String[] manifestFiles = CxSCAFileSystemUtils.scanAndGetIncludedFiles(
+                    sourceDirPath,
+                    new PathFilter(null, getManifestsIncludePattern(), log));
+
+            if (manifestFiles != null && manifestFiles.length > 0) {
+                log.info("Found {} manifest files to include for remediation", manifestFiles.length);
+
+                int copiedCount = 0;
+                for (String manifestFilePath : manifestFiles) {
+                    File manifestFile = new File(sourceDirPath, manifestFilePath);
+
+                    if (manifestFile.exists() && manifestFile.isFile()) {
+                        String relativePath = manifestFilePath;
+
+                        File destFile = new File(filePath, relativePath);
+                        File destParent = destFile.getParentFile();
+
+                        if (destParent != null && !destParent.exists()) {
+                            destParent.mkdirs();
+                        }
+
+                        Files.copy(manifestFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                        if (!paths.contains(relativePath)) {
+                            paths.add(relativePath);
+                            copiedCount++;
+                        }
+                    }
+                }
+                log.info("Successfully added {} manifest files for remediation", copiedCount);
+            } else {
+                log.info("No manifest files found for remediation support");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to add manifest files for SCA remediation: {}", e.getMessage());
+            log.debug("Exception details:", e);
+        }
+
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
             log.info("Added {} files to zip.",  zipper.getFileCount());
