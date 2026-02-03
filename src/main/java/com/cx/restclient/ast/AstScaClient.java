@@ -750,10 +750,13 @@ public class AstScaClient extends AstClient implements Scanner {
 
         log.info("Collecting files to zip archive: {}", tempUploadFile.getAbsolutePath());
 
-        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024
+        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize().longValue() * 1024 * 1024
                 : MAX_ZIP_SIZE_BYTES;
 
-        List<String> paths = new ArrayList<>(Arrays.asList(filePath.list()));
+        String[] existingFiles = filePath.list();
+        List<String> paths = existingFiles != null
+                ? new ArrayList<>(Arrays.asList(existingFiles))
+                : new ArrayList<>();
 
         // Add manifest files for remediation support
         try {
@@ -774,11 +777,18 @@ public class AstScaClient extends AstClient implements Scanner {
                     if (manifestFile.exists() && manifestFile.isFile()) {
                         String relativePath = manifestFilePath;
 
-                        File destFile = new File(filePath, relativePath);
+                        Path destPath = filePath.toPath().resolve(relativePath).normalize();
+                        if (!destPath.startsWith(filePath.toPath())) {
+                            log.warn("Skipping invalid manifest path: {}", relativePath);
+                            continue;
+                        }
+
+                        File destFile = destPath.toFile();
                         File destParent = destFile.getParentFile();
 
-                        if (destParent != null && !destParent.exists()) {
-                            destParent.mkdirs();
+                        if (destParent != null && !destParent.exists() && !destParent.mkdirs()) {
+                            log.warn("Failed to create directory {}", destParent.getAbsolutePath());
+                            continue;
                         }
 
                         Files.copy(manifestFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -793,9 +803,11 @@ public class AstScaClient extends AstClient implements Scanner {
             } else {
                 log.info("No manifest files found for remediation support");
             }
-        } catch (Exception e) {
-            log.warn("Failed to add manifest files for SCA remediation: {}", e.getMessage());
+        } catch (IOException e) {
+            log.warn("I/O error while adding manifest files: {}", e.getMessage());
             log.debug("Exception details:", e);
+        } catch (Exception e) {
+            log.warn("Unexpected error while adding manifest files", e);
         }
 
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
