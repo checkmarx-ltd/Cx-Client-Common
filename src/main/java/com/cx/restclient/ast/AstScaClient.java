@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.sca.dto.Tags;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -749,9 +750,66 @@ public class AstScaClient extends AstClient implements Scanner {
 
         log.info("Collecting files to zip archive: {}", tempUploadFile.getAbsolutePath());
 
-        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
-        
-        List<String> paths = Arrays.asList(filePath.list());
+        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize().longValue() * 1024 * 1024
+                : MAX_ZIP_SIZE_BYTES;
+
+        String[] existingFiles = filePath.list();
+        List<String> paths = existingFiles != null
+                ? new ArrayList<>(Arrays.asList(existingFiles))
+                : new ArrayList<>();
+
+        // Add manifest files for remediation support
+        try {
+            String sourceDirPath = getResolvedDependencySourceDir();
+            log.info("Scanning for manifest files for SCA remediation support");
+
+            String[] manifestFiles = CxSCAFileSystemUtils.scanAndGetIncludedFiles(
+                    sourceDirPath,
+                    new PathFilter(null, getManifestsIncludePattern(), log));
+
+            if (manifestFiles != null && manifestFiles.length > 0) {
+                log.info("Found {} manifest files to include for remediation", manifestFiles.length);
+
+                int copiedCount = 0;
+                for (String manifestFilePath : manifestFiles) {
+                    File manifestFile = new File(sourceDirPath, manifestFilePath);
+
+                    if (manifestFile.exists() && manifestFile.isFile()) {
+                        String relativePath = manifestFilePath;
+
+                        Path destPath = filePath.toPath().resolve(relativePath).normalize();
+                        if (!destPath.startsWith(filePath.toPath())) {
+                            log.warn("Skipping invalid manifest path: {}", relativePath);
+                            continue;
+                        }
+
+                        File destFile = destPath.toFile();
+                        File destParent = destFile.getParentFile();
+
+                        if (destParent != null && !destParent.exists() && !destParent.mkdirs()) {
+                            log.warn("Failed to create directory {}", destParent.getAbsolutePath());
+                            continue;
+                        }
+
+                        Files.copy(manifestFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                        if (!paths.contains(relativePath)) {
+                            paths.add(relativePath);
+                            copiedCount++;
+                        }
+                    }
+                }
+                log.info("Successfully added {} manifest files for remediation", copiedCount);
+            } else {
+                log.info("No manifest files found for remediation support");
+            }
+        } catch (IOException e) {
+            log.warn("I/O error while adding manifest files: {}", e.getMessage());
+            log.debug("Exception details:", e);
+        } catch (Exception e) {
+            log.warn("Unexpected error while adding manifest files", e);
+        }
+
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
             log.info("Added {} files to zip.",  zipper.getFileCount());
