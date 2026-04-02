@@ -255,7 +255,7 @@ public abstract class LegacyClient {
     private void initHttpClient(CxScanConfig config, Logger log) throws MalformedURLException {
     	if (!org.apache.commons.lang3.StringUtils.isEmpty(config.getUrl())) {
         	httpClient = new CxHttpClient(
-            		
+
                     UrlUtils.parseURLToString(config.getUrl(), "CxRestAPI/"),
                     config.getCxOrigin(),
                     config.getCxOriginUrl(),
@@ -266,7 +266,8 @@ public abstract class LegacyClient {
                     config.getProxyConfig(),
                     log,
                     config.getNTLM(),
-                    config.getPluginVersion());
+                    config.getPluginVersion(),
+                    config.getAllowedHostname());
         }
     }
 

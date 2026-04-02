@@ -39,6 +39,7 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import javax.net.ssl.HostnameVerifier;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -131,7 +132,13 @@ public class CxHttpClient implements Closeable {
 
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion) throws CxClientException {
-    	   	   	
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, null);
+    }
+
+    public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
+                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion,
+                        String allowedHostname) throws CxClientException {
+
         this.log = log;
         this.rootUri = rootUri;
         this.refreshToken = refreshToken;
@@ -147,6 +154,9 @@ public class CxHttpClient implements Closeable {
         Registry<ConnectionSocketFactory> registry;
         PoolingHttpClientConnectionManager cm = null;
         if (disableSSLValidation) {
+            log.info("[SSL Config] SSL validation is DISABLED (-trusted_certificates flag is set).");
+            log.info("[SSL Config] Using NoopHostnameVerifier - ALL hostname verification is SKIPPED.");
+            log.info("[SSL Config] Using TrustSelfSignedStrategy - self-signed certificates will be accepted.");
             try {
                 builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
                 sslConnectionSocketFactory = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
@@ -162,10 +172,16 @@ public class CxHttpClient implements Closeable {
             cb.setSSLSocketFactory(sslConnectionSocketFactory);
             cb.setConnectionManager(cm);
         } else {
+            log.info("[SSL Config] SSL validation is ENABLED. Hostname verification will be performed.");
         	String customTrustStore = System.getProperty("javax.net.ssl.trustStore");
-        	if(!StringUtils.isEmpty(customTrustStore))
-        		this.log.info("Custom truststore is configured. Ensure that trusted certificate for all CxSAST/CxSCA endpoints are imported. Custom store path: " + customTrustStore );
-            cb.setConnectionManager(getHttpConnectionManager(false));
+        	if(!StringUtils.isEmpty(customTrustStore)) {
+        		this.log.info("[SSL Config] Custom truststore is configured. Path: " + customTrustStore);
+        		this.log.info("[SSL Config] Ensure that trusted certificate/chain for all CxSAST/CxSCA endpoints are imported in this truststore.");
+        	} else {
+        	    this.log.info("[SSL Config] Using default JVM truststore (cacerts). No custom truststore configured.");
+        	}
+            log.info("[SSL Config] Using CxHostnameVerifier with 4-step fallback chain.");
+            cb.setConnectionManager(getHttpConnectionManager(false, new CxHostnameVerifier(allowedHostname)));
         }
         cb.setConnectionManagerShared(true);
 
@@ -190,7 +206,14 @@ public class CxHttpClient implements Closeable {
 
     public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion) throws CxClientException {
-        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion);
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, (String) null);
+        this.cxOriginUrl = originUrl;
+    }
+
+    public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
+                        boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion,
+                        String allowedHostname) throws CxClientException {
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, allowedHostname);
         this.cxOriginUrl = originUrl;
     }
 
@@ -345,12 +368,12 @@ public class CxHttpClient implements Closeable {
         return new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
     }
 
-    private static PoolingHttpClientConnectionManager getHttpConnectionManager(boolean disableSSLValidation) {
+    private static PoolingHttpClientConnectionManager getHttpConnectionManager(boolean disableSSLValidation, HostnameVerifier hostnameVerifier) {
         ConnectionSocketFactory factory;
         if (disableSSLValidation) {
             factory = getTrustAllSSLSocketFactory();
         } else {
-            factory = new SSLConnectionSocketFactory(SSLContexts.createDefault(), NoopHostnameVerifier.INSTANCE);
+            factory = new SSLConnectionSocketFactory(SSLContexts.createDefault(), hostnameVerifier);
         }
         Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register(HTTPS, factory)
