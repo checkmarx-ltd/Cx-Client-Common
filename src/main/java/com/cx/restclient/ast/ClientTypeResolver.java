@@ -99,7 +99,8 @@ public class ClientTypeResolver {
                     log,
                     config.getNTLM(),
                     config.getPluginVersion(),
-                    config.getAllowedHostname());
+                    config.getAllowedHostname(),
+                    config.getHostnameVerificationEnabled());
         }
         return httpClient;
     }

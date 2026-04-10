@@ -97,6 +97,7 @@ public class CxHttpClient implements Closeable {
     private static String HTTPS_NO_HOST = System.getProperty("https.nonProxyHosts");
 
     private static final String HTTPS = "https";
+    private static final String ENV_HOSTNAME_VERIFICATION = "CX_HOSTNAME_VERIFICATION_ENABLED";
 
     private static final String LOGIN_FAILED_MSG = "Fail to login with windows authentication: ";
 
@@ -130,14 +131,27 @@ public class CxHttpClient implements Closeable {
     private String pluginVersion;
 
 
+    /**
+     * Legacy 10-arg constructor — kept for binary compatibility with existing plugin builds
+     * Delegates to the canonical 12-arg constructor with null values for the new parameters,
+     * which causes the resolver to fall back to the CX_HOSTNAME_VERIFICATION_ENABLED env var
+     * (defaulting to false / legacy NoopHostnameVerifier behavior).
+     */
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion) throws CxClientException {
-        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, null);
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, null, null);
     }
 
+    /**
+     * Canonical 12-arg constructor. Used by CLI (which reads ssl.hostname.verification.enabled
+     * and ssl.allowed.hosts from cx_console.properties) and any plugin that opts in.
+     *
+     * @param allowedHostname              Comma-separated list of allowed host patterns; null for plugins that don't support it.
+     * @param hostnameVerificationEnabled  Tri-state flag: true = on, false = off, null = fall back to env var then default false.
+     */
     public CxHttpClient(String rootUri, String origin, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion,
-                        String allowedHostname) throws CxClientException {
+                        String allowedHostname, Boolean hostnameVerificationEnabled) throws CxClientException {
 
         this.log = log;
         this.rootUri = rootUri;
@@ -172,16 +186,30 @@ public class CxHttpClient implements Closeable {
             cb.setSSLSocketFactory(sslConnectionSocketFactory);
             cb.setConnectionManager(cm);
         } else {
-            log.info("[SSL Config] SSL validation is ENABLED. Hostname verification will be performed.");
-        	String customTrustStore = System.getProperty("javax.net.ssl.trustStore");
-        	if(!StringUtils.isEmpty(customTrustStore)) {
-        		this.log.info("[SSL Config] Custom truststore is configured. Path: " + customTrustStore);
-        		this.log.info("[SSL Config] Ensure that trusted certificate/chain for all CxSAST/CxSCA endpoints are imported in this truststore.");
-        	} else {
-        	    this.log.info("[SSL Config] Using default JVM truststore (cacerts). No custom truststore configured.");
-        	}
-            log.info("[SSL Config] Using CxHostnameVerifier with 4-step fallback chain.");
-            cb.setConnectionManager(getHttpConnectionManager(false, new CxHostnameVerifier(allowedHostname)));
+            log.info("[SSL Config] SSL validation is ENABLED.");
+            String customTrustStore = System.getProperty("javax.net.ssl.trustStore");
+            if (!StringUtils.isEmpty(customTrustStore)) {
+                this.log.info("[SSL Config] Custom truststore is configured. Path: " + customTrustStore);
+                this.log.info("[SSL Config] Ensure that trusted certificate/chain for all CxSAST/CxSCA endpoints are imported in this truststore.");
+            } else {
+                this.log.info("[SSL Config] Using default JVM truststore (cacerts). No custom truststore configured.");
+            }
+
+            boolean verifyHostname = resolveHostnameVerificationFlag(hostnameVerificationEnabled, log);
+            if (verifyHostname) {
+                log.info("[SSL Config] Hostname verification ENABLED. Using CxHostnameVerifier with fallback chain (CN/SAN -> ssl.allowed.hosts -> CX_ALLOWED_HOSTS).");
+                if (allowedHostname != null && !allowedHostname.trim().isEmpty()) {
+                    log.info("[SSL Config] Allowed hosts list (from config): {}", allowedHostname);
+                }
+                cb.setConnectionManager(getHttpConnectionManager(false, new CxHostnameVerifier(allowedHostname)));
+            } else {
+                log.info("[SSL Config] Hostname verification DISABLED (legacy behavior). Using NoopHostnameVerifier.");
+                log.info("[SSL Config] To enable hostname verification, set CX_HOSTNAME_VERIFICATION_ENABLED=true (or ssl.hostname.verification.enabled=true in cx_console.properties for CLI).");
+                if (allowedHostname != null && !allowedHostname.trim().isEmpty()) {
+                    log.warn("[SSL Config] ssl.allowed.hosts is set but hostname verification is DISABLED. The allowed hosts list will have NO EFFECT until hostname verification is enabled.");
+                }
+                cb.setConnectionManager(getHttpConnectionManager(false, NoopHostnameVerifier.INSTANCE));
+            }
         }
         cb.setConnectionManagerShared(true);
 
@@ -204,16 +232,24 @@ public class CxHttpClient implements Closeable {
         } else apacheClient = cb.build();
     }
 
+    /**
+     * Legacy originUrl 11-arg constructor — backward compatibility for plugins that use the
+     * originUrl variant (e.g. older AstClient builds). Falls through to env var / default.
+     */
     public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion) throws CxClientException {
-        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, (String) null);
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, null, null);
         this.cxOriginUrl = originUrl;
     }
 
+    /**
+     * Canonical 13-arg originUrl constructor. Used by AstClient (SCA / AST-SAST) to pass
+     * both allowedHostname and hostnameVerificationEnabled along with the originUrl.
+     */
     public CxHttpClient(String rootUri, String origin, String originUrl, boolean disableSSLValidation, boolean isSSO, String refreshToken,
                         boolean isProxy, @Nullable ProxyConfig proxyConfig, Logger log, Boolean useNTLM, String pluginVersion,
-                        String allowedHostname) throws CxClientException {
-        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, allowedHostname);
+                        String allowedHostname, Boolean hostnameVerificationEnabled) throws CxClientException {
+        this(rootUri, origin, disableSSLValidation, isSSO, refreshToken, isProxy, proxyConfig, log, useNTLM, pluginVersion, allowedHostname, hostnameVerificationEnabled);
         this.cxOriginUrl = originUrl;
     }
 
@@ -366,6 +402,29 @@ public class CxHttpClient implements Closeable {
             throw new CxClientException("Fail to set trust all certificate, 'SSLConnectionSocketFactory'", e);
         }
         return new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+    }
+
+    /**
+     * Resolves whether hostname verification should be enabled.
+     * Priority (highest to lowest):
+     *   1. Explicit value passed via constructor (e.g. CLI from cx_console.properties)
+     *   2. CX_HOSTNAME_VERIFICATION_ENABLED environment variable (works for all plugins)
+     *   3. Default: false (legacy NoopHostnameVerifier behavior - no impact on existing pipelines)
+     */
+    private static boolean resolveHostnameVerificationFlag(Boolean explicitValue, Logger log) {
+        if (explicitValue != null) {
+            log.info("[SSL Config] Hostname verification flag from config: {}", explicitValue);
+            return explicitValue;
+        }
+        String envValue = System.getenv(ENV_HOSTNAME_VERIFICATION);
+        if (envValue != null && !envValue.trim().isEmpty()) {
+            boolean parsed = Boolean.parseBoolean(envValue.trim());
+            log.info("[SSL Config] Hostname verification flag from env var {}={} (parsed as {})",
+                    ENV_HOSTNAME_VERIFICATION, envValue, parsed);
+            return parsed;
+        }
+        log.info("[SSL Config] Hostname verification flag not set (no config, no env var). Defaulting to FALSE (legacy behavior).");
+        return false;
     }
 
     private static PoolingHttpClientConnectionManager getHttpConnectionManager(boolean disableSSLValidation, HostnameVerifier hostnameVerifier) {

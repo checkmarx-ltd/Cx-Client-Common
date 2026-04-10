@@ -86,7 +86,8 @@ public abstract class AstClient {
                 log,
                 config.getNTLM(),
                 config.getPluginVersion(),
-                config.getAllowedHostname());
+                config.getAllowedHostname(),
+                config.getHostnameVerificationEnabled());
         //initializing Team Path to prevent null pointer in login when called from automation
         client.setTeamPathHeader("");
 

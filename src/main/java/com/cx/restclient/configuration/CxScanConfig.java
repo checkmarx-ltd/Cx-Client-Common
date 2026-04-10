@@ -34,6 +34,7 @@ public class CxScanConfig implements Serializable {
     private boolean enableDataRetention;
     private boolean disableCertificateValidation = false;
     private String allowedHostname;
+    private Boolean hostnameVerificationEnabled;
     private boolean useSSOLogin = false;
 
     private String sourceDir;
@@ -266,6 +267,14 @@ public class CxScanConfig implements Serializable {
 
     public void setAllowedHostname(String allowedHostname) {
         this.allowedHostname = allowedHostname;
+    }
+
+    public Boolean getHostnameVerificationEnabled() {
+        return hostnameVerificationEnabled;
+    }
+
+    public void setHostnameVerificationEnabled(Boolean hostnameVerificationEnabled) {
+        this.hostnameVerificationEnabled = hostnameVerificationEnabled;
     }
 
     public boolean isUseSSOLogin() {

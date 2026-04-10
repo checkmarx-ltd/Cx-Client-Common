@@ -267,7 +267,8 @@ public abstract class LegacyClient {
                     log,
                     config.getNTLM(),
                     config.getPluginVersion(),
-                    config.getAllowedHostname());
+                    config.getAllowedHostname(),
+                    config.getHostnameVerificationEnabled());
         }
     }
 
