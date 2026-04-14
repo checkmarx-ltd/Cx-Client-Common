@@ -193,8 +193,7 @@ public class CxHostnameVerifier implements HostnameVerifier {
     }
 
     private static boolean isIpAddress(String hostname) {
-        // Simple check: an IP address contains only digits and dots (IPv4)
-        // or contains a colon (IPv6)
-        return hostname.matches("\\d+\\.\\d+\\.\\d+\\.\\d+") || hostname.contains(":");
+        return hostname.matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}")
+                || hostname.matches(".*:.*:.*");
     }
 }
