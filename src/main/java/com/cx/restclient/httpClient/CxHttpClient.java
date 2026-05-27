@@ -168,9 +168,6 @@ public class CxHttpClient implements Closeable {
         Registry<ConnectionSocketFactory> registry;
         PoolingHttpClientConnectionManager cm = null;
         if (disableSSLValidation) {
-            log.info("[SSL Config] SSL validation is DISABLED (-trusted_certificates flag is set).");
-            log.info("[SSL Config] Using NoopHostnameVerifier - ALL hostname verification is SKIPPED.");
-            log.info("[SSL Config] Using TrustSelfSignedStrategy - self-signed certificates will be accepted.");
             try {
                 builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
                 sslConnectionSocketFactory = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
@@ -186,28 +183,15 @@ public class CxHttpClient implements Closeable {
             cb.setSSLSocketFactory(sslConnectionSocketFactory);
             cb.setConnectionManager(cm);
         } else {
-            log.info("[SSL Config] SSL validation is ENABLED.");
             String customTrustStore = System.getProperty("javax.net.ssl.trustStore");
             if (!StringUtils.isEmpty(customTrustStore)) {
-                this.log.info("[SSL Config] Custom truststore is configured. Path: " + customTrustStore);
-                this.log.info("[SSL Config] Ensure that trusted certificate/chain for all CxSAST/CxSCA endpoints are imported in this truststore.");
-            } else {
-                this.log.info("[SSL Config] Using default JVM truststore (cacerts). No custom truststore configured.");
+                this.log.info("Custom truststore is configured. Ensure that trusted certificate for all CxSAST/CxSCA endpoints are imported. Custom store path: " + customTrustStore);
             }
 
-            boolean verifyHostname = resolveHostnameVerificationFlag(hostnameVerificationEnabled, log);
+            boolean verifyHostname = resolveHostnameVerificationFlag(hostnameVerificationEnabled);
             if (verifyHostname) {
-                log.info("[SSL Config] Hostname verification ENABLED. Using CxHostnameVerifier with fallback chain (CN/SAN -> ssl.allowed.hosts -> CX_ALLOWED_HOSTS).");
-                if (allowedHostname != null && !allowedHostname.trim().isEmpty()) {
-                    log.info("[SSL Config] Allowed hosts list (from config): {}", allowedHostname);
-                }
                 cb.setConnectionManager(getHttpConnectionManager(false, new CxHostnameVerifier(allowedHostname)));
             } else {
-                log.info("[SSL Config] Hostname verification DISABLED (legacy behavior). Using NoopHostnameVerifier.");
-                log.info("[SSL Config] To enable hostname verification, set CX_HOSTNAME_VERIFICATION_ENABLED=true (or ssl.hostname.verification.enabled=true in cx_console.properties for CLI).");
-                if (allowedHostname != null && !allowedHostname.trim().isEmpty()) {
-                    log.warn("[SSL Config] ssl.allowed.hosts is set but hostname verification is DISABLED. The allowed hosts list will have NO EFFECT until hostname verification is enabled.");
-                }
                 cb.setConnectionManager(getHttpConnectionManager(false, NoopHostnameVerifier.INSTANCE));
             }
         }
@@ -411,19 +395,14 @@ public class CxHttpClient implements Closeable {
      *   2. CX_HOSTNAME_VERIFICATION_ENABLED environment variable (works for all plugins)
      *   3. Default: false (legacy NoopHostnameVerifier behavior - no impact on existing pipelines)
      */
-    private static boolean resolveHostnameVerificationFlag(Boolean explicitValue, Logger log) {
+    private static boolean resolveHostnameVerificationFlag(Boolean explicitValue) {
         if (explicitValue != null) {
-            log.info("[SSL Config] Hostname verification flag from config: {}", explicitValue);
             return explicitValue;
         }
         String envValue = System.getenv(ENV_HOSTNAME_VERIFICATION);
         if (envValue != null && !envValue.trim().isEmpty()) {
-            boolean parsed = Boolean.parseBoolean(envValue.trim());
-            log.info("[SSL Config] Hostname verification flag from env var {}={} (parsed as {})",
-                    ENV_HOSTNAME_VERIFICATION, envValue, parsed);
-            return parsed;
+            return Boolean.parseBoolean(envValue.trim());
         }
-        log.info("[SSL Config] Hostname verification flag not set (no config, no env var). Defaulting to FALSE (legacy behavior).");
         return false;
     }
 
