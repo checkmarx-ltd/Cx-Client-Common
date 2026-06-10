@@ -38,7 +38,8 @@ pipeline {
                 script {
                     env.PIPELINE_STATUS = "Success"
                     env.STAGE_NAME_FAILED = "None"
-                    if (params.Tag == 'master' || params.Tag == 'cx-client-common-temp-release') {
+                    if (params.Tag == 'master' || params.Tag == 'origin/master' ||
+                        params.Tag == 'cx-client-common-temp-release' || params.Tag == 'origin/cx-client-common-temp-release') {
                         Calendar cal = Calendar.getInstance(Locale.US)
                         int quarter = (cal.get(Calendar.MONTH) / 3) + 1
                         int year = cal.get(Calendar.YEAR)
