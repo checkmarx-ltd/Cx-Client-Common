@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 import com.cx.restclient.ast.dto.sca.*;
 import com.cx.restclient.sca.dto.Tags;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -499,8 +500,9 @@ public class AstScaClient extends AstClient implements Scanner {
 
         byte[] zipFile = CxZipUtils.getZippedSources(config, filter, sourceDir, log, "astsca");
 
-        
-        FileUtils.deleteDirectory(configFileDestination.toFile());
+        if (configFileDestination != null) {
+            FileUtils.deleteDirectory(configFileDestination.toFile());
+        }
         CxZipUtils.cleanupTempExtractedDir(log);
 
         return initiateScanForUpload(projectId, zipFile, config.getAstScaConfig(),config.getAstScaConfig().getScaScanCustomTags());
@@ -712,8 +714,9 @@ public class AstScaClient extends AstClient implements Scanner {
 
         optionallyWriteFingerprintsToFile(fingerprints);
 
-
-        FileUtils.deleteDirectory(configFileDestination.toFile());
+        if (configFileDestination != null) {
+            FileUtils.deleteDirectory(configFileDestination.toFile());
+        }
         CxZipUtils.cleanupTempExtractedDir(log);
 
         return initiateScanForUpload(projectId, FileUtils.readFileToByteArray(zipFile), astScaConfig,config.getAstScaConfig().getScaScanCustomTags());
@@ -749,9 +752,84 @@ public class AstScaClient extends AstClient implements Scanner {
 
         log.info("Collecting files to zip archive: {}", tempUploadFile.getAbsolutePath());
 
-        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize() * 1024 * 1024 : MAX_ZIP_SIZE_BYTES;
-        
-        List<String> paths = Arrays.asList(filePath.list());
+        long maxZipSizeBytes = config.getMaxZipSize() != null ? config.getMaxZipSize().longValue() * 1024 * 1024
+                : MAX_ZIP_SIZE_BYTES;
+
+        String[] existingFiles = filePath.list();
+        List<String> paths = existingFiles != null
+                ? new ArrayList<>(Arrays.asList(existingFiles))
+                : new ArrayList<>();
+
+        // Add manifest files for remediation support.
+        // Defense-in-depth: any failure here is logged and swallowed; the resolver
+        // JSON evidence upload always proceeds regardless of remediation outcomes.
+        try {
+            // getResolvedDependencySourceDir() will extract a zip source (via
+            // CxZipUtils.extractZipToTempDirectory) so we can scan the contents.
+            // It overwrites the static CxZipUtils.tempExtractedDir, but cleanup at
+            // the end of submitScaResolverEvidenceFile resets it to null, so the
+            // leak is bounded to the current scan and does not affect subsequent runs.
+            String sourceDirPath = getResolvedDependencySourceDir();
+            String manifestPattern = resolveManifestPatternSafely();
+
+            if (sourceDirPath == null) {
+                log.info("Skipping remediation manifest collection: source dir not available.");
+            } else if (StringUtils.isBlank(manifestPattern)) {
+                log.info("Skipping remediation manifest collection: no manifest include pattern configured.");
+            } else {
+                log.info("Scanning for manifest files for SCA remediation support");
+                String[] manifestFiles = CxSCAFileSystemUtils.scanAndGetIncludedFiles(
+                        sourceDirPath,
+                        new PathFilter(null, manifestPattern, log));
+
+                if (manifestFiles != null && manifestFiles.length > 0) {
+                    log.info("Found {} manifest files to include for remediation", manifestFiles.length);
+
+                    int copiedCount = 0;
+                    for (String manifestFilePath : manifestFiles) {
+                        File manifestFile = new File(sourceDirPath, manifestFilePath);
+                        if (!manifestFile.exists() || !manifestFile.isFile()) {
+                            continue;
+                        }
+
+                        Path destPath = filePath.toPath().resolve(manifestFilePath).normalize();
+                        if (!destPath.startsWith(filePath.toPath())) {
+                            log.warn("Skipping invalid manifest path: {}", manifestFilePath);
+                            continue;
+                        }
+
+                        // Never overwrite a file already in the evidence dir
+                        // (cxsca-results.json, sast-results.json, anything the resolver wrote).
+                        if (Files.exists(destPath)) {
+                            log.warn("Skipping manifest {}: target already exists in evidence directory", manifestFilePath);
+                            continue;
+                        }
+
+                        File destParent = destPath.toFile().getParentFile();
+                        if (destParent != null && !destParent.exists() && !destParent.mkdirs()) {
+                            log.warn("Failed to create directory {}", destParent.getAbsolutePath());
+                            continue;
+                        }
+
+                        Files.copy(manifestFile.toPath(), destPath);
+
+                        if (!paths.contains(manifestFilePath)) {
+                            paths.add(manifestFilePath);
+                            copiedCount++;
+                        }
+                    }
+                    log.info("Successfully added {} manifest files for remediation", copiedCount);
+                } else {
+                    log.info("No manifest files found for remediation support");
+                }
+            }
+        } catch (IOException e) {
+            log.warn("I/O error while adding manifest files: {}", e.getMessage());
+            log.debug("Exception details:", e);
+        } catch (Exception e) {
+            log.warn("Unexpected error while adding manifest files", e);
+        }
+
         try (NewCxZipFile zipper = new NewCxZipFile(tempUploadFile, maxZipSizeBytes, log)) {
             zipper.addMultipleFilesToArchive(new File(sourceDir), paths);
             log.info("Added {} files to zip.",  zipper.getFileCount());
@@ -789,7 +867,13 @@ public class AstScaClient extends AstClient implements Scanner {
 
     private Path copyConfigFileToSourceDir(String sourceDir) throws IOException {
 
-        Path configFileDestination = Paths.get("");
+        // Return null when no config file directory was created. Callers must
+        // null-check before calling FileUtils.deleteDirectory(...). Returning
+        // Paths.get("") here historically caused deleteDirectory to resolve to the
+        // current working directory on Windows and attempt to delete the CLI's
+        // own installation (CxConsolePlugin-CLI-*.jar, lib/, logs/), which fails
+        // because the running JAR is locked.
+        Path configFileDestination = null;
         log.info("Source Directory : {}", sourceDir);
         List<String> configFilePaths = config.getAstScaConfig().getConfigFilePaths();
 
@@ -806,11 +890,11 @@ public class AstScaClient extends AstClient implements Scanner {
                     if (Files.notExists(configFileDestination)) {
                         Path destDir = Files.createDirectory(configFileDestination);
                         Files.copy(configFilePath, destDir.resolve(configFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-                        
+
                     } else {
                         Path r = configFileDestination.resolve(configFilePath.getFileName());
                         Files.copy(configFilePath,r , StandardCopyOption.REPLACE_EXISTING);
-                        
+
                     }
                     log.info("Config file ({}) copied to directory: {}", configFilePath, configFileDestination);
                 }
@@ -888,6 +972,19 @@ public class AstScaClient extends AstClient implements Scanner {
         }
 
         return resolvingConfiguration.getManifestsIncludePattern();
+    }
+
+    /**
+     * Null-safe variant of {@link #getManifestsIncludePattern()} for use from the
+     * resolver remediation path, where {@code resolvingConfiguration} may not be
+     * loaded (it is initialized only in the manifest+fingerprint flow). Returns
+     * null when no pattern is available; callers must skip remediation in that case.
+     */
+    private String resolveManifestPatternSafely() {
+        if (astScaConfig != null && StringUtils.isNotEmpty(astScaConfig.getManifestsIncludePattern())) {
+            return astScaConfig.getManifestsIncludePattern();
+        }
+        return resolvingConfiguration != null ? resolvingConfiguration.getManifestsIncludePattern() : null;
     }
 
     private File getZipFile() throws IOException {
