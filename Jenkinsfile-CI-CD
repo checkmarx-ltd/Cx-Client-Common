@@ -494,7 +494,7 @@ pipeline {
 
                 stage('GitHub Release') {
                     environment {
-                        GITHUB_TOKEN = credentials('github-cxflowtestuser')
+                        GITHUB_TOKEN = credentials('UMESH-CX-COMMON-GHT')
                     }
                     steps {
                         script {
