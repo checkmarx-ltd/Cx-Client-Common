@@ -498,7 +498,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            sh "ghr -t ${GITHUB_TOKEN} -u checkmarx-ltd -n ${env.cxCommonVersion} -r Cx-Client-Common -c ${GIT_COMMIT} -delete ${env.cxCommonVersion} ./target/cx-client-common-${env.cxCommonVersion}.jar"
+                            sh "ghr -t ${GITHUB_TOKEN_PSW} -u checkmarx-ltd -n ${env.cxCommonVersion} -r Cx-Client-Common -c ${GIT_COMMIT} -delete ${env.cxCommonVersion} ./target/cx-client-common-${env.cxCommonVersion}.jar"
                         }
                     }
                     post {
